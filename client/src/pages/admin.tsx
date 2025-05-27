@@ -21,6 +21,8 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState("orders");
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [processedImages, setProcessedImages] = useState<{ [key: string]: string }>({});
   
   const today = new Date().toISOString().split('T')[0];
 
@@ -125,32 +127,143 @@ export default function Admin() {
     }
   };
 
-  const handleSendToRestaurant = () => {
-    if (!ordersSummary) return;
+  const handleCreateOrder = async () => {
+    if (!ordersSummary || !dishes) return;
     
-    // Создаем текстовое сообщение для ресторана
-    const message = `🍽️ ЗАКАЗ НА ${today}
-
-📊 Общая статистика:
-• Всего заказов: ${ordersSummary.totalOrders}
-• Самое популярное блюдо: ${ordersSummary.mostPopular || "N/A"}
-
-📝 Детальный список:
-${Object.entries(ordersSummary.dishCounts || {}).map(([dish, count]) => 
-  `• ${dish}: ${count} порций`
-).join('\n')}
-
----
-Отправлено из системы заказа обедов
-${new Date().toLocaleString()}`;
-
-    // Копируем в буфер обмена
-    navigator.clipboard.writeText(message);
+    setIsCreatingOrder(true);
+    const processed: { [key: string]: string } = {};
     
-    toast({
-      title: "Заказ скопирован!",
-      description: "Отправьте этот текст в WhatsApp ресторану",
-    });
+    try {
+      // Получаем только блюда которые были заказаны
+      const orderedDishes = Object.entries(ordersSummary.dishCounts || {})
+        .map(([dishKey, count]) => {
+          const dishId = dishKey.replace('dish_', '');
+          const dish = dishes.find((d: any) => d.id.toString() === dishId);
+          return { dish, count: count as number };
+        })
+        .filter(item => item.dish);
+
+      for (const { dish, count } of orderedDishes) {
+        // Загружаем изображение
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = dish.imagePath;
+        });
+
+        // Создаем canvas для обработки
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        // Рисуем оригинальное изображение
+        ctx.drawImage(img, 0, 0);
+
+        // Добавляем белый квадрат с количеством
+        const squareSize = Math.min(img.width, img.height) * 0.2;
+        const x = img.width - squareSize - 20;
+        const y = 20;
+
+        // Белый квадрат
+        ctx.fillStyle = 'white';
+        ctx.fillRect(x, y, squareSize, squareSize);
+        
+        // Черная рамка
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, squareSize, squareSize);
+
+        // Текст с количеством
+        ctx.fillStyle = 'black';
+        ctx.font = `bold ${squareSize * 0.4}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(
+          count.toString(), 
+          x + squareSize / 2, 
+          y + squareSize / 2
+        );
+
+        // Конвертируем в base64
+        const processedImageData = canvas.toDataURL('image/jpeg', 0.9);
+        processed[`dish_${dish.id}`] = processedImageData;
+      }
+
+      setProcessedImages(processed);
+      
+      toast({
+        title: "Заказ готов!",
+        description: `Обработано ${Object.keys(processed).length} изображений с количеством заказов`,
+      });
+      
+    } catch (error) {
+      toast({
+        title: "Ошибка обработки",
+        description: "Не удалось обработать изображения",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingOrder(false);
+    }
+  };
+
+  const handleSendToRestaurant = async () => {
+    if (!ordersSummary || Object.keys(processedImages).length === 0) {
+      toast({
+        title: "Ошибка",
+        description: "Сначала создайте заказ с помощью кнопки 'Create Order'",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Проверяем поддержку File System Access API
+      if ('showDirectoryPicker' in window) {
+        const dirHandle = await (window as any).showDirectoryPicker();
+        
+        // Сохраняем каждое обработанное изображение
+        for (const [dishKey, imageData] of Object.entries(processedImages)) {
+          const response = await fetch(imageData);
+          const blob = await response.blob();
+          
+          const fileHandle = await dirHandle.getFileHandle(`${dishKey}_order_${today}.jpg`, {
+            create: true,
+          });
+          const writable = await fileHandle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+        }
+        
+        toast({
+          title: "Изображения экспортированы!",
+          description: `Сохранено ${Object.keys(processedImages).length} изображений в выбранную папку`,
+        });
+      } else {
+        // Fallback для браузеров без поддержки File System Access API
+        for (const [dishKey, imageData] of Object.entries(processedImages)) {
+          const link = document.createElement('a');
+          link.href = imageData;
+          link.download = `${dishKey}_order_${today}.jpg`;
+          link.click();
+        }
+        
+        toast({
+          title: "Изображения скачаны!",
+          description: `Скачано ${Object.keys(processedImages).length} изображений`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Ошибка экспорта",
+        description: "Не удалось экспортировать изображения",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleExportReport = () => {
@@ -283,10 +396,18 @@ ${new Date().toLocaleString()}`;
                   </CardContent>
                 </Card>
 
-                <div className="flex space-x-4">
+                <div className="flex flex-wrap gap-4">
+                  <Button 
+                    className="bg-blue-600 text-white hover:bg-blue-700"
+                    onClick={handleCreateOrder}
+                    disabled={isCreatingOrder || !ordersSummary || ordersSummary.totalOrders === 0}
+                  >
+                    {isCreatingOrder ? "Processing..." : "Create Order"}
+                  </Button>
                   <Button 
                     className="bg-accent text-white hover:bg-teal-600"
                     onClick={handleSendToRestaurant}
+                    disabled={Object.keys(processedImages).length === 0}
                   >
                     Send to Restaurant
                   </Button>
@@ -297,6 +418,32 @@ ${new Date().toLocaleString()}`;
                     Export Report
                   </Button>
                 </div>
+
+                {/* Показываем превью обработанных изображений */}
+                {Object.keys(processedImages).length > 0 && (
+                  <Card className="mt-6">
+                    <CardHeader>
+                      <CardTitle>Processed Order Images</CardTitle>
+                      <p className="text-sm text-gray-600">Images ready for restaurant with order quantities</p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {Object.entries(processedImages).map(([dishKey, imageData]) => (
+                          <div key={dishKey} className="border rounded-lg overflow-hidden">
+                            <img 
+                              src={imageData} 
+                              alt={`Processed ${dishKey}`}
+                              className="w-full h-32 object-cover"
+                            />
+                            <div className="p-2 text-center">
+                              <p className="text-xs text-gray-600">{dishKey}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </>
             )}
           </TabsContent>
