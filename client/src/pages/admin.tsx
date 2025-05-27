@@ -56,6 +56,11 @@ export default function Admin() {
     queryKey: ["/api/admin/users"],
   });
 
+  // Fetch dishes
+  const { data: dishes = [] } = useQuery({
+    queryKey: ["/api/dishes"],
+  });
+
   // Bulk upload mutation
   const bulkUploadMutation = useMutation({
     mutationFn: async (images: File[]) => {
@@ -144,9 +149,10 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="orders">Orders Summary</TabsTrigger>
             <TabsTrigger value="upload">Upload Menu</TabsTrigger>
+            <TabsTrigger value="dishes">View Dishes</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
 
@@ -287,6 +293,48 @@ export default function Admin() {
                     {bulkUploadMutation.isPending ? `Uploading ${uploadProgress}/${selectedImages.length}...` : `Upload ${selectedImages.length} Images`}
                   </Button>
                 </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="dishes">
+            <Card>
+              <CardHeader>
+                <CardTitle>Uploaded Dishes ({dishes.length})</CardTitle>
+                <p className="text-sm text-gray-600">All dishes in the system</p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {dishes.map((dish: any) => (
+                    <div key={dish.id} className="border rounded-lg overflow-hidden">
+                      {dish.imagePath && (
+                        <img 
+                          src={dish.imagePath} 
+                          alt={dish.name}
+                          className="w-full h-32 object-cover"
+                        />
+                      )}
+                      <div className="p-3">
+                        <h3 className="font-medium text-sm mb-1">{dish.name}</h3>
+                        <p className="text-xs text-gray-600 mb-2">{dish.description}</p>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-bold">${dish.price}</span>
+                          <Badge variant="secondary" className="text-xs">
+                            {dish.category}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {dish.date}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {dishes.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No dishes uploaded yet</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
