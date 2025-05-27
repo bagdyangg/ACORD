@@ -125,6 +125,60 @@ export default function Admin() {
     }
   };
 
+  const handleSendToRestaurant = () => {
+    if (!ordersSummary) return;
+    
+    // Создаем текстовое сообщение для ресторана
+    const message = `🍽️ ЗАКАЗ НА ${today}
+
+📊 Общая статистика:
+• Всего заказов: ${ordersSummary.totalOrders}
+• Самое популярное блюдо: ${ordersSummary.mostPopular || "N/A"}
+
+📝 Детальный список:
+${Object.entries(ordersSummary.dishCounts || {}).map(([dish, count]) => 
+  `• ${dish}: ${count} порций`
+).join('\n')}
+
+---
+Отправлено из системы заказа обедов
+${new Date().toLocaleString()}`;
+
+    // Копируем в буфер обмена
+    navigator.clipboard.writeText(message);
+    
+    toast({
+      title: "Заказ скопирован!",
+      description: "Отправьте этот текст в WhatsApp ресторану",
+    });
+  };
+
+  const handleExportReport = () => {
+    if (!ordersSummary) return;
+    
+    // Создаем CSV отчет
+    const csvHeader = "Employee,Email,Dish ID,Quantity,Time\n";
+    const csvData = ordersSummary.orders?.map((order: any) => 
+      `"${order.userName} ${order.userLastName}","${order.userEmail}","${order.dishId}","${order.quantity}","${new Date(order.createdAt).toLocaleString()}"`
+    ).join('\n') || '';
+    
+    const csv = csvHeader + csvData;
+    
+    // Создаем и скачиваем файл
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lunch-orders-${today}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Отчет экспортирован!",
+      description: `Файл lunch-orders-${today}.csv загружен`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-neutral">
       <Navigation />
@@ -230,10 +284,16 @@ export default function Admin() {
                 </Card>
 
                 <div className="flex space-x-4">
-                  <Button className="bg-accent text-white hover:bg-teal-600">
+                  <Button 
+                    className="bg-accent text-white hover:bg-teal-600"
+                    onClick={handleSendToRestaurant}
+                  >
                     Send to Restaurant
                   </Button>
-                  <Button variant="outline">
+                  <Button 
+                    variant="outline"
+                    onClick={handleExportReport}
+                  >
                     Export Report
                   </Button>
                 </div>
