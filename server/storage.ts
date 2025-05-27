@@ -61,14 +61,14 @@ export class DatabaseStorage implements IStorage {
 
   // Dish operations
   async getDishes(): Promise<Dish[]> {
-    return await db.select().from(dishes).where(eq(dishes.available, true)).orderBy(desc(dishes.createdAt));
+    return await db.select().from(dishes).orderBy(desc(dishes.createdAt));
   }
 
   async getDishesByDate(date: string): Promise<Dish[]> {
     return await db
       .select()
       .from(dishes)
-      .where(and(eq(dishes.date, date), eq(dishes.available, true)))
+      .where(eq(dishes.date, date))
       .orderBy(desc(dishes.createdAt));
   }
 
@@ -113,12 +113,9 @@ export class DatabaseStorage implements IStorage {
       .select({
         orderId: orders.id,
         quantity: orders.quantity,
-        totalPrice: orders.totalPrice,
-        status: orders.status,
         createdAt: orders.createdAt,
-        dishName: dishes.name,
-        dishPrice: dishes.price,
-        dishCategory: dishes.category,
+        dishId: dishes.id,
+        dishImagePath: dishes.imagePath,
         userName: users.firstName,
         userLastName: users.lastName,
         userEmail: users.email,
@@ -154,21 +151,17 @@ export class DatabaseStorage implements IStorage {
     const ordersWithDetails = await this.getOrdersWithDetails(date);
     
     const totalOrders = ordersWithDetails.length;
-    const totalRevenue = ordersWithDetails.reduce(
-      (sum, order) => sum + parseFloat(order.totalPrice.toString()),
-      0
-    );
 
     const dishCounts = ordersWithDetails.reduce((acc, order) => {
-      acc[order.dishName] = (acc[order.dishName] || 0) + order.quantity;
+      const dishKey = `dish_${order.dishId}`;
+      acc[dishKey] = (acc[dishKey] || 0) + order.quantity;
       return acc;
     }, {} as Record<string, number>);
 
-    const mostPopular = Object.entries(dishCounts).sort(([,a], [,b]) => b - a)[0];
+    const mostPopular = Object.entries(dishCounts).sort(([,a], [,b]) => (b as number) - (a as number))[0];
 
     return {
       totalOrders,
-      totalRevenue,
       mostPopular: mostPopular ? mostPopular[0] : null,
       dishCounts,
       orders: ordersWithDetails,

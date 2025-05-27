@@ -38,27 +38,20 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Dishes table
+// Dishes table - simplified to only store images
 export const dishes = pgTable("dishes", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  description: text("description"),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  imagePath: varchar("image_path", { length: 500 }),
-  category: varchar("category", { length: 100 }),
-  available: boolean("available").default(true),
+  imagePath: varchar("image_path", { length: 500 }).notNull(),
   date: date("date").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Orders table
+// Orders table - simplified without price
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
   dishId: integer("dish_id").notNull().references(() => dishes.id),
   quantity: integer("quantity").default(1),
-  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
-  status: varchar("status", { length: 50 }).default("pending"),
   orderDate: date("order_date").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -93,12 +86,10 @@ export type Dish = typeof dishes.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
 export type Order = typeof orders.$inferSelect;
 
-// Zod schemas
+// Zod schemas - simplified
 export const insertDishSchema = createInsertSchema(dishes).omit({
   id: true,
   createdAt: true,
-}).extend({
-  price: z.coerce.number().positive(),
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({
