@@ -19,6 +19,8 @@ export default function Admin() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("orders");
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   const today = new Date().toISOString().split('T')[0];
 
@@ -54,41 +56,73 @@ export default function Admin() {
     queryKey: ["/api/admin/users"],
   });
 
-  // Upload dish mutation
-  const uploadDishMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const response = await fetch("/api/dishes", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
+  // Bulk upload mutation
+  const bulkUploadMutation = useMutation({
+    mutationFn: async (images: File[]) => {
+      const results = [];
+      setUploadProgress(0);
+      
+      for (let i = 0; i < images.length; i++) {
+        const image = images[i];
+        const formData = new FormData();
+        
+        // Use filename without extension as dish name
+        const dishName = image.name.replace(/\.[^/.]+$/, "");
+        formData.append("name", dishName);
+        formData.append("description", "");
+        formData.append("price", "0");
+        formData.append("category", "Popular");
+        formData.append("image", image);
+        
+        try {
+          const response = await fetch("/api/dishes", {
+            method: "POST",
+            body: formData,
+            credentials: "include",
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to upload ${image.name}`);
+          }
+          
+          const result = await response.json();
+          results.push(result);
+          setUploadProgress(i + 1);
+        } catch (error) {
+          console.error(`Error uploading ${image.name}:`, error);
+        }
       }
-      return response.json();
+      
+      return results;
     },
-    onSuccess: () => {
+    onSuccess: (results) => {
       toast({
-        title: "Dish uploaded successfully!",
-        description: "The new dish has been added to today's menu.",
+        title: "Bulk upload completed!",
+        description: `Successfully uploaded ${results.length} images.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/dishes"] });
+      setSelectedImages([]);
+      setUploadProgress(0);
     },
     onError: (error) => {
       toast({
-        title: "Upload failed",
+        title: "Bulk upload failed",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const handleDishUpload = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleImageSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setSelectedImages(files);
+  };
+
+  const handleBulkUpload = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    uploadDishMutation.mutate(formData);
-    (e.target as HTMLFormElement).reset();
+    if (selectedImages.length > 0) {
+      bulkUploadMutation.mutate(selectedImages);
+    }
   };
 
   return (
@@ -202,55 +236,55 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="upload">
-            <Card className="max-w-md mx-auto">
+            <Card className="max-w-2xl mx-auto">
               <CardHeader>
-                <CardTitle>Upload New Dish</CardTitle>
+                <CardTitle>Bulk Upload Images</CardTitle>
+                <p className="text-sm text-gray-600">Select multiple images from WhatsApp or any folder</p>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleDishUpload} className="space-y-4">
+                <form onSubmit={handleBulkUpload} className="space-y-4">
                   <div>
-                    <Label htmlFor="name">Dish Name</Label>
-                    <Input id="name" name="name" required />
+                    <Label htmlFor="images">Select Images</Label>
+                    <Input 
+                      id="images" 
+                      name="images" 
+                      type="file" 
+                      accept="image/*" 
+                      multiple 
+                      required 
+                      onChange={handleImageSelection}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Select all images you want to upload at once
+                    </p>
                   </div>
                   
-                  <div>
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" name="description" />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="price">Price</Label>
-                    <Input id="price" name="price" type="number" step="0.01" min="0" required />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="category">Category</Label>
-                    <Select name="category">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Healthy">Healthy</SelectItem>
-                        <SelectItem value="Popular">Popular</SelectItem>
-                        <SelectItem value="Vegan">Vegan</SelectItem>
-                        <SelectItem value="Comfort">Comfort</SelectItem>
-                        <SelectItem value="Premium">Premium</SelectItem>
-                        <SelectItem value="Classic">Classic</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="image">Image</Label>
-                    <Input id="image" name="image" type="file" accept="image/*" required />
-                  </div>
+                  {selectedImages.length > 0 && (
+                    <div className="border rounded-lg p-4">
+                      <h3 className="font-medium mb-2">Selected Images ({selectedImages.length})</h3>
+                      <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                        {selectedImages.map((image, index) => (
+                          <div key={index} className="relative">
+                            <img 
+                              src={URL.createObjectURL(image)} 
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-20 object-cover rounded border"
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 rounded-b">
+                              {image.name}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   
                   <Button 
                     type="submit" 
                     className="w-full" 
-                    disabled={uploadDishMutation.isPending}
+                    disabled={bulkUploadMutation.isPending || selectedImages.length === 0}
                   >
-                    {uploadDishMutation.isPending ? "Uploading..." : "Upload Dish"}
+                    {bulkUploadMutation.isPending ? `Uploading ${uploadProgress}/${selectedImages.length}...` : `Upload ${selectedImages.length} Images`}
                   </Button>
                 </form>
               </CardContent>
