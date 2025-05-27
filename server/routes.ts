@@ -83,10 +83,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
+      if (!req.file) {
+        return res.status(400).json({ message: "Image is required" });
+      }
+
       const dishData = insertDishSchema.parse({
-        ...req.body,
-        price: parseFloat(req.body.price),
-        imagePath: req.file ? `/uploads/${req.file.filename}` : null,
+        imagePath: `/uploads/${req.file.filename}`,
         date: req.body.date || new Date().toISOString().split('T')[0],
       });
 
@@ -204,7 +206,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId,
           dishId,
           quantity: 1,
-          totalPrice: dish.price,
           orderDate,
         });
 

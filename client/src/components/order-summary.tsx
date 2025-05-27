@@ -6,7 +6,6 @@ import type { Dish } from "@shared/schema";
 
 interface OrderSummaryProps {
   selectedDishes: Dish[];
-  totalPrice: number;
   onConfirm: () => void;
   isLoading: boolean;
   onRemoveDish: (dishId: number) => void;
@@ -14,7 +13,6 @@ interface OrderSummaryProps {
 
 export default function OrderSummary({ 
   selectedDishes, 
-  totalPrice, 
   onConfirm, 
   isLoading, 
   onRemoveDish 
@@ -27,7 +25,7 @@ export default function OrderSummary({
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold text-secondary">Your Order</h3>
               <Badge variant="secondary">
-                {selectedDishes.length} {selectedDishes.length === 1 ? "item" : "items"}
+                {selectedDishes.length} {selectedDishes.length === 1 ? "dish" : "dishes"}
               </Badge>
             </div>
             
@@ -35,41 +33,41 @@ export default function OrderSummary({
               {selectedDishes.length === 0 ? (
                 <div className="text-gray-500 text-center py-4">
                   <UtensilsCrossed className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                  <p>Select dishes to add to your order</p>
+                  <p>Select dishes from the menu above</p>
                 </div>
               ) : (
-                selectedDishes.map((dish) => (
-                  <div key={dish.id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
-                    <span className="text-sm font-medium">{dish.name}</span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-bold text-primary">
-                        ${parseFloat(dish.price.toString()).toFixed(2)}
-                      </span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {selectedDishes.map((dish, index) => (
+                    <div key={dish.id} className="relative">
+                      <img 
+                        src={dish.imagePath || "https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150"} 
+                        alt="Selected dish" 
+                        className="w-full h-20 object-cover rounded-lg"
+                      />
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                        className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-red-500 text-white rounded-full hover:bg-red-600"
                         onClick={() => onRemoveDish(dish.id)}
                       >
                         <X className="h-3 w-3" />
                       </Button>
+                      <div className="text-xs text-center mt-1 text-gray-600">
+                        #{index + 1}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
             
             <div className="border-t pt-4">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-lg font-semibold text-secondary">Total:</span>
-                <span className="text-2xl font-bold text-primary">${totalPrice.toFixed(2)}</span>
-              </div>
               <Button 
                 onClick={onConfirm}
                 disabled={selectedDishes.length === 0 || isLoading}
                 className="w-full bg-primary text-white py-3 px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                {isLoading ? "Confirming..." : "Confirm Order"}
+                {isLoading ? "Confirming..." : `Confirm Order (${selectedDishes.length} dishes)`}
               </Button>
             </div>
           </CardContent>
