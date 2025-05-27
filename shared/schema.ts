@@ -97,6 +97,8 @@ export type Order = typeof orders.$inferSelect;
 export const insertDishSchema = createInsertSchema(dishes).omit({
   id: true,
   createdAt: true,
+}).extend({
+  price: z.coerce.number().positive(),
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({
