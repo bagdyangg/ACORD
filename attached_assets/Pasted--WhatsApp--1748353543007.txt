@@ -1,0 +1,325 @@
+# Система заказов обедов через WhatsApp
+
+## 📋 Функциональные требования
+
+### Основные функции:
+1. **Получение изображений из WhatsApp**
+   - Автоматическое получение изображений блюд от ресторана
+   - Сохранение изображений с привязкой к дате
+   - Распознавание времени получения для группировки по дням
+
+2. **Пользовательский интерфейс**
+   - Веб-интерфейс для просмотра доступных блюд
+   - Возможность выбора блюд кликом по изображению
+   - Отображение статуса заказа (выбрано/не выбрано)
+   - Личный кабинет для каждого сотрудника
+
+3. **Система аккаунтов**
+   - Регистрация/авторизация сотрудников
+   - Профили с именем и контактными данными
+   - История заказов
+
+4. **Формирование заказов**
+   - Индивидуальные заказы для каждого сотрудника
+   - Сводный заказ для всего офиса
+   - Подсчет количества порций каждого блюда
+
+5. **Административная панель**
+   - Просмотр всех заказов
+   - Формирование итогового заказа
+   - Отправка заказа в WhatsApp ресторану
+
+## 🛠 Технические требования
+
+### Технологический стек:
+- **Backend**: Node.js с Express.js
+- **Frontend**: React или простой HTML/CSS/JavaScript
+- **База данных**: SQLite (для Replit) или PostgreSQL
+- **WhatsApp API**: WhatsApp Business API или альтернативы (Twilio, WhatsApp Web JS)
+- **Аутентификация**: JWT токены
+- **Хранение изображений**: Локальное хранилище или облачное (Cloudinary)
+
+### Структура проекта:
+```
+lunch-ordering-system/
+├── backend/
+│   ├── server.js
+│   ├── routes/
+│   │   ├── auth.js
+│   │   ├── orders.js
+│   │   ├── whatsapp.js
+│   │   └── admin.js
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Dish.js
+│   │   └── Order.js
+│   ├── middleware/
+│   │   └── auth.js
+│   └── services/
+│       └── whatsapp.js
+├── frontend/
+│   ├── index.html
+│   ├── login.html
+│   ├── dashboard.html
+│   ├── admin.html
+│   └── assets/
+│       ├── css/
+│       └── js/
+├── database/
+│   └── schema.sql
+├── uploads/
+│   └── dishes/
+├── .env
+├── package.json
+└── README.md
+```
+
+## 📝 Пошаговая инструкция для Replit
+
+### Шаг 1: Создание проекта
+1. Создайте новый Repl с шаблоном "Node.js"
+2. Назовите проект "lunch-ordering-system"
+
+### Шаг 2: Установка зависимостей
+```bash
+npm init -y
+npm install express cors dotenv bcrypt jsonwebtoken sqlite3 multer
+npm install whatsapp-web.js qrcode-terminal
+npm install --save-dev nodemon
+```
+
+### Шаг 3: Настройка базы данных
+Создайте файл `database/schema.sql`:
+```sql
+-- Таблица пользователей
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    role TEXT DEFAULT 'user',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Таблица блюд
+CREATE TABLE dishes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    image_path TEXT NOT NULL,
+    date DATE NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Таблица заказов
+CREATE TABLE orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    dish_id INTEGER NOT NULL,
+    date DATE NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (dish_id) REFERENCES dishes(id),
+    UNIQUE(user_id, dish_id, date)
+);
+```
+
+### Шаг 4: Создание базового сервера
+Файл `backend/server.js`:
+```javascript
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, '../frontend')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/orders', require('./routes/orders'));
+app.use('/api/whatsapp', require('./routes/whatsapp'));
+app.use('/api/admin', require('./routes/admin'));
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+```
+
+### Шаг 5: Настройка WhatsApp интеграции
+Файл `backend/services/whatsapp.js`:
+```javascript
+const { Client, LocalAuth } = require('whatsapp-web.js');
+const qrcode = require('qrcode-terminal');
+const fs = require('fs');
+const path = require('path');
+
+class WhatsAppService {
+    constructor() {
+        this.client = new Client({
+            authStrategy: new LocalAuth(),
+            puppeteer: {
+                args: ['--no-sandbox'],
+            }
+        });
+
+        this.initialize();
+    }
+
+    initialize() {
+        this.client.on('qr', qr => {
+            qrcode.generate(qr, { small: true });
+        });
+
+        this.client.on('ready', () => {
+            console.log('WhatsApp client is ready!');
+        });
+
+        this.client.on('message', async msg => {
+            if (msg.hasMedia) {
+                const media = await msg.downloadMedia();
+                // Сохранение изображения
+                const fileName = `dish_${Date.now()}.${media.mimetype.split('/')[1]}`;
+                const filePath = path.join(__dirname, '../../uploads/dishes', fileName);
+                
+                fs.writeFileSync(filePath, media.data, 'base64');
+                
+                // Сохранение в базу данных
+                // TODO: Добавить логику сохранения в БД
+            }
+        });
+
+        this.client.initialize();
+    }
+
+    async sendMessage(number, message) {
+        const chatId = number.includes('@c.us') ? number : `${number}@c.us`;
+        await this.client.sendMessage(chatId, message);
+    }
+}
+
+module.exports = new WhatsAppService();
+```
+
+### Шаг 6: Создание пользовательского интерфейса
+Файл `frontend/dashboard.html`:
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заказ обедов</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Выберите блюда на сегодня</h1>
+        <div id="dishes-grid" class="dishes-grid">
+            <!-- Блюда будут загружены динамически -->
+        </div>
+        <div class="order-summary">
+            <h2>Ваш заказ:</h2>
+            <div id="selected-dishes"></div>
+            <button id="confirm-order">Подтвердить заказ</button>
+        </div>
+    </div>
+    <script src="assets/js/dashboard.js"></script>
+</body>
+</html>
+```
+
+### Шаг 7: Создание административной панели
+Файл `frontend/admin.html`:
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ панель - Заказы</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Сводка заказов</h1>
+        <div id="orders-summary">
+            <!-- Сводка заказов -->
+        </div>
+        <button id="send-to-whatsapp">Отправить заказ в WhatsApp</button>
+    </div>
+    <script src="assets/js/admin.js"></script>
+</body>
+</html>
+```
+
+### Шаг 8: Настройка переменных окружения
+Файл `.env`:
+```
+PORT=3000
+JWT_SECRET=your_secret_key_here
+WHATSAPP_PHONE=your_whatsapp_number
+RESTAURANT_PHONE=restaurant_whatsapp_number
+```
+
+### Шаг 9: Запуск и тестирование
+1. В package.json добавьте скрипты:
+```json
+"scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js"
+}
+```
+
+2. Запустите проект:
+```bash
+npm run dev
+```
+
+3. Отсканируйте QR-код для подключения WhatsApp
+
+## 🔧 Дополнительные модули для реализации
+
+### Модуль аутентификации (`backend/routes/auth.js`):
+- Регистрация новых пользователей
+- Вход в систему
+- Выход из системы
+- Проверка токенов
+
+### Модуль заказов (`backend/routes/orders.js`):
+- Получение списка доступных блюд
+- Добавление/удаление блюд из заказа
+- Получение истории заказов
+
+### Модуль администратора (`backend/routes/admin.js`):
+- Просмотр всех заказов за день
+- Формирование сводного заказа
+- Отправка заказа в WhatsApp
+- Управление пользователями
+
+## 🚀 Развертывание на Replit
+
+1. **Настройка Secrets**: В Replit добавьте секретные переменные через вкладку "Secrets"
+2. **Постоянное хранилище**: Используйте Replit Database для SQLite
+3. **Автозапуск**: Настройте файл `.replit` для автоматического запуска сервера
+4. **Публичный доступ**: Получите публичный URL для доступа сотрудников
+
+## 📱 Альтернативные решения для WhatsApp
+
+Если WhatsApp Web JS не подходит:
+1. **Twilio WhatsApp API** - официальное решение, требует бизнес-аккаунт
+2. **WhatsApp Business API** - для крупных компаний
+3. **Telegram Bot API** - альтернатива WhatsApp с более простой интеграцией
+
+## 🔒 Безопасность
+
+1. Хешируйте пароли с помощью bcrypt
+2. Используйте HTTPS для production
+3. Валидируйте все входные данные
+4. Ограничьте размер загружаемых изображений
+5. Регулярно делайте резервные копии базы данных
