@@ -111,11 +111,6 @@ export default function Dashboard() {
   }
 
   const selectedDishesData = dishes.filter(dish => selectedDishes.includes(dish.id));
-  const totalPrice = selectedDishesData.reduce((sum, dish) => sum + parseFloat(dish.price.toString()), 0);
-  const orderCount = dishes.reduce((sum, dish) => {
-    // This would normally come from API, using a simple counter for now
-    return sum + Math.floor(Math.random() * 10) + 1;
-  }, 0);
 
   return (
     <div className="min-h-screen bg-neutral">
@@ -128,14 +123,10 @@ export default function Dashboard() {
           <p className="text-gray-600">
             Select your lunch preferences for <span className="font-semibold">{formatDate(today)}</span>
           </p>
-          <div className="mt-4 flex items-center space-x-4">
-            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+          <div className="mt-4">
+            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium inline-block">
               <i className="fas fa-clock mr-1"></i>
               Order deadline: 11:00 AM
-            </div>
-            <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-              <i className="fas fa-users mr-1"></i>
-              {orderCount} colleagues ordered
             </div>
           </div>
         </div>
@@ -163,7 +154,6 @@ export default function Dashboard() {
       {/* Order Summary - Fixed on mobile */}
       <OrderSummary
         selectedDishes={selectedDishesData}
-        totalPrice={totalPrice}
         onConfirm={confirmOrder}
         isLoading={orderMutation.isPending}
         onRemoveDish={(dishId) => setSelectedDishes(prev => prev.filter(id => id !== dishId))}

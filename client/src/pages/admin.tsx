@@ -70,13 +70,6 @@ export default function Admin() {
       for (let i = 0; i < images.length; i++) {
         const image = images[i];
         const formData = new FormData();
-        
-        // Use filename without extension as dish name
-        const dishName = image.name.replace(/\.[^/.]+$/, "");
-        formData.append("name", dishName);
-        formData.append("description", "");
-        formData.append("price", "0");
-        formData.append("category", "Popular");
         formData.append("image", image);
         
         try {
@@ -169,10 +162,7 @@ export default function Admin() {
                         <span>Total Orders:</span>
                         <span className="font-bold">{ordersSummary.totalOrders}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Total Revenue:</span>
-                        <span className="font-bold">${ordersSummary.totalRevenue.toFixed(2)}</span>
-                      </div>
+
                       <div className="flex justify-between">
                         <span>Most Popular:</span>
                         <span className="font-bold">{ordersSummary.mostPopular || "N/A"}</span>
@@ -205,8 +195,8 @@ export default function Admin() {
                         <thead className="bg-gray-50">
                           <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dish Image</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
                           </tr>
                         </thead>
@@ -216,8 +206,16 @@ export default function Admin() {
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {order.userName} {order.userLastName}
                               </td>
-                              <td className="px-6 py-4 text-sm text-gray-500">{order.dishName}</td>
-                              <td className="px-6 py-4 text-sm text-gray-900">${parseFloat(order.totalPrice).toFixed(2)}</td>
+                              <td className="px-6 py-4">
+                                {order.dishImagePath && (
+                                  <img 
+                                    src={order.dishImagePath} 
+                                    alt="Dish" 
+                                    className="w-16 h-12 object-cover rounded"
+                                  />
+                                )}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">{order.quantity}</td>
                               <td className="px-6 py-4 text-sm text-gray-500">
                                 {new Date(order.createdAt).toLocaleTimeString()}
                               </td>
@@ -304,27 +302,22 @@ export default function Admin() {
                 <p className="text-sm text-gray-600">All dishes in the system</p>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                   {dishes.map((dish: any) => (
-                    <div key={dish.id} className="border rounded-lg overflow-hidden">
+                    <div key={dish.id} className="border rounded-lg overflow-hidden bg-white shadow-sm">
                       {dish.imagePath && (
                         <img 
                           src={dish.imagePath} 
-                          alt={dish.name}
+                          alt="Dish"
                           className="w-full h-32 object-cover"
                         />
                       )}
-                      <div className="p-3">
-                        <h3 className="font-medium text-sm mb-1">{dish.name}</h3>
-                        <p className="text-xs text-gray-600 mb-2">{dish.description}</p>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-bold">${dish.price}</span>
-                          <Badge variant="secondary" className="text-xs">
-                            {dish.category}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
+                      <div className="p-2">
+                        <p className="text-xs text-gray-500 text-center">
                           {dish.date}
+                        </p>
+                        <p className="text-xs text-gray-400 text-center mt-1">
+                          ID: {dish.id}
                         </p>
                       </div>
                     </div>
