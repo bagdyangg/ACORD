@@ -73,21 +73,16 @@ export default function Admin() {
         formData.append("image", image);
         
         try {
-          const response = await fetch("/api/dishes", {
+          const response = await apiRequest("/api/dishes", {
             method: "POST",
             body: formData,
-            credentials: "include",
           });
           
-          if (!response.ok) {
-            throw new Error(`Failed to upload ${image.name}`);
-          }
-          
-          const result = await response.json();
-          results.push(result);
+          results.push(response);
           setUploadProgress(i + 1);
         } catch (error) {
           console.error(`Error uploading ${image.name}:`, error);
+          throw new Error(`Failed to upload ${image.name}: ${error.message}`);
         }
       }
       
