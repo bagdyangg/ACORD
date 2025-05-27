@@ -134,12 +134,12 @@ export default function Admin() {
     const processed: { [key: string]: string } = {};
     
     try {
-      // Получаем только блюда которые были заказаны
+      // Получаем только блюда которые были заказаны с суммарным количеством
       const orderedDishes = Object.entries(ordersSummary.dishCounts || {})
-        .map(([dishKey, count]) => {
+        .map(([dishKey, totalCount]) => {
           const dishId = dishKey.replace('dish_', '');
-          const dish = dishes.find((d: any) => d.id.toString() === dishId);
-          return { dish, count: count as number };
+          const dish = (dishes as any[]).find((d: any) => d.id.toString() === dishId);
+          return { dish, count: totalCount as number };
         })
         .filter(item => item.dish);
 
