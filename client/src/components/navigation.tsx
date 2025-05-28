@@ -18,7 +18,7 @@ export default function Navigation() {
             <img 
               src="/logo.jpeg" 
               alt="ACORD Logo" 
-              className="w-10 h-10 object-contain rounded-lg"
+              className="w-40 h-40 object-contain rounded-lg"
             />
             <Link href="/">
               <h1 className="text-2xl font-bold text-primary cursor-pointer">ACORD</h1>
