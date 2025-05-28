@@ -581,6 +581,119 @@ export default function Admin() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="manage-users">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Create New User</CardTitle>
+                  <p className="text-sm text-gray-600">Only administrators can create new users</p>
+                </CardHeader>
+                <CardContent>
+                  <form className="grid grid-cols-2 gap-4 max-w-2xl">
+                    <div>
+                      <Label htmlFor="newUserId">User ID</Label>
+                      <Input id="newUserId" placeholder="user-001" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="newUserEmail">Email</Label>
+                      <Input id="newUserEmail" type="email" placeholder="user@company.com" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="newUserFirstName">First Name</Label>
+                      <Input id="newUserFirstName" placeholder="John" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="newUserLastName">Last Name</Label>
+                      <Input id="newUserLastName" placeholder="Doe" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="newUserRole">Role</Label>
+                      <Select name="newUserRole">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="employee">Employee</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-end">
+                      <Button type="submit" className="w-full">
+                        Create User
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>User Management</CardTitle>
+                  <p className="text-sm text-gray-600">Manage existing user roles and permissions</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current Role</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {users.map((user: any) => (
+                          <tr key={user.id}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {user.firstName} {user.lastName}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">{user.email}</td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              <Badge variant={
+                                user.role === "superadmin" ? "destructive" : 
+                                user.role === "admin" ? "default" : 
+                                "secondary"
+                              }>
+                                {user.role}
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              <div className="flex space-x-2">
+                                {user.role !== "superadmin" && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {/* Handle role change */}}
+                                    >
+                                      {user.role === "admin" ? "Make Employee" : "Make Admin"}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => {/* Handle delete */}}
+                                    >
+                                      Delete
+                                    </Button>
+                                  </>
+                                )}
+                                {user.role === "superadmin" && (
+                                  <span className="text-xs text-gray-400">Protected</span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
         </Tabs>
       </main>
     </div>
