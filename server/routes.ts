@@ -160,25 +160,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const date = req.query.date as string || new Date().toISOString().split('T')[0];
+      const date = req.query.date as string;
       
-      // Get orders and available dishes
-      const orders = await storage.getUserOrderForDate(userId, date);
-      const dishes = await storage.getDishesByDate(date);
-      const validDishIds = dishes.map(dish => dish.id);
-      
-      // Filter orders to only include existing dishes and clean up invalid ones
-      const validOrders = [];
-      for (const order of orders) {
-        if (validDishIds.includes(order.dishId)) {
-          validOrders.push(order);
-        } else {
-          // Delete invalid order silently
-          await db.delete(orders).where(eq(orders.id, order.id));
-        }
+      let orders;
+      if (date) {
+        orders = await storage.getUserOrderForDate(userId, date);
+      } else {
+        orders = await storage.getOrdersByUser(userId);
       }
       
-      res.json(validOrders);
+      res.json(orders);
     } catch (error) {
       console.error("Error fetching orders:", error);
       res.status(500).json({ message: "Failed to fetch orders" });
