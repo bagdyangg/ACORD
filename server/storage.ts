@@ -18,6 +18,7 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   createUser(user: UpsertUser): Promise<User>;
   updateUserRole(id: string, role: string): Promise<User | undefined>;
+  updateUser(id: string, userData: Partial<UpsertUser>): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
 
   // Dish operations
@@ -74,6 +75,15 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .update(users)
       .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateUser(id: string, userData: Partial<UpsertUser>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ ...userData, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     return user;
