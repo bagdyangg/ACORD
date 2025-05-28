@@ -257,6 +257,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/admin/users", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== "admin" && user?.role !== "superadmin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const newUser = await storage.createUser(req.body);
+      res.json(newUser);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.put("/api/admin/users/:id/role", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== "admin" && user?.role !== "superadmin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { id } = req.params;
+      const { role } = req.body;
+      const updatedUser = await storage.updateUserRole(id, role);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
+
   app.put("/api/admin/users/:id/role", isAuthenticated, async (req: any, res) => {
     try {
       const currentUserId = req.user.claims.sub;
