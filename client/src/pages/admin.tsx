@@ -633,7 +633,25 @@ export default function Admin() {
                       size="sm"
                       className="border-purple-300 text-purple-700 hover:bg-purple-50"
                       onClick={() => {
-                        // Create file input for directory selection
+                        const isWindows = navigator.platform.indexOf('Win') > -1;
+                        const isMac = navigator.platform.indexOf('Mac') > -1;
+                        
+                        let instructions = "";
+                        if (isWindows) {
+                          instructions = "Windows: Press Win+R, type %USERPROFILE%\\AppData\\Local\\Packages and look for WhatsApp folders";
+                        } else if (isMac) {
+                          instructions = "Mac: Press Cmd+Shift+G, paste ~/Library/Group Containers/group.net.whatsapp.WhatsApp.shared/Media";
+                        } else {
+                          instructions = "Navigate to your WhatsApp Media folder in file manager";
+                        }
+                        
+                        toast({
+                          title: "WhatsApp Folder Location",
+                          description: instructions,
+                          duration: 8000,
+                        });
+                        
+                        // Open file browser (will start from default location)
                         const input = document.createElement('input');
                         input.type = 'file';
                         input.webkitdirectory = true;
@@ -643,15 +661,14 @@ export default function Admin() {
                             const path = files[0].webkitRelativePath.split('/')[0];
                             toast({
                               title: "Folder saved!",
-                              description: `WhatsApp folder path saved: ${path}`,
+                              description: `WhatsApp folder: ${path}`,
                             });
-                            // Here you would save the path to database
                           }
                         };
                         input.click();
                       }}
                     >
-                      📁 Choose WhatsApp Folder
+                      📁 Open WhatsApp Folder
                     </Button>
                   </div>
                 </div>
@@ -669,14 +686,23 @@ export default function Admin() {
                       onChange={handleImageSelection}
                       className="border-purple-200 focus:border-purple-400 focus:ring-purple-400"
                     />
-                    <div className="mt-2 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                      <p className="text-xs text-blue-800 font-medium">💡 WhatsApp Folder Locations</p>
-                      <p className="text-xs text-blue-600 mt-1">
-                        • <strong>Windows:</strong> %USERPROFILE%\AppData\Local\Packages\5319275A.WhatsAppDesktop_*\LocalState\shared\transfers
-                      </p>
-                      <p className="text-xs text-blue-600">
-                        • <strong>Mac:</strong> ~/Library/Group Containers/group.net.whatsapp.WhatsApp.shared/Media
-                      </p>
+                    <div className="mt-2 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                      <p className="text-xs text-blue-800 font-medium">💡 Быстрый доступ к папке WhatsApp</p>
+                      <div className="mt-2 space-y-2">
+                        <div className="bg-white rounded p-2 border border-blue-100">
+                          <p className="text-xs font-semibold text-blue-800">Windows (рекомендуется):</p>
+                          <ol className="text-xs text-blue-700 mt-1 list-decimal list-inside space-y-1">
+                            <li>Нажмите <kbd className="bg-blue-100 px-1 rounded">Win + R</kbd></li>
+                            <li>Вставьте: <code className="bg-blue-100 px-1 rounded text-xs">%USERPROFILE%\AppData\Local\Packages</code></li>
+                            <li>Найдите папку начинающуюся с "5319275A.WhatsAppDesktop"</li>
+                            <li>Откройте: LocalState → shared → transfers</li>
+                          </ol>
+                        </div>
+                        <div className="bg-white rounded p-2 border border-purple-100">
+                          <p className="text-xs font-semibold text-purple-800">Mac:</p>
+                          <p className="text-xs text-purple-700">Нажмите <kbd className="bg-purple-100 px-1 rounded">Cmd + Shift + G</kbd> и вставьте путь выше</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
