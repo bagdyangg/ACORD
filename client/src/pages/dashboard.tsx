@@ -29,13 +29,18 @@ export default function Dashboard() {
     retry: false,
   });
 
-  // Set selected dishes based on existing orders
+  // Set selected dishes based on existing orders (only for dishes that still exist)
   useEffect(() => {
-    if (existingOrders.length > 0) {
-      const orderDishIds = existingOrders.map(order => order.dishId);
+    if (existingOrders.length > 0 && dishes.length > 0) {
+      const validDishIds = dishes.map(dish => dish.id);
+      const orderDishIds = existingOrders
+        .map(order => order.dishId)
+        .filter(dishId => validDishIds.includes(dishId));
       setSelectedDishes(orderDishIds);
+    } else {
+      setSelectedDishes([]);
     }
-  }, [existingOrders]);
+  }, [existingOrders, dishes]);
 
   // Create/update order mutation
   const orderMutation = useMutation({
