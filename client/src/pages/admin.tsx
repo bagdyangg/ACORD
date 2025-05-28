@@ -127,6 +127,103 @@ export default function Admin() {
     }
   };
 
+  const handleCreateUser = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const firstName = formData.get('newUserFirstName') as string;
+    const lastName = formData.get('newUserLastName') as string;
+    const role = formData.get('newUserRole') as string;
+    const email = formData.get('newUserEmail') as string;
+
+    try {
+      const userData = {
+        id: `user_${Date.now()}`, // Auto-generate ID
+        firstName,
+        lastName,
+        role,
+        ...(role === 'admin' ? { email } : {}) // Only add email for admins
+      };
+
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        toast({
+          title: "User created successfully!",
+          description: `${firstName} ${lastName} has been added as ${role}`,
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+        e.currentTarget.reset();
+      } else {
+        throw new Error('Failed to create user');
+      }
+    } catch (error) {
+      toast({
+        title: "Error creating user",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}/role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Role updated!",
+          description: `User role changed to ${newRole}`,
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      } else {
+        throw new Error('Failed to update role');
+      }
+    } catch (error) {
+      toast({
+        title: "Error updating role",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteDish = async (dishId: number) => {
+    if (!confirm('Are you sure you want to delete this dish?')) return;
+
+    try {
+      const response = await fetch(`/api/dishes/${dishId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Dish deleted!",
+          description: "The dish has been removed from today's menu",
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/dishes"] });
+      } else {
+        throw new Error('Failed to delete dish');
+      }
+    } catch (error) {
+      toast({
+        title: "Error deleting dish",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCreateOrder = async () => {
     if (!ordersSummary || !dishes) return;
     
@@ -311,12 +408,10 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="menu">Menu Management</TabsTrigger>
             <TabsTrigger value="orders">Orders Summary</TabsTrigger>
-            <TabsTrigger value="upload">Upload Menu</TabsTrigger>
-            <TabsTrigger value="dishes">View Dishes</TabsTrigger>
-            <TabsTrigger value="users">View Users</TabsTrigger>
-            <TabsTrigger value="manage-users">Manage Users</TabsTrigger>
+            <TabsTrigger value="users">User Management</TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders" className="space-y-6">
@@ -449,10 +544,10 @@ export default function Admin() {
             )}
           </TabsContent>
 
-          <TabsContent value="upload">
+          <TabsContent value="menu" className="space-y-6">
             <Card className="max-w-2xl mx-auto">
               <CardHeader>
-                <CardTitle>Bulk Upload Images</CardTitle>
+                <CardTitle>Upload Today's Menu</CardTitle>
                 <p className="text-sm text-gray-600">Select multiple images from WhatsApp or any folder</p>
               </CardHeader>
               <CardContent>
@@ -503,18 +598,16 @@ export default function Admin() {
                 </form>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="dishes">
             <Card>
               <CardHeader>
-                <CardTitle>Uploaded Dishes ({dishes.length})</CardTitle>
-                <p className="text-sm text-gray-600">All dishes in the system</p>
+                <CardTitle>Today's Menu ({dishes.length} dishes)</CardTitle>
+                <p className="text-sm text-gray-600">All uploaded dishes for today</p>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                   {dishes.map((dish: any) => (
-                    <div key={dish.id} className="border rounded-lg overflow-hidden bg-white shadow-sm">
+                    <div key={dish.id} className="border rounded-lg overflow-hidden bg-white shadow-sm relative group">
                       {dish.imagePath && (
                         <img 
                           src={dish.imagePath} 
@@ -530,6 +623,14 @@ export default function Admin() {
                           ID: {dish.id}
                         </p>
                       </div>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleDeleteDish(dish.id)}
+                      >
+                        ×
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -590,15 +691,7 @@ export default function Admin() {
                   <p className="text-sm text-gray-600">Only administrators can create new users</p>
                 </CardHeader>
                 <CardContent>
-                  <form className="grid grid-cols-2 gap-4 max-w-2xl">
-                    <div>
-                      <Label htmlFor="newUserId">User ID</Label>
-                      <Input id="newUserId" placeholder="user-001" required />
-                    </div>
-                    <div>
-                      <Label htmlFor="newUserEmail">Email</Label>
-                      <Input id="newUserEmail" type="email" placeholder="user@company.com" required />
-                    </div>
+                  <form className="grid grid-cols-2 gap-4 max-w-2xl" onSubmit={handleCreateUser}>
                     <div>
                       <Label htmlFor="newUserFirstName">First Name</Label>
                       <Input id="newUserFirstName" placeholder="John" required />
@@ -609,7 +702,12 @@ export default function Admin() {
                     </div>
                     <div>
                       <Label htmlFor="newUserRole">Role</Label>
-                      <Select name="newUserRole">
+                      <Select name="newUserRole" onValueChange={(value) => {
+                        const emailField = document.getElementById('emailField');
+                        if (emailField) {
+                          emailField.style.display = value === 'admin' ? 'block' : 'none';
+                        }
+                      }}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select role" />
                         </SelectTrigger>
@@ -619,7 +717,11 @@ export default function Admin() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="flex items-end">
+                    <div id="emailField" style={{display: 'none'}} className="col-span-2">
+                      <Label htmlFor="newUserEmail">Email (только для администратора)</Label>
+                      <Input id="newUserEmail" name="newUserEmail" type="email" placeholder="admin@company.com" />
+                    </div>
+                    <div className="flex items-end col-span-2">
                       <Button type="submit" className="w-full">
                         Create User
                       </Button>
