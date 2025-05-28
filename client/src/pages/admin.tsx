@@ -23,6 +23,8 @@ export default function Admin() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [processedImages, setProcessedImages] = useState<{ [key: string]: string }>({});
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', role: '' });
   
   const today = new Date().toISOString().split('T')[0];
 
@@ -218,6 +220,75 @@ export default function Admin() {
     } catch (error) {
       toast({
         title: "Error deleting dish",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditUser = (user: any) => {
+    setEditingUser(user);
+    setEditForm({
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      role: user.role || ''
+    });
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    try {
+      const response = await fetch(`/api/admin/users/${editingUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        toast({
+          title: "User updated successfully!",
+          description: `${editForm.firstName} ${editForm.lastName} has been updated`,
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+        setEditingUser(null);
+        setEditForm({ firstName: '', lastName: '', email: '', role: '' });
+      } else {
+        throw new Error('Failed to update user');
+      }
+    } catch (error) {
+      toast({
+        title: "Error updating user",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        toast({
+          title: "User deleted!",
+          description: "The user has been removed from the system",
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      } else {
+        throw new Error('Failed to delete user');
+      }
+    } catch (error) {
+      toast({
+        title: "Error deleting user",
         description: "Please try again",
         variant: "destructive",
       });
@@ -562,9 +633,18 @@ export default function Admin() {
                       required 
                       onChange={handleImageSelection}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Select all images you want to upload at once
-                    </p>
+                    <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+                      <p className="text-xs text-blue-800 font-medium">💡 Tip: WhatsApp Images Location</p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        • <strong>Windows:</strong> C:\Users\[Username]\AppData\Local\Packages\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\LocalState\shared\transfers
+                      </p>
+                      <p className="text-xs text-blue-600">
+                        • <strong>Mac:</strong> ~/Library/Group Containers/group.net.whatsapp.WhatsApp.shared/Media/WhatsApp Images
+                      </p>
+                      <p className="text-xs text-blue-600">
+                        • <strong>Phone:</strong> Navigate to WhatsApp Media folder in your file manager
+                      </p>
+                    </div>
                   </div>
                   
                   {selectedImages.length > 0 && (
@@ -652,6 +732,7 @@ export default function Admin() {
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
@@ -661,10 +742,30 @@ export default function Admin() {
                     <tbody className="divide-y divide-gray-200">
                       {users.map((user: any) => (
                         <tr key={user.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div className="flex space-x-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleEditUser(user)}
+                              >
+                                Edit
+                              </Button>
+                              {user.id !== 'superadmin-001' && (
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive"
+                                  onClick={() => handleDeleteUser(user.id)}
+                                >
+                                  Delete
+                                </Button>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {user.firstName} {user.lastName}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">{user.email}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">{user.email || 'No email'}</td>
                           <td className="px-6 py-4 text-sm text-gray-500">
                             <Badge variant={user.role === "admin" ? "default" : "secondary"}>
                               {user.role}
@@ -796,6 +897,78 @@ export default function Admin() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Edit User Modal */}
+        {editingUser && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Edit User: {editingUser.firstName} {editingUser.lastName}</h3>
+              <form onSubmit={handleUpdateUser} className="space-y-4">
+                <div>
+                  <Label htmlFor="editFirstName">First Name</Label>
+                  <Input 
+                    id="editFirstName"
+                    value={editForm.firstName}
+                    onChange={(e) => setEditForm({...editForm, firstName: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editLastName">Last Name</Label>
+                  <Input 
+                    id="editLastName"
+                    value={editForm.lastName}
+                    onChange={(e) => setEditForm({...editForm, lastName: e.target.value})}
+                    required
+                  />
+                </div>
+                {(editForm.role === 'admin' || editForm.role === 'superadmin') && (
+                  <div>
+                    <Label htmlFor="editEmail">Email</Label>
+                    <Input 
+                      id="editEmail"
+                      type="email"
+                      value={editForm.email}
+                      onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                      placeholder="admin@company.com"
+                    />
+                  </div>
+                )}
+                <div>
+                  <Label htmlFor="editRole">Role</Label>
+                  <Select 
+                    value={editForm.role}
+                    onValueChange={(value) => setEditForm({...editForm, role: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="employee">Employee</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      {editingUser.id === 'superadmin-001' && (
+                        <SelectItem value="superadmin">Super Admin</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex space-x-2 pt-4">
+                  <Button type="submit" className="flex-1">
+                    Update User
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setEditingUser(null)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
