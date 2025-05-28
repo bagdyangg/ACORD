@@ -23,6 +23,12 @@ export default function Dashboard() {
     queryKey: ["/api/orders", { date: today }],
   });
 
+  // Fetch orders summary for today (available to all users)
+  const { data: ordersSummary } = useQuery({
+    queryKey: ["/api/admin/orders", { date: today }],
+    retry: false,
+  });
+
   // Set selected dishes based on existing orders
   useEffect(() => {
     if (existingOrders.length > 0) {
@@ -130,6 +136,48 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Today's Order Summary for Everyone */}
+        {ordersSummary && (
+          <div className="mb-8 bg-white rounded-lg shadow p-6">
+            <h3 className="text-xl font-semibold mb-4">Today's Order Summary</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{ordersSummary.totalOrders || 0}</div>
+                <div className="text-sm text-gray-600">Total Orders</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-green-600">
+                  {ordersSummary.mostPopular?.imagePath ? 'Available' : 'No orders yet'}
+                </div>
+                <div className="text-sm text-gray-600">Most Popular</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-purple-600">
+                  {ordersSummary.dishCounts ? Object.keys(ordersSummary.dishCounts).length : 0}
+                </div>
+                <div className="text-sm text-gray-600">Different Dishes</div>
+              </div>
+            </div>
+            {ordersSummary.dishCounts && Object.keys(ordersSummary.dishCounts).length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {Object.entries(ordersSummary.dishCounts).map(([dishId, count]: [string, any]) => {
+                  const dish = dishes.find(d => d.id.toString() === dishId);
+                  return dish ? (
+                    <div key={dishId} className="text-center">
+                      <img 
+                        src={dish.imagePath} 
+                        alt="Dish"
+                        className="w-16 h-16 object-cover rounded-lg mx-auto mb-1"
+                      />
+                      <div className="text-xs font-semibold">{count} orders</div>
+                    </div>
+                  ) : null;
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Menu Grid */}
         {dishes.length === 0 ? (
