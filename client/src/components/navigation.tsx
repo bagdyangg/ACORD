@@ -15,11 +15,9 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-3">
-            <img 
-              src="/attached_assets/Generated Image May 28, 2025 - 10_28AM 666x666.jpxeg.jpeg" 
-              alt="ACORD Logo" 
-              className="w-10 h-10 object-contain"
-            />
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">A</span>
+            </div>
             <Link href="/">
               <h1 className="text-2xl font-bold text-primary cursor-pointer">ACORD</h1>
             </Link>

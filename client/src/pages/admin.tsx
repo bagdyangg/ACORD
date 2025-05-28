@@ -241,10 +241,18 @@ export default function Admin() {
     if (!editingUser) return;
 
     try {
+      // Clean data - remove email if not admin/superadmin
+      const updateData = {
+        firstName: editForm.firstName,
+        lastName: editForm.lastName,
+        role: editForm.role,
+        ...(editForm.role === 'admin' || editForm.role === 'superadmin' ? { email: editForm.email } : {})
+      };
+
       const response = await fetch(`/api/admin/users/${editingUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify(updateData),
         credentials: 'include'
       });
 
@@ -257,12 +265,13 @@ export default function Admin() {
         setEditingUser(null);
         setEditForm({ firstName: '', lastName: '', email: '', role: '' });
       } else {
-        throw new Error('Failed to update user');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update user');
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error updating user",
-        description: "Please try again",
+        description: error.message || "Please try again",
         variant: "destructive",
       });
     }
