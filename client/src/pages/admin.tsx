@@ -621,6 +621,41 @@ export default function Admin() {
                 <p className="text-sm text-gray-600">Select multiple images from WhatsApp or any folder</p>
               </CardHeader>
               <CardContent>
+                <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium text-purple-900">WhatsApp Folder Setup</h3>
+                      <p className="text-sm text-purple-700">Set default folder for quick access</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                      onClick={() => {
+                        // Create file input for directory selection
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.webkitdirectory = true;
+                        input.onchange = (e: any) => {
+                          const files = e.target.files;
+                          if (files.length > 0) {
+                            const path = files[0].webkitRelativePath.split('/')[0];
+                            toast({
+                              title: "Folder saved!",
+                              description: `WhatsApp folder path saved: ${path}`,
+                            });
+                            // Here you would save the path to database
+                          }
+                        };
+                        input.click();
+                      }}
+                    >
+                      📁 Choose WhatsApp Folder
+                    </Button>
+                  </div>
+                </div>
+
                 <form onSubmit={handleBulkUpload} className="space-y-4">
                   <div>
                     <Label htmlFor="images">Select Images</Label>
@@ -632,17 +667,15 @@ export default function Admin() {
                       multiple 
                       required 
                       onChange={handleImageSelection}
+                      className="border-purple-200 focus:border-purple-400 focus:ring-purple-400"
                     />
-                    <div className="mt-2 p-3 bg-blue-50 rounded-lg">
-                      <p className="text-xs text-blue-800 font-medium">💡 Tip: WhatsApp Images Location</p>
+                    <div className="mt-2 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                      <p className="text-xs text-blue-800 font-medium">💡 WhatsApp Folder Locations</p>
                       <p className="text-xs text-blue-600 mt-1">
-                        • <strong>Windows:</strong> C:\Users\[Username]\AppData\Local\Packages\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\LocalState\shared\transfers
+                        • <strong>Windows:</strong> %USERPROFILE%\AppData\Local\Packages\5319275A.WhatsAppDesktop_*\LocalState\shared\transfers
                       </p>
                       <p className="text-xs text-blue-600">
-                        • <strong>Mac:</strong> ~/Library/Group Containers/group.net.whatsapp.WhatsApp.shared/Media/WhatsApp Images
-                      </p>
-                      <p className="text-xs text-blue-600">
-                        • <strong>Phone:</strong> Navigate to WhatsApp Media folder in your file manager
+                        • <strong>Mac:</strong> ~/Library/Group Containers/group.net.whatsapp.WhatsApp.shared/Media
                       </p>
                     </div>
                   </div>

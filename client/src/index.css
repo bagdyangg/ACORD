@@ -16,11 +16,11 @@
   --card-foreground: 20 14.3% 4.1%;
   --border: 20 5.9% 90%;
   --input: 20 5.9% 90%;
-  --primary: 14 90% 53%; /* #FF6B35 */
+  --primary: 262 83% 58%; /* Purple from logo */
   --primary-foreground: 0 0% 98%;
-  --secondary: 213 26% 23%; /* #2D3748 */
+  --secondary: 217 91% 60%; /* Blue from logo */
   --secondary-foreground: 0 0% 98%;
-  --accent: 177 60% 47%; /* #38B2AC */
+  --accent: 280 65% 70%; /* Light purple accent */
   --accent-foreground: 0 0% 98%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 60 9.1% 97.8%;
@@ -40,11 +40,11 @@
   --card-foreground: 0 0% 98%;
   --border: 240 3.7% 15.9%;
   --input: 240 3.7% 15.9%;
-  --primary: 14 90% 53%;
+  --primary: 262 83% 58%;
   --primary-foreground: 0 0% 98%;
-  --secondary: 240 3.7% 15.9%;
+  --secondary: 217 91% 60%;
   --secondary-foreground: 0 0% 98%;
-  --accent: 177 60% 47%;
+  --accent: 280 65% 70%;
   --accent-foreground: 0 0% 98%;
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 98%;
