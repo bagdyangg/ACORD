@@ -72,11 +72,31 @@ NODE_ENV=production
 PORT=5000
 ```
 
-### Admin Access
-After first user logs in, set them as admin:
+### Admin Access Setup
+Create default superadmin user:
 ```sql
-UPDATE users SET role = 'admin' WHERE email = 'your-email@domain.com';
+# Run this SQL to create initial superadmin
+psql lunch_orders < init-superadmin.sql
+
+# Or manually:
+INSERT INTO users (id, email, first_name, last_name, role, created_at, updated_at) 
+VALUES (
+  'superadmin-001',
+  'admin@yourcompany.com',
+  'Super',
+  'Administrator', 
+  'superadmin',
+  NOW(),
+  NOW()
+);
 ```
+
+**User Management System:**
+- **Superadmin** - Can create/delete users, promote to admin
+- **Admin** - Can create employees, manage orders, upload menu
+- **Employee** - Can only place orders
+
+**Important:** Change the default superadmin email to your actual email address!
 
 ## 🎯 How to Use
 
