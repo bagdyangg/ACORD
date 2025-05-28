@@ -311,11 +311,12 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="orders">Orders Summary</TabsTrigger>
             <TabsTrigger value="upload">Upload Menu</TabsTrigger>
             <TabsTrigger value="dishes">View Dishes</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="users">View Users</TabsTrigger>
+            <TabsTrigger value="manage-users">Manage Users</TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders" className="space-y-6">

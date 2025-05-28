@@ -14,13 +14,11 @@ export default function Navigation() {
     <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center">
+          <div className="flex items-center space-x-6">
             <Link href="/">
               <h1 className="text-2xl font-bold text-primary cursor-pointer">LunchOrder</h1>
             </Link>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-2">
+            <div className="flex items-center space-x-2">
               {user?.profileImageUrl && (
                 <img 
                   src={user.profileImageUrl} 
@@ -28,10 +26,22 @@ export default function Navigation() {
                   className="w-8 h-8 rounded-full object-cover"
                 />
               )}
-              <span className="text-sm text-gray-700">
+              <span className="text-sm font-medium text-gray-900">
                 {user?.firstName} {user?.lastName}
               </span>
+              {user?.role === "superadmin" && (
+                <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                  Super Admin
+                </span>
+              )}
+              {user?.role === "admin" && (
+                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                  Admin
+                </span>
+              )}
             </div>
+          </div>
+          <div className="flex items-center space-x-4">
             
             {user?.role === "admin" && (
               <Link href="/admin">
