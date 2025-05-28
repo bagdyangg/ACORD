@@ -18,7 +18,7 @@ import { Link } from "wouter";
 export default function Admin() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("orders");
+  const [activeTab, setActiveTab] = useState("menu");
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
@@ -408,9 +408,8 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="menu">Menu Management</TabsTrigger>
-            <TabsTrigger value="orders">Orders Summary</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
           </TabsList>
 
