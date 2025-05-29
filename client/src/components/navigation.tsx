@@ -2,6 +2,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Settings, LogOut, Shield } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function Navigation() {
   const { user } = useAuth();
@@ -11,20 +17,36 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-purple-50 to-blue-50 shadow-sm border-b border-purple-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-3">
-            <img 
-              src="/logo.jpeg" 
-              alt="ACORD Logo" 
-              className="w-10 h-10 object-contain rounded-lg"
-            />
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-primary cursor-pointer">ACORD</h1>
-            </Link>
-          </div>
-          <div className="flex items-center space-x-4">
+    <TooltipProvider>
+      <nav className="bg-gradient-to-r from-purple-50 to-blue-50 shadow-sm border-b border-purple-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-3">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <img 
+                    src="/logo.jpeg" 
+                    alt="ACORD Logo" 
+                    className="w-10 h-10 object-contain rounded-lg cursor-pointer"
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>ACORD Lunch Ordering System</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/">
+                    <h1 className="text-2xl font-bold text-primary cursor-pointer">ACORD</h1>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Go to dashboard</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            
+            <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               {user?.profileImageUrl && (
                 <img 
@@ -63,5 +85,6 @@ export default function Navigation() {
         </div>
       </div>
     </nav>
+    </TooltipProvider>
   );
 }
