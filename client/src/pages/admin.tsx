@@ -26,7 +26,7 @@ export default function Admin() {
   const [editingUser, setEditingUser] = useState<any>(null);
   const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', role: '' });
   const [showCreateUser, setShowCreateUser] = useState(false);
-  const [createForm, setCreateForm] = useState({ firstName: '', lastName: '', email: '', role: 'employee' });
+  const [createForm, setCreateForm] = useState({ firstName: '', lastName: '', email: '', role: 'employee', password: '' });
   const [showImportUsers, setShowImportUsers] = useState(false);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvPreview, setCsvPreview] = useState<any[]>([]);
@@ -256,6 +256,7 @@ export default function Admin() {
             firstName: user.firstname || user['first name'] || '',
             lastName: user.lastname || user['last name'] || '',
             role: user.role || 'employee',
+            password: user.password || 'defaultPass123', // Use provided password or default
             ...(user.role === 'admin' || user.role === 'superadmin' ? { email: user.email || '' } : {})
           };
 
@@ -295,7 +296,7 @@ export default function Admin() {
   };
 
   const downloadCsvTemplate = () => {
-    const template = "firstname,lastname,email,role\nJohn,Doe,john@company.com,employee\nJane,Smith,jane@company.com,admin";
+    const template = "firstname,lastname,email,role,password\nJohn,Doe,john@company.com,employee,password123\nJane,Smith,jane@company.com,admin,adminPass456\nBob,Wilson,,employee,employee789";
     const blob = new Blob([template], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1282,7 +1283,7 @@ export default function Admin() {
                     className="mt-1"
                   />
                   <p className="text-sm text-gray-500 mt-1">
-                    CSV should contain columns: firstname, lastname, email, role
+                    CSV should contain columns: firstname, lastname, email, role, password
                   </p>
                 </div>
 
@@ -1297,6 +1298,7 @@ export default function Admin() {
                             <th className="px-3 py-2 text-left">Last Name</th>
                             <th className="px-3 py-2 text-left">Email</th>
                             <th className="px-3 py-2 text-left">Role</th>
+                            <th className="px-3 py-2 text-left">Password</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1306,6 +1308,7 @@ export default function Admin() {
                               <td className="px-3 py-2">{user.lastname || user['last name'] || 'N/A'}</td>
                               <td className="px-3 py-2">{user.email || 'N/A'}</td>
                               <td className="px-3 py-2">{user.role || 'employee'}</td>
+                              <td className="px-3 py-2">{user.password ? '•••••••' : 'default'}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -1317,9 +1320,10 @@ export default function Admin() {
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <h4 className="font-medium text-blue-800 mb-1">CSV Format Requirements:</h4>
                   <ul className="text-sm text-blue-700 space-y-1">
-                    <li>• Header row: firstname,lastname,email,role</li>
+                    <li>• Header row: firstname,lastname,email,role,password</li>
                     <li>• Role values: employee, admin, superadmin</li>
                     <li>• Email required only for admin and superadmin roles</li>
+                    <li>• Password field required for all users</li>
                     <li>• Use comma-separated values</li>
                   </ul>
                 </div>
