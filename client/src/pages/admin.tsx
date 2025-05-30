@@ -148,6 +148,7 @@ export default function Admin() {
         firstName: createForm.firstName,
         lastName: createForm.lastName,
         role: createForm.role,
+        password: createForm.password,
         ...(createForm.role === 'admin' || createForm.role === 'superadmin' ? { email: createForm.email } : {})
       };
 
@@ -165,7 +166,7 @@ export default function Admin() {
         });
         queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
         setShowCreateUser(false);
-        setCreateForm({ firstName: '', lastName: '', email: '', role: 'employee' });
+        setCreateForm({ firstName: '', lastName: '', email: '', role: 'employee', password: '' });
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to create user');
@@ -1217,6 +1218,17 @@ export default function Admin() {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="createPassword">Password</Label>
+                  <Input 
+                    id="createPassword"
+                    type="password"
+                    value={createForm.password}
+                    onChange={(e) => setCreateForm({...createForm, password: e.target.value})}
+                    placeholder="Enter password"
+                    required
+                  />
+                </div>
+                <div>
                   <Label htmlFor="createRole">Role</Label>
                   <Select 
                     value={createForm.role}
@@ -1254,7 +1266,7 @@ export default function Admin() {
                     variant="outline" 
                     onClick={() => {
                       setShowCreateUser(false);
-                      setCreateForm({ firstName: '', lastName: '', email: '', role: 'employee' });
+                      setCreateForm({ firstName: '', lastName: '', email: '', role: 'employee', password: '' });
                     }}
                     className="flex-1"
                   >
