@@ -38,17 +38,22 @@ export default function OrderSummary({
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {selectedDishes.map((dish, index) => (
-                    <div key={dish.id} className="relative">
+                    <div key={`${dish.id}-${index}`} className="relative">
                       <img 
                         src={dish.imagePath || "https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150"} 
-                        alt="Selected dish" 
+                        alt={`Selected dish ${index + 1}`}
                         className="w-full h-20 object-cover rounded-lg"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150";
+                        }}
                       />
                       <Button
                         variant="ghost"
                         size="sm"
                         className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-red-500 text-white rounded-full hover:bg-red-600"
                         onClick={() => onRemoveDish(dish.id)}
+                        aria-label={`Remove dish ${index + 1}`}
                       >
                         <X className="h-3 w-3" />
                       </Button>

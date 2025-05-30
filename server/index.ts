@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+const log = (message: string, ...args: any[]) => console.log(`[express] ${message}`, ...args);
+import { storage } from "./storage";
+import { setupVite, serveStatic } from "./vite";
 
 const app = express();
 app.use(express.json());
@@ -36,7 +38,29 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
+export default (async () => {
+  // Initialize superadmin user if it doesn't exist
+  try {
+    const existingAdmin = await storage.getUser('superadmin-001');
+    if (!existingAdmin) {
+      await storage.createUser({
+        id: 'superadmin-001',
+        firstName: 'Super',
+        lastName: 'Admin',
+        username: 'admin',
+        password: 'admin123',
+        role: 'admin',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      log("Superadmin user created: username=admin, password=admin123");
+    } else {
+      log("Superadmin user already exists");
+    }
+  } catch (error) {
+    log("Error initializing superadmin:", error);
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
