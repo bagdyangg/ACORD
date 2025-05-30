@@ -193,6 +193,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/dishes/bulk-delete", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { dishIds } = req.body;
+      if (!Array.isArray(dishIds) || dishIds.length === 0) {
+        return res.status(400).json({ message: "No dish IDs provided" });
+      }
+
+      let deletedCount = 0;
+      for (const dishId of dishIds) {
+        const success = await storage.deleteDish(parseInt(dishId));
+        if (success) deletedCount++;
+      }
+      
+      res.json({ 
+        message: `${deletedCount} dishes deleted successfully`,
+        deletedCount,
+        total: dishIds.length
+      });
+    } catch (error) {
+      console.error("Error bulk deleting dishes:", error);
+      res.status(500).json({ message: "Failed to delete dishes" });
+    }
+  });
+
   // Order routes
   app.get("/api/orders", isAuthenticated, async (req: any, res) => {
     try {
