@@ -37,6 +37,13 @@ export default function Dashboard() {
     enabled: !!dishes.length, // Only fetch if dishes are loaded
   });
 
+  // Get detailed orders data for admin management
+  const { data: detailedOrdersData } = useQuery({
+    queryKey: ["/api/admin/detailed-orders", { date: today }],
+    enabled: isAdmin && activeTab === "all-orders",
+    retry: false,
+  });
+
   // Set selected dishes based on existing orders (only for dishes that still exist)
   useEffect(() => {
     if (existingOrders.length > 0 && dishes.length > 0) {
@@ -343,13 +350,6 @@ export default function Dashboard() {
       )}
     </>
   );
-
-  // Get detailed orders data for admin management
-  const { data: detailedOrdersData } = useQuery({
-    queryKey: ["/api/admin/detailed-orders", { date: today }],
-    enabled: isAdmin && activeTab === "all-orders",
-    retry: false,
-  });
 
   // Render admin orders management tab
   const renderAdminOrdersTab = () => (
