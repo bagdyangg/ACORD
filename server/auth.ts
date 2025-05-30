@@ -24,8 +24,8 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: false, // Отключаем secure для разработки
+      sameSite: 'none', // Более мягкая настройка
       maxAge: sessionTtl,
     },
   });
