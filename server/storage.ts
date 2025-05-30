@@ -123,7 +123,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteDish(id: number): Promise<boolean> {
     const result = await db.delete(dishes).where(eq(dishes.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Order operations
@@ -178,7 +178,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(orders)
       .where(and(eq(orders.userId, userId), eq(orders.orderDate, date)));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Admin operations
