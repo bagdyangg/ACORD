@@ -131,21 +131,21 @@ export default function Admin() {
     }
   };
 
-  const handleCreateUser = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const firstName = formData.get('newUserFirstName') as string;
-    const lastName = formData.get('newUserLastName') as string;
-    const role = formData.get('newUserRole') as string;
-    const email = formData.get('newUserEmail') as string;
-
+    
     try {
+      // Generate unique User ID
+      const timestamp = Date.now().toString().slice(-6);
+      const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const userId = `user-${timestamp}-${randomNum}`;
+
       const userData = {
-        id: `user_${Date.now()}`, // Auto-generate ID
-        firstName,
-        lastName,
-        role,
-        ...(role === 'admin' ? { email } : {}) // Only add email for admins
+        id: userId,
+        firstName: createForm.firstName,
+        lastName: createForm.lastName,
+        role: createForm.role,
+        ...(createForm.role === 'admin' || createForm.role === 'superadmin' ? { email: createForm.email } : {})
       };
 
       const response = await fetch('/api/admin/users', {
@@ -158,17 +158,19 @@ export default function Admin() {
       if (response.ok) {
         toast({
           title: "User created successfully!",
-          description: `${firstName} ${lastName} has been added as ${role}`,
+          description: `${createForm.firstName} ${createForm.lastName} has been registered with ID: ${userId}`,
         });
         queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-        e.currentTarget.reset();
+        setShowCreateUser(false);
+        setCreateForm({ firstName: '', lastName: '', email: '', role: 'employee' });
       } else {
-        throw new Error('Failed to create user');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create user');
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error creating user",
-        description: "Please try again",
+        description: error.message || "Please try again",
         variant: "destructive",
       });
     }
@@ -278,6 +280,8 @@ export default function Admin() {
       });
     }
   };
+
+
 
   const handleDeleteUser = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
@@ -1036,6 +1040,82 @@ export default function Admin() {
                     type="button" 
                     variant="outline" 
                     onClick={() => setEditingUser(null)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Create User Modal */}
+        {showCreateUser && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Create New User</h3>
+              <form onSubmit={handleCreateUser} className="space-y-4">
+                <div>
+                  <Label htmlFor="createFirstName">First Name</Label>
+                  <Input 
+                    id="createFirstName"
+                    value={createForm.firstName}
+                    onChange={(e) => setCreateForm({...createForm, firstName: e.target.value})}
+                    placeholder="Enter first name"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="createLastName">Last Name</Label>
+                  <Input 
+                    id="createLastName"
+                    value={createForm.lastName}
+                    onChange={(e) => setCreateForm({...createForm, lastName: e.target.value})}
+                    placeholder="Enter last name"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="createRole">Role</Label>
+                  <Select 
+                    value={createForm.role}
+                    onValueChange={(value) => setCreateForm({...createForm, role: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="employee">Employee</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="superadmin">Super Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {(createForm.role === 'admin' || createForm.role === 'superadmin') && (
+                  <div>
+                    <Label htmlFor="createEmail">Email (Required for Admin)</Label>
+                    <Input 
+                      id="createEmail"
+                      type="email"
+                      value={createForm.email}
+                      onChange={(e) => setCreateForm({...createForm, email: e.target.value})}
+                      placeholder="admin@company.com"
+                      required={createForm.role === 'admin' || createForm.role === 'superadmin'}
+                    />
+                  </div>
+                )}
+                <div className="flex space-x-2 pt-4">
+                  <Button type="submit" className="flex-1">
+                    Create User
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowCreateUser(false);
+                      setCreateForm({ firstName: '', lastName: '', email: '', role: 'employee' });
+                    }}
                     className="flex-1"
                   >
                     Cancel
