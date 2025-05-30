@@ -648,7 +648,10 @@ export default function Dashboard() {
           <Button 
             className="bg-blue-600 text-white hover:bg-blue-700"
             disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0}
-            onClick={handleCreateOrder}
+            onClick={() => {
+              console.log("Create Order button clicked!");
+              handleCreateOrder();
+            }}
           >
             Create Order
           </Button>
@@ -656,14 +659,20 @@ export default function Dashboard() {
             style={{ backgroundColor: '#0d9488', color: 'white' }}
             className="hover:bg-teal-700 border-0"
             disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0}
-            onClick={handleSendToRestaurant}
+            onClick={() => {
+              console.log("Send to Restaurant button clicked!");
+              handleSendToRestaurant();
+            }}
           >
             Send to Restaurant
           </Button>
           <Button 
             variant="outline"
-            disabled={!detailedOrdersData || detailedOrdersData.length === 0}
-            onClick={handleExportReport}
+            disabled={!detailedOrdersData || (detailedOrdersData as any).length === 0}
+            onClick={() => {
+              console.log("Export Report button clicked!");
+              handleExportReport();
+            }}
           >
             Export Report
           </Button>
