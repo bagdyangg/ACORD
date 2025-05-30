@@ -8,7 +8,11 @@ interface DishCardProps {
 }
 
 export default function DishCard({ dish, isSelected, onToggle }: DishCardProps) {
+  console.log("DishCard rendering with dish:", dish);
+  console.log("Image path:", dish.imagePath);
+  
   if (!dish.imagePath) {
+    console.log("No image path, not rendering");
     return null; // Don't render if no image
   }
 
