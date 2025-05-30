@@ -29,15 +29,16 @@ export default function Login() {
       });
 
       if (response.ok) {
-        // Invalidate auth cache to refresh user data
-        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        // Clear all cached data and force refresh
+        queryClient.clear();
         
         toast({
           title: "Login successful",
           description: "Welcome to ACORD!",
         });
-        setLocation("/");
-        window.location.reload(); // Refresh to update auth state
+        
+        // Force page reload to ensure fresh data
+        window.location.href = "/";
       } else {
         const error = await response.json();
         toast({
