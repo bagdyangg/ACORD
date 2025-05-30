@@ -647,9 +647,11 @@ export default function Dashboard() {
         <div className="flex flex-wrap gap-4">
           <Button 
             className="bg-blue-600 text-white hover:bg-blue-700"
-            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0}
+            disabled={false}
             onClick={() => {
               console.log("Create Order button clicked!");
+              console.log("ordersSummary:", ordersSummary);
+              alert("Create Order clicked!");
               handleCreateOrder();
             }}
           >
@@ -658,9 +660,11 @@ export default function Dashboard() {
           <Button 
             style={{ backgroundColor: '#0d9488', color: 'white' }}
             className="hover:bg-teal-700 border-0"
-            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0}
+            disabled={false}
             onClick={() => {
               console.log("Send to Restaurant button clicked!");
+              console.log("ordersSummary:", ordersSummary);
+              alert("Send to Restaurant clicked!");
               handleSendToRestaurant();
             }}
           >
@@ -668,9 +672,11 @@ export default function Dashboard() {
           </Button>
           <Button 
             variant="outline"
-            disabled={!detailedOrdersData || (detailedOrdersData as any).length === 0}
+            disabled={false}
             onClick={() => {
               console.log("Export Report button clicked!");
+              console.log("detailedOrdersData:", detailedOrdersData);
+              alert("Export Report clicked!");
               handleExportReport();
             }}
           >
