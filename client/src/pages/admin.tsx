@@ -24,9 +24,9 @@ export default function Admin() {
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [processedImages, setProcessedImages] = useState<{ [key: string]: string }>({});
   const [editingUser, setEditingUser] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', role: '' });
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', username: '', role: '' });
   const [showCreateUser, setShowCreateUser] = useState(false);
-  const [createForm, setCreateForm] = useState({ firstName: '', lastName: '', email: '', role: 'employee', password: '' });
+  const [createForm, setCreateForm] = useState({ firstName: '', lastName: '', username: '', role: 'employee', password: '' });
   const [showImportUsers, setShowImportUsers] = useState(false);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvPreview, setCsvPreview] = useState<any[]>([]);
@@ -147,9 +147,9 @@ export default function Admin() {
         id: userId,
         firstName: createForm.firstName,
         lastName: createForm.lastName,
+        username: createForm.username,
         role: createForm.role,
-        password: createForm.password,
-        ...(createForm.role === 'admin' || createForm.role === 'superadmin' ? { email: createForm.email } : {})
+        password: createForm.password
       };
 
       const response = await fetch('/api/admin/users', {
@@ -166,7 +166,7 @@ export default function Admin() {
         });
         queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
         setShowCreateUser(false);
-        setCreateForm({ firstName: '', lastName: '', email: '', role: 'employee', password: '' });
+        setCreateForm({ firstName: '', lastName: '', username: '', role: 'employee', password: '' });
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to create user');
@@ -256,9 +256,9 @@ export default function Admin() {
             id: user.id,
             firstName: user.firstname || user['first name'] || '',
             lastName: user.lastname || user['last name'] || '',
+            username: user.username || '',
             role: user.role || 'employee',
-            password: user.password || 'defaultPass123', // Use provided password or default
-            ...(user.role === 'admin' || user.role === 'superadmin' ? { email: user.email || '' } : {})
+            password: user.password || 'defaultPass123' // Use provided password or default
           };
 
           const response = await fetch('/api/admin/users', {
@@ -297,7 +297,7 @@ export default function Admin() {
   };
 
   const downloadCsvTemplate = () => {
-    const template = "firstname,lastname,email,role,password\nJohn,Doe,john@company.com,employee,password123\nJane,Smith,jane@company.com,admin,adminPass456\nBob,Wilson,,employee,employee789";
+    const template = "firstname,lastname,username,role,password\nJohn,Doe,john.doe,employee,password123\nJane,Smith,jane.smith,admin,adminPass456\nBob,Wilson,bob.wilson,employee,employee789";
     const blob = new Blob([template], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
