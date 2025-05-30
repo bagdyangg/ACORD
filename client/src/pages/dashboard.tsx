@@ -117,6 +117,7 @@ export default function Dashboard() {
       return response.json();
     },
     onSuccess: () => {
+      alert("Order Created Successfully!");
       toast({
         title: "Order Created",
         description: "Order has been successfully created and processed.",
@@ -141,6 +142,7 @@ export default function Dashboard() {
       return response.json();
     },
     onSuccess: () => {
+      alert("Sent to Restaurant Successfully!");
       toast({
         title: "Sent to Restaurant",
         description: "Order has been successfully sent to the restaurant.",
@@ -182,6 +184,7 @@ export default function Dashboard() {
     },
     onSuccess: (blob) => {
       console.log("Export successful, downloading file");
+      alert("Export Report Successfully!");
       // Download the CSV file
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
