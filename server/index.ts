@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { log } from "replit/ai";
+const log = (message: string, ...args: any[]) => console.log(`[express] ${message}`, ...args);
 import { storage } from "./storage";
 import { setupVite, serveStatic } from "./vite";
 
