@@ -17,7 +17,9 @@ import { Link } from "wouter";
 import type { User, Dish } from "@shared/schema";
 
 export default function Admin() {
+  console.log("=== Admin component rendered ===");
   const { user } = useAuth();
+  console.log("=== Auth hook result ===", { user });
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("menu");
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
