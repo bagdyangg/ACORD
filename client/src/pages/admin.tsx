@@ -412,7 +412,7 @@ export default function Admin() {
     }
   };
 
-  const handleSendToRestaurant = () => {
+  const handleSendToRestaurant = async () => {
     if (Object.keys(processedImages).length === 0) {
       toast({
         title: "No orders to send",
@@ -422,32 +422,79 @@ export default function Admin() {
       return;
     }
 
-    // Download all processed images with quantity overlays
-    Object.entries(processedImages).forEach(([dishKey, imageData], index) => {
-      try {
-        // Create download link for each processed image
-        const link = document.createElement('a');
-        link.href = imageData;
-        link.download = `order_${dishKey}_${today}.jpg`;
-        link.style.display = 'none';
-        
-        document.body.appendChild(link);
-        
-        // Delay downloads to avoid browser blocking
-        setTimeout(() => {
-          link.click();
-          document.body.removeChild(link);
-        }, index * 300);
-        
-      } catch (error) {
-        console.error(`Failed to download ${dishKey}:`, error);
-      }
-    });
+    try {
+      // Check if File System Access API is supported
+      if ('showDirectoryPicker' in window) {
+        // Use modern File System Access API
+        const directoryHandle = await (window as any).showDirectoryPicker({
+          mode: 'readwrite'
+        });
 
-    toast({
-      title: "Downloading order images",
-      description: `${Object.keys(processedImages).length} images with quantity overlays are being downloaded for WhatsApp sharing`,
-    });
+        for (const [dishKey, imageData] of Object.entries(processedImages)) {
+          try {
+            // Convert data URL to blob
+            const response = await fetch(imageData);
+            const blob = await response.blob();
+            
+            // Create file in selected directory
+            const fileHandle = await directoryHandle.getFileHandle(
+              `order_${dishKey}_${today}.jpg`,
+              { create: true }
+            );
+            
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+          } catch (error) {
+            console.error(`Failed to save ${dishKey}:`, error);
+          }
+        }
+
+        toast({
+          title: "Order images saved",
+          description: `${Object.keys(processedImages).length} images saved to selected folder`,
+        });
+      } else {
+        // Fallback to traditional download method
+        Object.entries(processedImages).forEach(([dishKey, imageData], index) => {
+          try {
+            const link = document.createElement('a');
+            link.href = imageData;
+            link.download = `order_${dishKey}_${today}.jpg`;
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            
+            setTimeout(() => {
+              link.click();
+              document.body.removeChild(link);
+            }, index * 300);
+            
+          } catch (error) {
+            console.error(`Failed to download ${dishKey}:`, error);
+          }
+        });
+
+        toast({
+          title: "Downloading order images",
+          description: `${Object.keys(processedImages).length} images are being downloaded`,
+        });
+      }
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        toast({
+          title: "Operation cancelled",
+          description: "Folder selection was cancelled",
+        });
+      } else {
+        console.error('Error saving files:', error);
+        toast({
+          title: "Error saving files",
+          description: "Failed to save order images",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const handleExportReport = () => {
