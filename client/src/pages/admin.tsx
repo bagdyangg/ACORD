@@ -350,18 +350,29 @@ export default function Admin() {
                 ctx?.drawImage(img, 0, 0);
                 
                 if (ctx) {
-                  // Add semi-transparent overlay
-                  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                  ctx.fillRect(0, canvas.height - 80, canvas.width, 80);
+                  // Calculate square size and position
+                  const squareSize = Math.min(canvas.width, canvas.height) * 0.25; // 25% of smallest dimension
+                  const x = canvas.width - squareSize - 20; // 20px margin from right
+                  const y = 20; // 20px margin from top
+                  
+                  // Add white square background
+                  ctx.fillStyle = 'white';
+                  ctx.fillRect(x, y, squareSize, squareSize);
+                  
+                  // Add border to square
+                  ctx.strokeStyle = '#ddd';
+                  ctx.lineWidth = 2;
+                  ctx.strokeRect(x, y, squareSize, squareSize);
                   
                   // Add quantity text
-                  ctx.fillStyle = 'white';
-                  ctx.font = 'bold 48px Arial';
+                  ctx.fillStyle = 'black';
+                  ctx.font = `bold ${squareSize * 0.4}px Arial`; // Font size is 40% of square size
                   ctx.textAlign = 'center';
+                  ctx.textBaseline = 'middle';
                   ctx.fillText(
                     `${data.count}x`, 
-                    canvas.width / 2, 
-                    canvas.height - 25
+                    x + squareSize / 2, 
+                    y + squareSize / 2
                   );
                 }
                 
