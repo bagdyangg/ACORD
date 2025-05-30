@@ -153,7 +153,7 @@ export class DatabaseStorage implements IStorage {
         dishImagePath: dishes.imagePath,
         userName: users.firstName,
         userLastName: users.lastName,
-        userEmail: users.email,
+        userUsername: users.username,
       })
       .from(orders)
       .innerJoin(dishes, eq(orders.dishId, dishes.id))
