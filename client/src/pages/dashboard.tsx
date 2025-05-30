@@ -344,26 +344,35 @@ export default function Dashboard() {
     </>
   );
 
+  // Get detailed orders data for admin management
+  const { data: detailedOrdersData } = useQuery({
+    queryKey: ["/api/admin/detailed-orders", { date: today }],
+    enabled: isAdmin && activeTab === "all-orders",
+    retry: false,
+  });
+
   // Render admin orders management tab
   const renderAdminOrdersTab = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-2xl font-bold text-secondary">All Orders Management</h3>
-        <Button
-          onClick={() => exportOrderSummary.mutate()}
-          disabled={exportOrderSummary.isPending || !ordersSummary || !(ordersSummary as any).dishCounts}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          {exportOrderSummary.isPending ? "Exporting..." : "Export Order Images"}
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            onClick={() => exportOrderSummary.mutate()}
+            disabled={exportOrderSummary.isPending || !ordersSummary || !(ordersSummary as any).dishCounts}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            {exportOrderSummary.isPending ? "Exporting..." : "Export Order Images"}
+          </Button>
+        </div>
       </div>
 
-      {/* Order Summary Stats */}
+      {/* Today's Orders Summary */}
       {ordersSummary && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h4 className="text-xl font-semibold mb-4">Today's Order Summary</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <h4 className="text-xl font-semibold mb-4 text-green-900">Today's Orders</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{(ordersSummary as any).totalOrders || 0}</div>
               <div className="text-sm text-gray-600">Total Orders</div>
@@ -382,27 +391,26 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Detailed order breakdown by dish */}
+          {/* Order Summary Grid */}
           {(ordersSummary as any).dishCounts && Object.keys((ordersSummary as any).dishCounts).length > 0 && (
-            <div className="space-y-4">
-              <h5 className="font-semibold text-lg">Orders by Dish</h5>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Object.entries((ordersSummary as any).dishCounts).map(([dishId, count]: [string, any]) => {
-                  const dish = dishes.find(d => d.id.toString() === dishId);
-                  return dish ? (
-                    <div key={dishId} className="border rounded-lg p-4 bg-gray-50">
-                      <img 
-                        src={dish.imagePath} 
-                        alt="Dish"
-                        className="w-full h-32 object-cover rounded-lg mb-3"
-                      />
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-blue-600">{count}</div>
-                        <div className="text-sm text-gray-600">orders</div>
-                        <div className="text-xs text-gray-500 mt-1">Dish ID: {dish.id}</div>
-                      </div>
+            <div className="mb-6">
+              <h5 className="font-semibold text-lg mb-3 text-green-900">Order Summary</h5>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {Object.entries((ordersSummary as any).dishCounts).map(([dishKey, count]: [string, any]) => {
+                  const dishId = dishKey.replace('dish_', '');
+                  const dish = dishes.find((d: any) => d.id.toString() === dishId);
+                  return (
+                    <div key={dishKey} className="text-center">
+                      {dish && (
+                        <img 
+                          src={dish.imagePath} 
+                          alt="Dish"
+                          className="w-full h-24 object-cover rounded-lg mb-2"
+                        />
+                      )}
+                      <span className="font-bold text-lg">{count}x</span>
                     </div>
-                  ) : null;
+                  );
                 })}
               </div>
             </div>
@@ -410,14 +418,102 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Orders by Dish - Detailed Table */}
+      {ordersSummary && (ordersSummary as any).orders && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h4 className="text-xl font-semibold mb-4">Orders by Dish</h4>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dish Image</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employees</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {(() => {
+                  // Group orders by dish
+                  const groupedOrders: { [key: string]: { count: number; employees: string[]; dish: any } } = {};
+                  
+                  (ordersSummary as any).orders?.forEach((order: any) => {
+                    const dishKey = `dish_${order.dishId}`;
+                    if (!groupedOrders[dishKey]) {
+                      const dish = dishes.find((d: any) => d.id === order.dishId);
+                      groupedOrders[dishKey] = { 
+                        count: 0, 
+                        employees: [], 
+                        dish: dish 
+                      };
+                    }
+                    groupedOrders[dishKey].count += order.quantity;
+                    groupedOrders[dishKey].employees.push(`${order.userName} ${order.userLastName} (${order.quantity}x)`);
+                  });
+
+                  return Object.entries(groupedOrders).map(([dishKey, data]) => (
+                    <tr key={dishKey}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {data.dish && (
+                          <img 
+                            src={data.dish.imagePath} 
+                            alt="Dish"
+                            className="h-16 w-16 object-cover rounded"
+                          />
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-bold text-gray-900">
+                        {data.count}x
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        <div className="space-y-1">
+                          {data.employees.map((employee, index) => (
+                            <div key={index}>{employee}</div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  ));
+                })()}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h4 className="text-xl font-semibold mb-4">Actions</h4>
+        <div className="flex flex-wrap gap-4">
+          <Button 
+            className="bg-blue-600 text-white hover:bg-blue-700"
+            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0}
+          >
+            Create Order
+          </Button>
+          <Button 
+            className="bg-teal-600 text-white hover:bg-teal-700"
+            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0}
+          >
+            Send to Restaurant
+          </Button>
+          <Button 
+            variant="outline"
+            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0}
+          >
+            Export Report
+          </Button>
+        </div>
+      </div>
+
       {/* Instructions */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h5 className="font-semibold text-blue-800 mb-2">Export Instructions</h5>
-        <p className="text-blue-700 text-sm">
-          Click "Export Order Images" to download processed images with quantity overlays. 
-          Each image will show the dish with a white square overlay containing the order count.
-          Images are saved as "order_dish_[ID]_[date].jpg" format.
-        </p>
+        <h5 className="font-semibold text-blue-800 mb-2">Management Instructions</h5>
+        <div className="text-blue-700 text-sm space-y-2">
+          <p><strong>Export Order Images:</strong> Download processed images with quantity overlays for restaurant delivery.</p>
+          <p><strong>Create Order:</strong> Generate final order summary for restaurant.</p>
+          <p><strong>Send to Restaurant:</strong> Prepare order data for restaurant notification.</p>
+          <p><strong>Export Report:</strong> Download detailed order report in CSV format.</p>
+        </div>
       </div>
     </div>
   );
