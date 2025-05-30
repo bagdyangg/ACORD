@@ -301,7 +301,7 @@ export default function Admin() {
     setIsSelectMode(false);
   };
 
-  const handleCreateOrder = () => {
+  const handleCreateOrder = async () => {
     if (!ordersSummary || !ordersSummary.orders || ordersSummary.orders.length === 0) {
       toast({
         title: "No orders found",
@@ -313,39 +313,92 @@ export default function Admin() {
 
     setIsCreatingOrder(true);
     
-    // Process the orders to create the combined order structure
-    const ordersByDish: { [key: string]: { count: number; employees: string[] } } = {};
-    
-    ordersSummary.orders.forEach((order: any) => {
-      const dishKey = `dish_${order.dishId}`;
-      if (!ordersByDish[dishKey]) {
-        ordersByDish[dishKey] = { count: 0, employees: [] };
-      }
-      ordersByDish[dishKey].count += order.quantity;
-      ordersByDish[dishKey].employees.push(`${order.userName} ${order.userLastName}`);
-    });
-
-    // Create processed images for WhatsApp
-    const processedData: { [key: string]: string } = {};
-    
-    Object.entries(ordersByDish).forEach(([dishKey, data]) => {
-      const dishId = dishKey.replace('dish_', '');
-      const dish = dishes?.find((d: any) => d.id.toString() === dishId);
+    try {
+      // Process the orders to create the combined order structure
+      const ordersByDish: { [key: string]: { count: number; employees: string[] } } = {};
       
-      if (dish) {
-        // Create a text representation that can be sent to WhatsApp
-        const orderText = `${dishKey}: ${data.count}x\nEmployees: ${data.employees.join(', ')}`;
-        processedData[dishKey] = dish.imagePath; // Store the image path for display
+      ordersSummary.orders.forEach((order: any) => {
+        const dishKey = `dish_${order.dishId}`;
+        if (!ordersByDish[dishKey]) {
+          ordersByDish[dishKey] = { count: 0, employees: [] };
+        }
+        ordersByDish[dishKey].count += order.quantity;
+        ordersByDish[dishKey].employees.push(`${order.userName} ${order.userLastName}`);
+      });
+
+      // Create processed images with quantity overlay
+      const processedData: { [key: string]: string } = {};
+      
+      for (const [dishKey, data] of Object.entries(ordersByDish)) {
+        const dishId = dishKey.replace('dish_', '');
+        const dish = dishes?.find((d: any) => d.id.toString() === dishId);
+        
+        if (dish) {
+          try {
+            // Create canvas to add quantity overlay to image
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            await new Promise((resolve, reject) => {
+              img.onload = () => {
+                // Set canvas size to match image
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                // Draw original image
+                ctx?.drawImage(img, 0, 0);
+                
+                if (ctx) {
+                  // Add semi-transparent overlay
+                  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                  ctx.fillRect(0, canvas.height - 80, canvas.width, 80);
+                  
+                  // Add quantity text
+                  ctx.fillStyle = 'white';
+                  ctx.font = 'bold 48px Arial';
+                  ctx.textAlign = 'center';
+                  ctx.fillText(
+                    `${data.count}x`, 
+                    canvas.width / 2, 
+                    canvas.height - 25
+                  );
+                }
+                
+                // Convert canvas to data URL
+                const processedImageData = canvas.toDataURL('image/jpeg', 0.9);
+                processedData[dishKey] = processedImageData;
+                resolve(void 0);
+              };
+              
+              img.onerror = reject;
+              img.crossOrigin = 'anonymous';
+              img.src = dish.imagePath;
+            });
+          } catch (error) {
+            console.error(`Failed to process image for ${dishKey}:`, error);
+            // Fallback to original image
+            processedData[dishKey] = dish.imagePath;
+          }
+        }
       }
-    });
 
-    setProcessedImages(processedData);
-    setIsCreatingOrder(false);
-
-    toast({
-      title: "Order created successfully",
-      description: `Processed ${Object.keys(processedData).length} dishes`,
-    });
+      setProcessedImages(processedData);
+      
+      toast({
+        title: "Order created successfully",
+        description: `Processed ${Object.keys(processedData).length} dishes with quantity overlays`,
+      });
+    } catch (error) {
+      console.error("Error creating order:", error);
+      toast({
+        title: "Error creating order",
+        description: "Failed to process images",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingOrder(false);
+    }
   };
 
   const handleSendToRestaurant = () => {
@@ -358,28 +411,31 @@ export default function Admin() {
       return;
     }
 
-    // Create a text summary of all orders
-    let orderSummary = `📝 *Daily Order Summary - ${new Date().toLocaleDateString()}*\n\n`;
-    
-    Object.entries(processedImages).forEach(([dishKey, imagePath]) => {
-      const dishOrderData = ordersSummary?.dishCounts?.[dishKey] || 0;
-      orderSummary += `🍽️ ${dishKey}: ${dishOrderData}x\n`;
+    // Download all processed images with quantity overlays
+    Object.entries(processedImages).forEach(([dishKey, imageData], index) => {
+      try {
+        // Create download link for each processed image
+        const link = document.createElement('a');
+        link.href = imageData;
+        link.download = `order_${dishKey}_${today}.jpg`;
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        
+        // Delay downloads to avoid browser blocking
+        setTimeout(() => {
+          link.click();
+          document.body.removeChild(link);
+        }, index * 300);
+        
+      } catch (error) {
+        console.error(`Failed to download ${dishKey}:`, error);
+      }
     });
 
-    orderSummary += `\n👥 Total Orders: ${ordersSummary?.totalOrders || 0}`;
-    orderSummary += `\n🏆 Most Popular: ${ordersSummary?.mostPopular || "N/A"}`;
-
-    // Copy to clipboard for easy sharing via WhatsApp
-    navigator.clipboard.writeText(orderSummary).then(() => {
-      toast({
-        title: "Order summary copied!",
-        description: "The order summary has been copied to clipboard. You can now paste it in WhatsApp.",
-      });
-    }).catch(() => {
-      toast({
-        title: "Order summary ready",
-        description: "Please manually copy the order summary from the preview above.",
-      });
+    toast({
+      title: "Downloading order images",
+      description: `${Object.keys(processedImages).length} images with quantity overlays are being downloaded for WhatsApp sharing`,
     });
   };
 
