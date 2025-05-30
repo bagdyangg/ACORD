@@ -159,17 +159,29 @@ export default function Dashboard() {
   // Export Report functionality
   const exportReportMutation = useMutation({
     mutationFn: async () => {
+      console.log("Starting export report for date:", today);
       const response = await fetch(`/api/admin/export-report?date=${today}`, {
-        credentials: 'include'
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'text/csv,application/octet-stream',
+        }
       });
       
+      console.log("Export response status:", response.status);
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error("Export error:", errorText);
+        throw new Error(`Export failed: ${response.status} - ${errorText}`);
       }
       
-      return response.blob();
+      const blob = await response.blob();
+      console.log("Export blob size:", blob.size);
+      return blob;
     },
     onSuccess: (blob) => {
+      console.log("Export successful, downloading file");
       // Download the CSV file
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -186,6 +198,7 @@ export default function Dashboard() {
       });
     },
     onError: (error) => {
+      console.error("Export mutation error:", error);
       toast({
         title: "Export Failed",
         description: error.message,
