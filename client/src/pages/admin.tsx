@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { X, UserPlus, Upload, FileText, Download } from "lucide-react";
 import { Link } from "wouter";
+import type { User, Dish } from "@shared/schema";
 
 export default function Admin() {
   const { user } = useAuth();
