@@ -79,7 +79,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
-      res.json(req.user);
+      console.log("=== API /auth/user called ===");
+      console.log("req.user from session:", req.user);
+      console.log("session userId:", req.session.userId);
+      
+      // Get full user data from database
+      const userId = req.session.userId;
+      if (userId) {
+        const fullUser = await storage.getUser(userId);
+        console.log("Full user from database:", fullUser);
+        res.json(fullUser);
+      } else {
+        console.log("No userId in session, returning req.user");
+        res.json(req.user);
+      }
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
