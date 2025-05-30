@@ -36,6 +36,10 @@ export default function Admin() {
   
   const today = new Date().toISOString().split('T')[0];
 
+  // Debug: log user data
+  console.log("Admin page - user data:", user);
+  console.log("Admin page - user role:", user?.role);
+  
   // Check if user is admin or superadmin
   if (user?.role !== "admin" && user?.role !== "superadmin") {
     return (
