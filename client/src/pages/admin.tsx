@@ -350,8 +350,8 @@ export default function Admin() {
                 ctx?.drawImage(img, 0, 0);
                 
                 if (ctx) {
-                  // Calculate square size and position
-                  const squareSize = Math.min(canvas.width, canvas.height) * 0.25; // 25% of smallest dimension
+                  // Calculate square size and position (increased by 30%)
+                  const squareSize = Math.min(canvas.width, canvas.height) * 0.325; // 32.5% of smallest dimension (25% + 30%)
                   const x = canvas.width - squareSize - 20; // 20px margin from right
                   const y = 20; // 20px margin from top
                   
@@ -364,9 +364,9 @@ export default function Admin() {
                   ctx.lineWidth = 2;
                   ctx.strokeRect(x, y, squareSize, squareSize);
                   
-                  // Add quantity text
+                  // Add quantity text (font size also increased proportionally)
                   ctx.fillStyle = 'black';
-                  ctx.font = `bold ${squareSize * 0.6}px Arial`; // Font size is 60% of square size
+                  ctx.font = `bold ${squareSize * 0.6}px Arial`; // Font size remains 60% of the now larger square
                   ctx.textAlign = 'center';
                   ctx.textBaseline = 'middle';
                   ctx.fillText(
