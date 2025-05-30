@@ -110,6 +110,7 @@ export default function Dashboard() {
 
   // Create Order functionality
   const handleCreateOrder = async () => {
+    alert("handleCreateOrder function started!");
     console.log("handleCreateOrder called");
     try {
       const response = await fetch('/api/admin/create-order', {
@@ -148,6 +149,7 @@ export default function Dashboard() {
 
   // Send to Restaurant functionality
   const handleSendToRestaurant = async () => {
+    alert("handleSendToRestaurant function started!");
     console.log("handleSendToRestaurant called");
     try {
       const response = await fetch('/api/admin/send-to-restaurant', {
@@ -186,7 +188,9 @@ export default function Dashboard() {
 
   // Export Report functionality
   const handleExportReport = () => {
-    if (!detailedOrdersData || detailedOrdersData.length === 0) {
+    alert("handleExportReport function started!");
+    console.log("handleExportReport called");
+    if (!detailedOrdersData || (detailedOrdersData as any).length === 0) {
       toast({
         title: "No data to export",
         description: "Please select a date with orders first",
