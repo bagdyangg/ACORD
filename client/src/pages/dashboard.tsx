@@ -108,6 +108,83 @@ export default function Dashboard() {
     },
   });
 
+  // Create Order functionality
+  const createOrderMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/admin/create-order", {
+        date: today,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Order Created",
+        description: "Order has been successfully created and processed.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Create Order Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Send to Restaurant functionality
+  const sendToRestaurantMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/admin/send-to-restaurant", {
+        date: today,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sent to Restaurant",
+        description: "Order has been successfully sent to the restaurant.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Send Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Export Report functionality
+  const exportReportMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("GET", `/api/admin/export-report?date=${today}`);
+      return response.blob();
+    },
+    onSuccess: (blob) => {
+      // Download the CSV file
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `order-report-${today}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Report Exported",
+        description: "Order report has been downloaded successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Export Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const toggleDishSelection = (dishId: number) => {
     setSelectedDishes(prev => {
       if (prev.includes(dishId)) {
@@ -512,22 +589,25 @@ export default function Dashboard() {
         <div className="flex flex-wrap gap-4">
           <Button 
             className="bg-blue-600 text-white hover:bg-blue-700"
-            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0}
+            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0 || createOrderMutation.isPending}
+            onClick={() => createOrderMutation.mutate()}
           >
-            Create Order
+            {createOrderMutation.isPending ? "Creating..." : "Create Order"}
           </Button>
           <Button 
             style={{ backgroundColor: '#0d9488', color: 'white' }}
             className="hover:bg-teal-700 border-0"
-            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0}
+            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0 || sendToRestaurantMutation.isPending}
+            onClick={() => sendToRestaurantMutation.mutate()}
           >
-            Send to Restaurant
+            {sendToRestaurantMutation.isPending ? "Sending..." : "Send to Restaurant"}
           </Button>
           <Button 
             variant="outline"
-            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0}
+            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0 || exportReportMutation.isPending}
+            onClick={() => exportReportMutation.mutate()}
           >
-            Export Report
+            {exportReportMutation.isPending ? "Exporting..." : "Export Report"}
           </Button>
         </div>
       </div>
