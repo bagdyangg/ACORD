@@ -8,6 +8,11 @@ import path from "path";
 import fs from "fs";
 import express from "express";
 
+// Helper function to check admin access
+const isAdmin = (userRole: string | undefined): boolean => {
+  return userRole === "admin" || userRole === "superadmin";
+};
+
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -110,7 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin" && user?.role !== "superadmin") {
+      if (!isAdmin(user?.role) && user?.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -139,7 +144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin") {
+      if (!isAdmin(user?.role)) {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -175,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin") {
+      if (!isAdmin(user?.role)) {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -201,7 +206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin") {
+      if (!isAdmin(user?.role)) {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -323,7 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin") {
+      if (!isAdmin(user?.role)) {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -345,7 +350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin" && user?.role !== "superadmin") {
+      if (!isAdmin(user?.role) && user?.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -365,7 +370,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin" && user?.role !== "superadmin") {
+      if (!isAdmin(user?.role) && user?.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -385,7 +390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin" && user?.role !== "superadmin") {
+      if (!isAdmin(user?.role) && user?.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -407,7 +412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin" && user?.role !== "superadmin") {
+      if (!isAdmin(user?.role) && user?.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -428,7 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin" && user?.role !== "superadmin") {
+      if (!isAdmin(user?.role) && user?.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
