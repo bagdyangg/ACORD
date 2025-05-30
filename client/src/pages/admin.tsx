@@ -22,6 +22,8 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState("menu");
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedDishes, setSelectedDishes] = useState<number[]>([]);
+  const [isSelectMode, setIsSelectMode] = useState(false);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [processedImages, setProcessedImages] = useState<{ [key: string]: string }>({});
   const [editingUser, setEditingUser] = useState<any>(null);
@@ -360,6 +362,57 @@ export default function Admin() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedDishes.length === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedDishes.length} dishes?`)) return;
+
+    try {
+      const response = await fetch('/api/dishes/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ dishIds: selectedDishes })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Dishes deleted!",
+          description: `${selectedDishes.length} dishes have been removed`,
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/dishes"] });
+        setSelectedDishes([]);
+        setIsSelectMode(false);
+      } else {
+        throw new Error('Failed to delete dishes');
+      }
+    } catch (error) {
+      toast({
+        title: "Error deleting dishes",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleDishSelection = (dishId: number) => {
+    setSelectedDishes(prev => 
+      prev.includes(dishId) 
+        ? prev.filter(id => id !== dishId)
+        : [...prev, dishId]
+    );
+  };
+
+  const selectAllDishes = () => {
+    if (dishes && dishes.length > 0) {
+      setSelectedDishes(dishes.map((dish: any) => dish.id));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedDishes([]);
+    setIsSelectMode(false);
   };
 
   const handleEditUser = (user: any) => {
@@ -886,13 +939,59 @@ export default function Admin() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Today's Menu ({dishes.length} dishes)</CardTitle>
-                <p className="text-sm text-gray-600">All uploaded dishes for today</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Today's Menu ({dishes && dishes.length || 0} dishes)</CardTitle>
+                    <p className="text-sm text-gray-600">All uploaded dishes for today</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    {isSelectMode ? (
+                      <>
+                        <Button variant="outline" size="sm" onClick={selectAllDishes}>
+                          Select All
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={clearSelection}>
+                          Cancel
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={handleBulkDelete}
+                          disabled={selectedDishes.length === 0}
+                        >
+                          Delete {selectedDishes.length} dishes
+                        </Button>
+                      </>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setIsSelectMode(true)}
+                        disabled={!dishes || dishes.length === 0}
+                      >
+                        Bulk Delete
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                  {dishes.map((dish: any) => (
-                    <div key={dish.id} className="border rounded-lg overflow-hidden bg-white shadow-sm relative group">
+                  {dishes && dishes.map((dish: any) => (
+                    <div 
+                      key={dish.id} 
+                      className={`border rounded-lg overflow-hidden bg-white shadow-sm relative group ${
+                        isSelectMode && selectedDishes.includes(dish.id) ? 'ring-2 ring-blue-500' : ''
+                      }`}
+                    >
+                      {isSelectMode && (
+                        <input
+                          type="checkbox"
+                          className="absolute top-2 left-2 z-10"
+                          checked={selectedDishes.includes(dish.id)}
+                          onChange={() => toggleDishSelection(dish.id)}
+                        />
+                      )}
                       {dish.imagePath && (
                         <img 
                           src={dish.imagePath} 
@@ -908,14 +1007,16 @@ export default function Admin() {
                           ID: {dish.id}
                         </p>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleDeleteDish(dish.id)}
-                      >
-                        ×
-                      </Button>
+                      {!isSelectMode && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleDeleteDish(dish.id)}
+                        >
+                          ×
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>
