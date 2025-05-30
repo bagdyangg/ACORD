@@ -381,8 +381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid role" });
       }
 
-      const user = await storage.upsertUser({
-        id: targetUserId,
+      const user = await storage.updateUser(targetUserId, {
         role,
         updatedAt: new Date(),
       });
