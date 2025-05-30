@@ -71,11 +71,18 @@ export default function Admin() {
   // Fetch orders for today
   const { data: orders } = useQuery({
     queryKey: ["/api/orders"],
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 0, // Always consider data stale
   });
 
   // Fetch orders summary for admin
   const { data: ordersSummary } = useQuery({
     queryKey: ["/api/admin/orders"],
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 0, // Always consider data stale
   });
 
   // Fetch users (admin only)
