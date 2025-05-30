@@ -14,6 +14,8 @@ import type { Dish, Order } from "@shared/schema";
 export default function Dashboard() {
   const [selectedDishes, setSelectedDishes] = useState<number[]>([]);
   const [activeTab, setActiveTab] = useState("my-orders");
+  const [processedImages, setProcessedImages] = useState<{ [key: string]: string }>({});
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -108,81 +110,195 @@ export default function Dashboard() {
     },
   });
 
-  // Create Order functionality
+  // Create Order functionality - copied from working Admin Panel
   const handleCreateOrder = async () => {
-    alert("handleCreateOrder function started!");
-    console.log("handleCreateOrder called");
-    try {
-      const response = await fetch('/api/admin/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ date: today }),
-      });
-
-      console.log("Create order response status:", response.status);
-      
-      if (!response.ok) {
-        throw new Error('Failed to create order');
-      }
-
-      const result = await response.json();
-      console.log("Create order result:", result);
-      alert("Order Created Successfully!");
+    if (!ordersSummary || !ordersSummary.orders || ordersSummary.orders.length === 0) {
       toast({
-        title: "Order created successfully",
-        description: result.message || "Order has been processed successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
-    } catch (error) {
-      console.error("Error creating order:", error);
-      alert("Error creating order!");
-      toast({
-        title: "Error creating order",
-        description: "Failed to create order",
+        title: "No orders found",
+        description: "There are no orders for today to process",
         variant: "destructive",
       });
+      return;
+    }
+
+    setIsCreatingOrder(true);
+    
+    try {
+      // Process the orders to create the combined order structure
+      const ordersByDish: { [key: string]: { count: number; employees: string[] } } = {};
+      
+      ordersSummary.orders.forEach((order: any) => {
+        const dishKey = `dish_${order.dishId}`;
+        if (!ordersByDish[dishKey]) {
+          ordersByDish[dishKey] = { count: 0, employees: [] };
+        }
+        ordersByDish[dishKey].count += order.quantity;
+        ordersByDish[dishKey].employees.push(`${order.userName} ${order.userLastName}`);
+      });
+
+      // Create processed images with quantity overlay
+      const processedData: { [key: string]: string } = {};
+      
+      for (const [dishKey, data] of Object.entries(ordersByDish)) {
+        const dishId = dishKey.replace('dish_', '');
+        const dish = dishes?.find((d: any) => d.id.toString() === dishId);
+        
+        if (dish) {
+          try {
+            // Create canvas to add quantity overlay to image
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            await new Promise((resolve, reject) => {
+              img.onload = () => {
+                // Set canvas size to match image
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                // Draw original image
+                ctx?.drawImage(img, 0, 0);
+                
+                if (ctx) {
+                  // Calculate square size and position (increased by 30%)
+                  const squareSize = Math.min(canvas.width, canvas.height) * 0.325; // 32.5% of smallest dimension
+                  const x = canvas.width - squareSize - 20; // 20px margin from right
+                  const y = 20; // 20px margin from top
+                  
+                  // Add white square background
+                  ctx.fillStyle = 'white';
+                  ctx.fillRect(x, y, squareSize, squareSize);
+                  
+                  // Add border to square
+                  ctx.strokeStyle = '#ddd';
+                  ctx.lineWidth = 2;
+                  ctx.strokeRect(x, y, squareSize, squareSize);
+                  
+                  // Add quantity text
+                  ctx.fillStyle = 'black';
+                  ctx.font = `bold ${squareSize * 0.6}px Arial`;
+                  ctx.textAlign = 'center';
+                  ctx.textBaseline = 'middle';
+                  ctx.fillText(
+                    `${data.count}x`, 
+                    x + squareSize / 2, 
+                    y + squareSize / 2
+                  );
+                }
+                
+                resolve(null);
+              };
+              img.onerror = reject;
+              img.src = dish.imagePath;
+            });
+            
+            // Convert canvas to data URL
+            processedData[dishKey] = canvas.toDataURL('image/jpeg', 0.9);
+          } catch (error) {
+            console.error(`Error processing image for ${dishKey}:`, error);
+          }
+        }
+      }
+      
+      setProcessedImages(processedData);
+      
+      toast({
+        title: "Order created successfully",
+        description: `Processed ${Object.keys(processedData).length} dishes with quantity overlays`,
+      });
+    } catch (error) {
+      console.error("Error creating order:", error);
+      toast({
+        title: "Error creating order",
+        description: "Failed to process images",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingOrder(false);
     }
   };
 
-  // Send to Restaurant functionality
+  // Send to Restaurant functionality - copied from working Admin Panel
   const handleSendToRestaurant = async () => {
-    alert("handleSendToRestaurant function started!");
-    console.log("handleSendToRestaurant called");
-    try {
-      const response = await fetch('/api/admin/send-to-restaurant', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ date: today }),
-      });
-
-      console.log("Send to restaurant response status:", response.status);
-
-      if (!response.ok) {
-        throw new Error('Failed to send to restaurant');
-      }
-
-      const result = await response.json();
-      console.log("Send to restaurant result:", result);
-      alert("Sent to Restaurant Successfully!");
+    if (Object.keys(processedImages).length === 0) {
       toast({
-        title: "Sent to restaurant",
-        description: result.message || "Order has been sent successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
-    } catch (error) {
-      console.error("Error sending to restaurant:", error);
-      alert("Error sending to restaurant!");
-      toast({
-        title: "Error sending to restaurant",
-        description: "Failed to send order",
+        title: "No orders to send",
+        description: "Please create an order first",
         variant: "destructive",
       });
+      return;
+    }
+
+    try {
+      // Check if File System Access API is supported
+      if ('showDirectoryPicker' in window) {
+        // Use modern File System Access API
+        const directoryHandle = await (window as any).showDirectoryPicker({
+          mode: 'readwrite'
+        });
+
+        // Save each processed image to the selected directory
+        for (const [dishKey, imageData] of Object.entries(processedImages)) {
+          try {
+            const fileName = `order_${dishKey}_${today}.jpg`;
+            const fileHandle = await directoryHandle.getFileHandle(fileName, { create: true });
+            
+            // Convert data URL to blob
+            const response = await fetch(imageData);
+            const blob = await response.blob();
+            
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+          } catch (error) {
+            console.error(`Failed to save ${dishKey}:`, error);
+          }
+        }
+
+        toast({
+          title: "Order images saved",
+          description: `${Object.keys(processedImages).length} images saved to selected folder`,
+        });
+      } else {
+        // Fallback to traditional download method
+        Object.entries(processedImages).forEach(([dishKey, imageData], index) => {
+          try {
+            const link = document.createElement('a');
+            link.href = imageData;
+            link.download = `order_${dishKey}_${today}.jpg`;
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            
+            setTimeout(() => {
+              link.click();
+              document.body.removeChild(link);
+            }, index * 300);
+            
+          } catch (error) {
+            console.error(`Failed to download ${dishKey}:`, error);
+          }
+        });
+
+        toast({
+          title: "Downloading order images",
+          description: `${Object.keys(processedImages).length} images are being downloaded`,
+        });
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        toast({
+          title: "Operation cancelled",
+          description: "Folder selection was cancelled",
+        });
+      } else {
+        console.error('Error saving files:', error);
+        toast({
+          title: "Error saving files",
+          description: "Failed to save order images",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -651,38 +767,21 @@ export default function Dashboard() {
         <div className="flex flex-wrap gap-4">
           <Button 
             className="bg-blue-600 text-white hover:bg-blue-700"
-            disabled={false}
-            onClick={() => {
-              console.log("Create Order button clicked!");
-              console.log("ordersSummary:", ordersSummary);
-              alert("Create Order clicked!");
-              handleCreateOrder();
-            }}
+            onClick={handleCreateOrder}
+            disabled={isCreatingOrder || !ordersSummary || (ordersSummary as any).totalOrders === 0}
           >
-            Create Order
+            {isCreatingOrder ? "Processing..." : "Create Order"}
           </Button>
           <Button 
-            style={{ backgroundColor: '#0d9488', color: 'white' }}
-            className="hover:bg-teal-700 border-0"
-            disabled={false}
-            onClick={() => {
-              console.log("Send to Restaurant button clicked!");
-              console.log("ordersSummary:", ordersSummary);
-              alert("Send to Restaurant clicked!");
-              handleSendToRestaurant();
-            }}
+            className="bg-accent text-white hover:bg-teal-600"
+            onClick={handleSendToRestaurant}
+            disabled={Object.keys(processedImages).length === 0}
           >
             Send to Restaurant
           </Button>
           <Button 
             variant="outline"
-            disabled={false}
-            onClick={() => {
-              console.log("Export Report button clicked!");
-              console.log("detailedOrdersData:", detailedOrdersData);
-              alert("Export Report clicked!");
-              handleExportReport();
-            }}
+            onClick={handleExportReport}
           >
             Export Report
           </Button>
