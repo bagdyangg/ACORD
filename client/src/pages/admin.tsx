@@ -834,75 +834,89 @@ export default function Admin() {
               <div className="space-y-6 mt-8">
                 <h2 className="text-2xl font-bold text-gray-900">Today's Orders</h2>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-blue-900">Today's Stats</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Total Orders:</span>
-                        <span className="font-bold">{ordersSummary.totalOrders}</span>
-                      </div>
-
-                      <div className="flex justify-between">
-                        <span>Most Popular:</span>
-                        <span className="font-bold">{ordersSummary.mostPopular || "N/A"}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-green-900">Order Summary</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2 text-sm">
-                      {Object.entries(ordersSummary.dishCounts || {}).map(([dish, count]) => (
-                        <div key={dish} className="flex justify-between">
-                          <span>{dish}:</span>
-                          <span className="font-bold">{count}x</span>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-green-900">Order Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {Object.entries(ordersSummary.dishCounts || {}).map(([dishKey, count]) => {
+                        const dishId = dishKey.replace('dish_', '');
+                        const dish = dishes?.find((d: any) => d.id.toString() === dishId);
+                        return (
+                          <div key={dishKey} className="text-center">
+                            {dish && (
+                              <img 
+                                src={dish.imagePath} 
+                                alt="Dish"
+                                className="w-full h-24 object-cover rounded-lg mb-2"
+                              />
+                            )}
+                            <span className="font-bold text-lg">{count}x</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Individual Orders</CardTitle>
+                    <CardTitle>Orders by Dish</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dish Image</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employees</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                          {ordersSummary.orders?.map((order: any, index: number) => (
-                            <tr key={index}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {order.userName} {order.userLastName}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                {order.dishImagePath && (
-                                  <img 
-                                    src={order.dishImagePath} 
-                                    alt="Dish"
-                                    className="h-12 w-12 object-cover rounded"
-                                  />
-                                )}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-900">{order.quantity}</td>
-                              <td className="px-6 py-4 text-sm text-gray-500">
-                                {new Date(order.createdAt).toLocaleTimeString()}
-                              </td>
-                            </tr>
-                          ))}
+                          {(() => {
+                            // Group orders by dish
+                            const groupedOrders: { [key: string]: { count: number; employees: string[]; dish: any } } = {};
+                            
+                            ordersSummary.orders?.forEach((order: any) => {
+                              const dishKey = `dish_${order.dishId}`;
+                              if (!groupedOrders[dishKey]) {
+                                const dish = dishes?.find((d: any) => d.id === order.dishId);
+                                groupedOrders[dishKey] = { 
+                                  count: 0, 
+                                  employees: [], 
+                                  dish: dish 
+                                };
+                              }
+                              groupedOrders[dishKey].count += order.quantity;
+                              groupedOrders[dishKey].employees.push(`${order.userName} ${order.userLastName} (${order.quantity}x)`);
+                            });
+
+                            return Object.entries(groupedOrders).map(([dishKey, data]) => (
+                              <tr key={dishKey}>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  {data.dish && (
+                                    <img 
+                                      src={data.dish.imagePath} 
+                                      alt="Dish"
+                                      className="h-16 w-16 object-cover rounded"
+                                    />
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 text-sm font-bold text-gray-900">
+                                  {data.count}x
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-900">
+                                  <div className="space-y-1">
+                                    {data.employees.map((employee, index) => (
+                                      <div key={index}>{employee}</div>
+                                    ))}
+                                  </div>
+                                </td>
+                              </tr>
+                            ));
+                          })()}
                         </tbody>
                       </table>
                     </div>
