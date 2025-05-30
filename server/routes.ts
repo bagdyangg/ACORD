@@ -211,16 +211,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       let deletedCount = 0;
+      const errors = [];
+      
       for (const dishId of dishIds) {
-        const success = await storage.deleteDish(parseInt(dishId));
-        if (success) deletedCount++;
+        try {
+          const success = await storage.deleteDish(parseInt(dishId));
+          if (success) deletedCount++;
+        } catch (error) {
+          errors.push({
+            dishId: parseInt(dishId),
+            error: error instanceof Error ? error.message : "Unknown error"
+          });
+        }
       }
       
-      res.json({ 
+      const response = {
         message: `${deletedCount} dishes deleted successfully`,
         deletedCount,
-        total: dishIds.length
-      });
+        total: dishIds.length,
+        errors: errors.length > 0 ? errors : undefined
+      };
+      
+      if (errors.length > 0 && deletedCount === 0) {
+        return res.status(400).json(response);
+      }
+      
+      res.json(response);
     } catch (error) {
       console.error("Error bulk deleting dishes:", error);
       res.status(500).json({ message: "Failed to delete dishes" });

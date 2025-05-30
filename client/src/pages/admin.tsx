@@ -377,15 +377,41 @@ export default function Admin() {
       });
 
       if (response.ok) {
-        toast({
-          title: "Dishes deleted!",
-          description: `${selectedDishes.length} dishes have been removed`,
-        });
+        const result = await response.json();
+        if (result.errors && result.errors.length > 0) {
+          const errorMessages = result.errors.map((err: any) => 
+            `Dish ${err.dishId}: ${err.error}`
+          ).join('\n');
+          
+          toast({
+            title: `Partial success: ${result.deletedCount} deleted, ${result.errors.length} failed`,
+            description: errorMessages,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Dishes deleted!",
+            description: `${result.deletedCount} dishes have been removed`,
+          });
+        }
         queryClient.invalidateQueries({ queryKey: ["/api/dishes"] });
         setSelectedDishes([]);
         setIsSelectMode(false);
       } else {
-        throw new Error('Failed to delete dishes');
+        const errorData = await response.json();
+        if (errorData.errors) {
+          const errorMessages = errorData.errors.map((err: any) => 
+            `Dish ${err.dishId}: ${err.error}`
+          ).join('\n');
+          
+          toast({
+            title: "Cannot delete dishes",
+            description: errorMessages,
+            variant: "destructive",
+          });
+        } else {
+          throw new Error('Failed to delete dishes');
+        }
       }
     } catch (error) {
       toast({

@@ -122,8 +122,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteDish(id: number): Promise<boolean> {
-    const result = await db.delete(dishes).where(eq(dishes.id, id));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      // Check if there are any orders for this dish
+      const existingOrders = await db.select().from(orders).where(eq(orders.dishId, id));
+      if (existingOrders.length > 0) {
+        throw new Error(`Cannot delete dish: ${existingOrders.length} orders exist for this dish`);
+      }
+
+      const result = await db.delete(dishes).where(eq(dishes.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting dish:", error);
+      throw error;
+    }
   }
 
   // Order operations
