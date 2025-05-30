@@ -366,7 +366,7 @@ export default function Admin() {
     setEditForm({
       firstName: user.firstName || '',
       lastName: user.lastName || '',
-      email: user.email || '',
+      username: user.username || '',
       role: user.role || ''
     });
   };
@@ -380,8 +380,8 @@ export default function Admin() {
       const updateData = {
         firstName: editForm.firstName,
         lastName: editForm.lastName,
-        role: editForm.role,
-        ...(editForm.role === 'admin' || editForm.role === 'superadmin' ? { email: editForm.email } : {})
+        username: editForm.username,
+        role: editForm.role
       };
 
       const response = await fetch(`/api/admin/users/${editingUser.id}`, {
@@ -398,7 +398,7 @@ export default function Admin() {
         });
         queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
         setEditingUser(null);
-        setEditForm({ firstName: '', lastName: '', email: '', role: '' });
+        setEditForm({ firstName: '', lastName: '', username: '', role: '' });
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to update user');
@@ -1143,18 +1143,17 @@ export default function Admin() {
                     required
                   />
                 </div>
-                {(editForm.role === 'admin' || editForm.role === 'superadmin') && (
-                  <div>
-                    <Label htmlFor="editEmail">Email</Label>
-                    <Input 
-                      id="editEmail"
-                      type="email"
-                      value={editForm.email}
-                      onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                      placeholder="admin@company.com"
-                    />
-                  </div>
-                )}
+                <div>
+                  <Label htmlFor="editUsername">Username</Label>
+                  <Input 
+                    id="editUsername"
+                    type="text"
+                    value={editForm.username}
+                    onChange={(e) => setEditForm({...editForm, username: e.target.value})}
+                    placeholder="Enter username"
+                    required
+                  />
+                </div>
                 <div>
                   <Label htmlFor="editRole">Role</Label>
                   <Select 
@@ -1244,19 +1243,17 @@ export default function Admin() {
                     </SelectContent>
                   </Select>
                 </div>
-                {(createForm.role === 'admin' || createForm.role === 'superadmin') && (
-                  <div>
-                    <Label htmlFor="createEmail">Email (Required for Admin)</Label>
-                    <Input 
-                      id="createEmail"
-                      type="email"
-                      value={createForm.email}
-                      onChange={(e) => setCreateForm({...createForm, email: e.target.value})}
-                      placeholder="admin@company.com"
-                      required={createForm.role === 'admin' || createForm.role === 'superadmin'}
-                    />
-                  </div>
-                )}
+                <div>
+                  <Label htmlFor="createUsername">Username</Label>
+                  <Input 
+                    id="createUsername"
+                    type="text"
+                    value={createForm.username}
+                    onChange={(e) => setCreateForm({...createForm, username: e.target.value})}
+                    placeholder="Enter username"
+                    required
+                  />
+                </div>
                 <div className="flex space-x-2 pt-4">
                   <Button type="submit" className="flex-1">
                     Create User
@@ -1266,7 +1263,7 @@ export default function Admin() {
                     variant="outline" 
                     onClick={() => {
                       setShowCreateUser(false);
-                      setCreateForm({ firstName: '', lastName: '', email: '', role: 'employee', password: '' });
+                      setCreateForm({ firstName: '', lastName: '', username: '', role: 'employee', password: '' });
                     }}
                     className="flex-1"
                   >
