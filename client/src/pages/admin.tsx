@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, UserPlus } from "lucide-react";
+import { X, UserPlus, Upload, FileText, Download } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Admin() {
@@ -27,6 +27,9 @@ export default function Admin() {
   const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', role: '' });
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [createForm, setCreateForm] = useState({ firstName: '', lastName: '', email: '', role: 'employee' });
+  const [showImportUsers, setShowImportUsers] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvPreview, setCsvPreview] = useState<any[]>([]);
   
   const today = new Date().toISOString().split('T')[0];
 
@@ -174,6 +177,132 @@ export default function Admin() {
         variant: "destructive",
       });
     }
+  };
+
+  const parseCsvFile = (file: File) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const csv = e.target?.result as string;
+          const lines = csv.split('\n').filter(line => line.trim());
+          const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+          
+          const users = lines.slice(1).map((line, index) => {
+            const values = line.split(',').map(v => v.trim());
+            const user: any = { lineNumber: index + 2 };
+            
+            headers.forEach((header, i) => {
+              user[header] = values[i] || '';
+            });
+            
+            // Generate unique ID for each user
+            const timestamp = Date.now().toString().slice(-6);
+            const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            user.id = `user-${timestamp}-${randomNum}-${index}`;
+            
+            return user;
+          });
+          
+          resolve(users);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsText(file);
+    });
+  };
+
+  const handleCsvFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.csv')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a CSV file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCsvFile(file);
+    
+    try {
+      const users = await parseCsvFile(file) as any[];
+      setCsvPreview(users.slice(0, 5)); // Show first 5 rows for preview
+    } catch (error) {
+      toast({
+        title: "Error reading CSV",
+        description: "Please check your CSV format",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImportUsers = async () => {
+    if (!csvFile) return;
+
+    try {
+      const users = await parseCsvFile(csvFile) as any[];
+      let successful = 0;
+      let failed = 0;
+      
+      for (const user of users) {
+        try {
+          const userData = {
+            id: user.id,
+            firstName: user.firstname || user['first name'] || '',
+            lastName: user.lastname || user['last name'] || '',
+            role: user.role || 'employee',
+            ...(user.role === 'admin' || user.role === 'superadmin' ? { email: user.email || '' } : {})
+          };
+
+          const response = await fetch('/api/admin/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData),
+            credentials: 'include'
+          });
+
+          if (response.ok) {
+            successful++;
+          } else {
+            failed++;
+          }
+        } catch (error) {
+          failed++;
+        }
+      }
+
+      toast({
+        title: "Import completed!",
+        description: `${successful} users imported successfully, ${failed} failed`,
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setShowImportUsers(false);
+      setCsvFile(null);
+      setCsvPreview([]);
+    } catch (error) {
+      toast({
+        title: "Import failed",
+        description: "Please check your CSV format and try again",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const downloadCsvTemplate = () => {
+    const template = "firstname,lastname,email,role\nJohn,Doe,john@company.com,employee\nJane,Smith,jane@company.com,admin";
+    const blob = new Blob([template], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'users_template.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
@@ -801,10 +930,20 @@ export default function Admin() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Registered Users</CardTitle>
-                  <Button onClick={() => setShowCreateUser(true)}>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Add New User
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" onClick={downloadCsvTemplate}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download Template
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowImportUsers(true)}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Import CSV
+                    </Button>
+                    <Button onClick={() => setShowCreateUser(true)}>
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Add New User
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -1122,6 +1261,92 @@ export default function Admin() {
                   </Button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Import CSV Modal */}
+        {showImportUsers && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-4">Import Users from CSV</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="csvFile">Select CSV File</Label>
+                  <Input 
+                    id="csvFile"
+                    type="file"
+                    accept=".csv"
+                    onChange={handleCsvFileChange}
+                    className="mt-1"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    CSV should contain columns: firstname, lastname, email, role
+                  </p>
+                </div>
+
+                {csvPreview.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2">Preview (first 5 rows)</h4>
+                    <div className="border rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left">First Name</th>
+                            <th className="px-3 py-2 text-left">Last Name</th>
+                            <th className="px-3 py-2 text-left">Email</th>
+                            <th className="px-3 py-2 text-left">Role</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {csvPreview.map((user, index) => (
+                            <tr key={index} className="border-t">
+                              <td className="px-3 py-2">{user.firstname || user['first name'] || 'N/A'}</td>
+                              <td className="px-3 py-2">{user.lastname || user['last name'] || 'N/A'}</td>
+                              <td className="px-3 py-2">{user.email || 'N/A'}</td>
+                              <td className="px-3 py-2">{user.role || 'employee'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <h4 className="font-medium text-blue-800 mb-1">CSV Format Requirements:</h4>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>• Header row: firstname,lastname,email,role</li>
+                    <li>• Role values: employee, admin, superadmin</li>
+                    <li>• Email required only for admin and superadmin roles</li>
+                    <li>• Use comma-separated values</li>
+                  </ul>
+                </div>
+
+                <div className="flex space-x-2 pt-4">
+                  <Button 
+                    onClick={handleImportUsers}
+                    disabled={!csvFile}
+                    className="flex-1"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import Users
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowImportUsers(false);
+                      setCsvFile(null);
+                      setCsvPreview([]);
+                    }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         )}
