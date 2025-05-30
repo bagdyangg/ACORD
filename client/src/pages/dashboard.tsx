@@ -110,6 +110,7 @@ export default function Dashboard() {
 
   // Create Order functionality
   const handleCreateOrder = async () => {
+    console.log("handleCreateOrder called");
     try {
       const response = await fetch('/api/admin/create-order', {
         method: 'POST',
@@ -120,11 +121,14 @@ export default function Dashboard() {
         body: JSON.stringify({ date: today }),
       });
 
+      console.log("Create order response status:", response.status);
+      
       if (!response.ok) {
         throw new Error('Failed to create order');
       }
 
       const result = await response.json();
+      console.log("Create order result:", result);
       alert("Order Created Successfully!");
       toast({
         title: "Order created successfully",
@@ -133,6 +137,7 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
     } catch (error) {
       console.error("Error creating order:", error);
+      alert("Error creating order!");
       toast({
         title: "Error creating order",
         description: "Failed to create order",
@@ -143,6 +148,7 @@ export default function Dashboard() {
 
   // Send to Restaurant functionality
   const handleSendToRestaurant = async () => {
+    console.log("handleSendToRestaurant called");
     try {
       const response = await fetch('/api/admin/send-to-restaurant', {
         method: 'POST',
@@ -153,11 +159,14 @@ export default function Dashboard() {
         body: JSON.stringify({ date: today }),
       });
 
+      console.log("Send to restaurant response status:", response.status);
+
       if (!response.ok) {
         throw new Error('Failed to send to restaurant');
       }
 
       const result = await response.json();
+      console.log("Send to restaurant result:", result);
       alert("Sent to Restaurant Successfully!");
       toast({
         title: "Sent to restaurant",
@@ -166,6 +175,7 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
     } catch (error) {
       console.error("Error sending to restaurant:", error);
+      alert("Error sending to restaurant!");
       toast({
         title: "Error sending to restaurant",
         description: "Failed to send order",
