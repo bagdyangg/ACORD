@@ -20,7 +20,8 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // Set to true in production with HTTPS
+      secure: false,
+      sameSite: 'lax',
       maxAge: sessionTtl,
     },
   });
