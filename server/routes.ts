@@ -498,6 +498,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create order endpoint
+  app.post("/api/admin/create-order", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
+      
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { date = new Date().toISOString().split('T')[0] } = req.body;
+      const ordersSummary = await storage.getOrdersSummary(date);
+      
+      if (!ordersSummary || ordersSummary.totalOrders === 0) {
+        return res.status(400).json({ message: "No orders to process" });
+      }
+
+      res.json({ 
+        message: "Order created successfully", 
+        orderCount: ordersSummary.totalOrders,
+        date: date 
+      });
+    } catch (error) {
+      console.error("Error creating order:", error);
+      res.status(500).json({ message: "Failed to create order" });
+    }
+  });
+
+  // Send to restaurant endpoint
+  app.post("/api/admin/send-to-restaurant", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
+      
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { date = new Date().toISOString().split('T')[0] } = req.body;
+      const ordersSummary = await storage.getOrdersSummary(date);
+      
+      if (!ordersSummary || ordersSummary.totalOrders === 0) {
+        return res.status(400).json({ message: "No orders to send" });
+      }
+
+      res.json({ 
+        message: "Order sent to restaurant successfully", 
+        orderCount: ordersSummary.totalOrders,
+        date: date 
+      });
+    } catch (error) {
+      console.error("Error sending to restaurant:", error);
+      res.status(500).json({ message: "Failed to send to restaurant" });
+    }
+  });
+
+  // Export report endpoint
+  app.get("/api/admin/export-report", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
+      
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { date = new Date().toISOString().split('T')[0] } = req.query;
+      const orders = await storage.getOrdersWithDetails(date as string);
+      
+      if (!orders || orders.length === 0) {
+        return res.status(400).json({ message: "No orders to export" });
+      }
+
+      // Create CSV content
+      const csvHeader = "Date,Employee,Dish ID,Quantity,Order Time\n";
+      const csvRows = orders.map(order => 
+        `${date},"${order.userName} ${order.userLastName}",${order.dishId},${order.quantity},"${new Date(order.createdAt).toLocaleTimeString()}"`
+      ).join('\n');
+      
+      const csvContent = csvHeader + csvRows;
+
+      // Set headers for file download
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=order-report-${date}.csv`);
+      res.send(csvContent);
+    } catch (error) {
+      console.error("Error exporting report:", error);
+      res.status(500).json({ message: "Failed to export report" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
