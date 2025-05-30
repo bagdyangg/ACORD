@@ -955,9 +955,8 @@ export default function Admin() {
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -986,14 +985,11 @@ export default function Admin() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {user.firstName} {user.lastName}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">{user.email || 'No email'}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">{user.username || 'No username'}</td>
                           <td className="px-6 py-4 text-sm text-gray-500">
                             <Badge variant={user.role === "admin" ? "default" : "secondary"}>
                               {user.role}
                             </Badge>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">
-                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"}
                           </td>
                         </tr>
                       ))}
