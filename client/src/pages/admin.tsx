@@ -366,7 +366,7 @@ export default function Admin() {
                   
                   // Add quantity text
                   ctx.fillStyle = 'black';
-                  ctx.font = `bold ${squareSize * 0.4}px Arial`; // Font size is 40% of square size
+                  ctx.font = `bold ${squareSize * 0.6}px Arial`; // Font size is 60% of square size
                   ctx.textAlign = 'center';
                   ctx.textBaseline = 'middle';
                   ctx.fillText(
