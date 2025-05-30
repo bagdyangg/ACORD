@@ -95,10 +95,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dishes = await storage.getDishesByDate(today);
       }
       
-      res.json(dishes);
+      res.json(dishes || []);
     } catch (error) {
       console.error("Error fetching dishes:", error);
-      res.status(500).json({ message: "Failed to fetch dishes" });
+      res.status(500).json({ message: "Failed to fetch dishes", error: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 
@@ -187,7 +187,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Order routes
   app.get("/api/orders", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
       const date = req.query.date as string;
       
       let orders;
@@ -197,10 +201,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orders = await storage.getOrdersByUser(userId);
       }
       
-      res.json(orders);
+      res.json(orders || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
-      res.status(500).json({ message: "Failed to fetch orders" });
+      res.status(500).json({ message: "Failed to fetch orders", error: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 
