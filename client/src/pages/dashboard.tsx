@@ -57,6 +57,15 @@ export default function Dashboard() {
     }
   }, [existingOrders, dishes]);
 
+  // Auto-refresh orders data when switching tabs
+  useEffect(() => {
+    if (isAdmin && activeTab === "all-orders") {
+      // Refresh admin orders data when switching to all-orders tab
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/detailed-orders"] });
+    }
+  }, [activeTab, isAdmin]);
+
   // Create/update order mutation
   const orderMutation = useMutation({
     mutationFn: async (dishIds: number[]) => {
@@ -71,7 +80,10 @@ export default function Dashboard() {
         title: "Order confirmed!",
         description: "Your lunch order has been placed successfully.",
       });
+      // Invalidate both personal orders and admin orders data
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/detailed-orders"] });
     },
     onError: (error) => {
       toast({
@@ -491,7 +503,7 @@ export default function Dashboard() {
             Create Order
           </Button>
           <Button 
-            className="bg-teal-600 text-white hover:bg-teal-700"
+            className="bg-teal-600 hover:bg-teal-700 text-white"
             disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0}
           >
             Send to Restaurant
