@@ -27,6 +27,7 @@ export default function Dashboard() {
   const { data: ordersSummary } = useQuery({
     queryKey: ["/api/admin/orders", { date: today }],
     retry: false,
+    enabled: !!dishes.length, // Only fetch if dishes are loaded
   });
 
   // Set selected dishes based on existing orders (only for dishes that still exist)

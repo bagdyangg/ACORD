@@ -104,7 +104,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/dishes", isAuthenticated, upload.single("image"), async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
       
       if (user?.role !== "admin") {
@@ -130,7 +133,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/dishes/:id", isAuthenticated, upload.single("image"), async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
       
       if (user?.role !== "admin") {
@@ -163,7 +169,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/dishes/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
       
       if (user?.role !== "admin") {
@@ -210,7 +219,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/orders", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const { dishIds, date } = req.body;
 
       if (!Array.isArray(dishIds) || dishIds.length === 0) {
@@ -255,7 +267,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes
   app.get("/api/admin/orders", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
       
       if (user?.role !== "admin") {
@@ -274,7 +289,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
       
       if (user?.role !== "admin") {
@@ -291,7 +309,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
       
       if (user?.role !== "admin" && user?.role !== "superadmin") {
@@ -308,7 +329,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/admin/users/:id/role", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
       
       if (user?.role !== "admin" && user?.role !== "superadmin") {
@@ -327,7 +351,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/admin/users/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
       
       if (user?.role !== "admin" && user?.role !== "superadmin") {
@@ -345,7 +372,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/admin/users/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
       
       if (user?.role !== "admin" && user?.role !== "superadmin") {
@@ -371,7 +401,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/admin/users/:id/role", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUserId = req.user.id;
+      const currentUserId = req.user?.id;
+      if (!currentUserId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const currentUser = await storage.getUser(currentUserId);
       
       if (currentUser?.role !== "admin") {

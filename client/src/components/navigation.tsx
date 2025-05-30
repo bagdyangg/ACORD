@@ -14,10 +14,18 @@ export default function Navigation() {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-      window.location.href = "/";
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (response.ok) {
+        window.location.href = "/";
+      } else {
+        throw new Error('Logout failed');
+      }
     } catch (error) {
       console.error("Logout error:", error);
+      // Force redirect even if logout fails
       window.location.href = "/";
     }
   };
@@ -51,7 +59,7 @@ export default function Navigation() {
                 </TooltipContent>
               </Tooltip>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 {user?.profileImageUrl && (
@@ -82,7 +90,7 @@ export default function Navigation() {
                   </TooltipContent>
                 </Tooltip>
               </div>
-              
+
               {(user?.role === "admin" || user?.role === "superadmin") && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -98,7 +106,7 @@ export default function Navigation() {
                   </TooltipContent>
                 </Tooltip>
               )}
-              
+
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="sm" onClick={handleLogout}>
