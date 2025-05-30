@@ -37,11 +37,11 @@ export default function Login() {
           description: "Welcome to ACORD!",
         });
         
-        // Small delay for mobile devices to ensure session is properly set
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Longer delay for mobile devices to ensure session is properly set
+        await new Promise(resolve => setTimeout(resolve, 800));
         
-        // Force page reload to ensure fresh data
-        window.location.href = "/";
+        // Force complete page reload for mobile compatibility
+        window.location.replace("/");
       } else {
         const error = await response.json();
         toast({

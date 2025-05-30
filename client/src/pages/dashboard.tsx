@@ -35,6 +35,8 @@ export default function Dashboard() {
     queryKey: ["/api/admin/orders", { date: today }],
     retry: false,
     enabled: !!dishes.length, // Only fetch if dishes are loaded
+    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchOnWindowFocus: true,
   });
 
   // Get detailed orders data for admin management
@@ -65,6 +67,18 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/detailed-orders"] });
     }
   }, [activeTab, isAdmin]);
+
+  // Force refresh data periodically for better sync
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isAdmin) {
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      }
+    }, 10000); // Every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [isAdmin]);
 
   // Create/update order mutation
   const orderMutation = useMutation({
@@ -503,7 +517,8 @@ export default function Dashboard() {
             Create Order
           </Button>
           <Button 
-            className="bg-teal-600 hover:bg-teal-700 text-white"
+            style={{ backgroundColor: '#0d9488', color: 'white' }}
+            className="hover:bg-teal-700 border-0"
             disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0}
           >
             Send to Restaurant
