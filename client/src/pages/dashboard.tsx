@@ -2,16 +2,23 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
 import DishCard from "@/components/dish-card";
 import OrderSummary from "@/components/order-summary";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Download, FileText, Users } from "lucide-react";
 import type { Dish, Order } from "@shared/schema";
 
 export default function Dashboard() {
   const [selectedDishes, setSelectedDishes] = useState<number[]>([]);
+  const [activeTab, setActiveTab] = useState("my-orders");
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const today = new Date().toISOString().split('T')[0];
+  const isAdmin = user?.role === 'admin';
 
   // Fetch dishes for today
   const { data: dishes = [], isLoading: dishesLoading } = useQuery<Dish[]>({
@@ -91,6 +98,139 @@ export default function Dashboard() {
     orderMutation.mutate(selectedDishes);
   };
 
+  // Export functionality for admin
+  const exportOrderSummary = useMutation({
+    mutationFn: async () => {
+      if (!ordersSummary?.dishCounts) {
+        throw new Error("No order data to export");
+      }
+
+      const processedImages = [];
+      
+      for (const [dishId, count] of Object.entries(ordersSummary.dishCounts)) {
+        const dish = dishes.find(d => d.id.toString() === dishId);
+        if (!dish) continue;
+
+        try {
+          // Create canvas for image processing
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          
+          await new Promise((resolve, reject) => {
+            img.onload = () => {
+              canvas.width = img.width;
+              canvas.height = img.height;
+              
+              // Draw original image
+              ctx!.drawImage(img, 0, 0);
+              
+              // Calculate overlay size (32.5% of image dimension)
+              const overlaySize = Math.min(img.width, img.height) * 0.325;
+              const x = (img.width - overlaySize) / 2;
+              const y = (img.height - overlaySize) / 2;
+              
+              // Draw white square overlay
+              ctx!.fillStyle = 'white';
+              ctx!.fillRect(x, y, overlaySize, overlaySize);
+              
+              // Draw black text with quantity
+              ctx!.fillStyle = 'black';
+              ctx!.font = `bold ${overlaySize * 0.4}px Arial`;
+              ctx!.textAlign = 'center';
+              ctx!.textBaseline = 'middle';
+              ctx!.fillText(
+                count.toString(),
+                img.width / 2,
+                img.height / 2
+              );
+              
+              resolve(true);
+            };
+            img.onerror = reject;
+            img.crossOrigin = 'anonymous';
+            img.src = dish.imagePath;
+          });
+
+          // Convert to blob
+          const blob = await new Promise<Blob>((resolve) => {
+            canvas.toBlob((blob) => {
+              resolve(blob!);
+            }, 'image/jpeg', 0.9);
+          });
+
+          const filename = `order_dish_${dish.id}_${today}.jpg`;
+          processedImages.push({ blob, filename });
+
+        } catch (error) {
+          console.error(`Failed to process image for dish ${dish.id}:`, error);
+        }
+      }
+
+      return processedImages;
+    },
+    onSuccess: async (processedImages) => {
+      if (processedImages.length === 0) {
+        toast({
+          title: "Export failed",
+          description: "No images could be processed",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        // Use File System Access API for bulk export
+        if ('showDirectoryPicker' in window) {
+          const dirHandle = await (window as any).showDirectoryPicker();
+          
+          for (const { blob, filename } of processedImages) {
+            const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+          }
+          
+          toast({
+            title: "Export successful",
+            description: `${processedImages.length} processed images saved to selected folder`,
+          });
+        } else {
+          // Fallback: download individual files
+          for (const { blob, filename } of processedImages) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }
+          
+          toast({
+            title: "Export successful",
+            description: `${processedImages.length} processed images downloaded`,
+          });
+        }
+      } catch (error) {
+        console.error('Export failed:', error);
+        toast({
+          title: "Export failed",
+          description: "Could not save files to selected location",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Export failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -124,94 +264,204 @@ export default function Dashboard() {
 
   const selectedDishesData = dishes.filter(dish => selectedDishes.includes(dish.id));
 
+  // Render content for regular users (non-admin)
+  const renderUserContent = () => (
+    <>
+      {/* Header Section */}
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold text-secondary mb-2">Today's Menu</h2>
+        <p className="text-gray-600">
+          Select your lunch preferences for <span className="font-semibold">{formatDate(today)}</span>
+        </p>
+        <div className="mt-4">
+          <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium inline-block">
+            <i className="fas fa-clock mr-1"></i>
+            Order deadline: 11:00 AM
+          </div>
+        </div>
+      </div>
+
+      {/* Today's Order Summary for Everyone */}
+      {ordersSummary && (
+        <div className="mb-8 bg-white rounded-lg shadow p-6">
+          <h3 className="text-xl font-semibold mb-4">Today's Order Summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{(ordersSummary as any).totalOrders || 0}</div>
+              <div className="text-sm text-gray-600">Total Orders</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-green-600">
+                {(ordersSummary as any).mostPopular?.imagePath ? 'Available' : 'No orders yet'}
+              </div>
+              <div className="text-sm text-gray-600">Most Popular</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-purple-600">
+                {(ordersSummary as any).dishCounts ? Object.keys((ordersSummary as any).dishCounts).length : 0}
+              </div>
+              <div className="text-sm text-gray-600">Different Dishes</div>
+            </div>
+          </div>
+          {(ordersSummary as any).dishCounts && Object.keys((ordersSummary as any).dishCounts).length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {Object.entries((ordersSummary as any).dishCounts).map(([dishId, count]: [string, any]) => {
+                const dish = dishes.find(d => d.id.toString() === dishId);
+                return dish ? (
+                  <div key={dishId} className="text-center">
+                    <img 
+                      src={dish.imagePath} 
+                      alt="Dish"
+                      className="w-16 h-16 object-cover rounded-lg mx-auto mb-1"
+                    />
+                    <div className="text-xs font-semibold">{count} orders</div>
+                  </div>
+                ) : null;
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Menu Grid */}
+      {dishes.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-gray-500 text-lg">No dishes available for today</div>
+          <p className="text-gray-400 mt-2">Check back later or contact admin</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {dishes.map((dish) => (
+            <DishCard
+              key={dish.id}
+              dish={dish}
+              isSelected={selectedDishes.includes(dish.id)}
+              onToggle={() => toggleDishSelection(dish.id)}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  );
+
+  // Render admin orders management tab
+  const renderAdminOrdersTab = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-2xl font-bold text-secondary">All Orders Management</h3>
+        <Button
+          onClick={() => exportOrderSummary.mutate()}
+          disabled={exportOrderSummary.isPending || !ordersSummary || !(ordersSummary as any).dishCounts}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          {exportOrderSummary.isPending ? "Exporting..." : "Export Order Images"}
+        </Button>
+      </div>
+
+      {/* Order Summary Stats */}
+      {ordersSummary && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h4 className="text-xl font-semibold mb-4">Today's Order Summary</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{(ordersSummary as any).totalOrders || 0}</div>
+              <div className="text-sm text-gray-600">Total Orders</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-green-600">
+                {(ordersSummary as any).mostPopular?.imagePath ? 'Available' : 'No orders yet'}
+              </div>
+              <div className="text-sm text-gray-600">Most Popular</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-purple-600">
+                {(ordersSummary as any).dishCounts ? Object.keys((ordersSummary as any).dishCounts).length : 0}
+              </div>
+              <div className="text-sm text-gray-600">Different Dishes</div>
+            </div>
+          </div>
+
+          {/* Detailed order breakdown by dish */}
+          {(ordersSummary as any).dishCounts && Object.keys((ordersSummary as any).dishCounts).length > 0 && (
+            <div className="space-y-4">
+              <h5 className="font-semibold text-lg">Orders by Dish</h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Object.entries((ordersSummary as any).dishCounts).map(([dishId, count]: [string, any]) => {
+                  const dish = dishes.find(d => d.id.toString() === dishId);
+                  return dish ? (
+                    <div key={dishId} className="border rounded-lg p-4 bg-gray-50">
+                      <img 
+                        src={dish.imagePath} 
+                        alt="Dish"
+                        className="w-full h-32 object-cover rounded-lg mb-3"
+                      />
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-blue-600">{count}</div>
+                        <div className="text-sm text-gray-600">orders</div>
+                        <div className="text-xs text-gray-500 mt-1">Dish ID: {dish.id}</div>
+                      </div>
+                    </div>
+                  ) : null;
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Instructions */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h5 className="font-semibold text-blue-800 mb-2">Export Instructions</h5>
+        <p className="text-blue-700 text-sm">
+          Click "Export Order Images" to download processed images with quantity overlays. 
+          Each image will show the dish with a white square overlay containing the order count.
+          Images are saved as "order_dish_[ID]_[date].jpg" format.
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-neutral">
       <Navigation />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-96 md:pb-8">
-        {/* Header Section */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-secondary mb-2">Today's Menu</h2>
-          <p className="text-gray-600">
-            Select your lunch preferences for <span className="font-semibold">{formatDate(today)}</span>
-          </p>
-          <div className="mt-4">
-            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium inline-block">
-              <i className="fas fa-clock mr-1"></i>
-              Order deadline: 11:00 AM
-            </div>
-          </div>
-        </div>
-
-        {/* Today's Order Summary for Everyone */}
-        {ordersSummary && (
-          <div className="mb-8 bg-white rounded-lg shadow p-6">
-            <h3 className="text-xl font-semibold mb-4">Today's Order Summary</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{ordersSummary.totalOrders || 0}</div>
-                <div className="text-sm text-gray-600">Total Orders</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-green-600">
-                  {ordersSummary.mostPopular?.imagePath ? 'Available' : 'No orders yet'}
-                </div>
-                <div className="text-sm text-gray-600">Most Popular</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-purple-600">
-                  {ordersSummary.dishCounts ? Object.keys(ordersSummary.dishCounts).length : 0}
-                </div>
-                <div className="text-sm text-gray-600">Different Dishes</div>
-              </div>
-            </div>
-            {ordersSummary.dishCounts && Object.keys(ordersSummary.dishCounts).length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                {Object.entries(ordersSummary.dishCounts).map(([dishId, count]: [string, any]) => {
-                  const dish = dishes.find(d => d.id.toString() === dishId);
-                  return dish ? (
-                    <div key={dishId} className="text-center">
-                      <img 
-                        src={dish.imagePath} 
-                        alt="Dish"
-                        className="w-16 h-16 object-cover rounded-lg mx-auto mb-1"
-                      />
-                      <div className="text-xs font-semibold">{count} orders</div>
-                    </div>
-                  ) : null;
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Menu Grid */}
-        {dishes.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-500 text-lg">No dishes available for today</div>
-            <p className="text-gray-400 mt-2">Check back later or contact admin</p>
-          </div>
+        {isAdmin ? (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value="my-orders" className="flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                My Orders
+              </TabsTrigger>
+              <TabsTrigger value="all-orders" className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                All Orders
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="my-orders">
+              {renderUserContent()}
+            </TabsContent>
+            
+            <TabsContent value="all-orders">
+              {renderAdminOrdersTab()}
+            </TabsContent>
+          </Tabs>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {dishes.map((dish) => (
-              <DishCard
-                key={dish.id}
-                dish={dish}
-                isSelected={selectedDishes.includes(dish.id)}
-                onToggle={() => toggleDishSelection(dish.id)}
-              />
-            ))}
-          </div>
+          renderUserContent()
         )}
       </main>
 
-      {/* Order Summary - Fixed on mobile */}
-      <OrderSummary
-        selectedDishes={selectedDishesData}
-        onConfirm={confirmOrder}
-        isLoading={orderMutation.isPending}
-        onRemoveDish={(dishId) => setSelectedDishes(prev => prev.filter(id => id !== dishId))}
-      />
+      {/* Order Summary - Fixed on mobile (only for personal orders) */}
+      {(!isAdmin || activeTab === "my-orders") && (
+        <OrderSummary
+          selectedDishes={selectedDishesData}
+          onConfirm={confirmOrder}
+          isLoading={orderMutation.isPending}
+          onRemoveDish={(dishId) => setSelectedDishes(prev => prev.filter(id => id !== dishId))}
+        />
+      )}
     </div>
   );
 }
