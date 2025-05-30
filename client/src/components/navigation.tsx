@@ -47,44 +47,66 @@ export default function Navigation() {
             </div>
             
             <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              {user?.profileImageUrl && (
-                <img 
-                  src={user.profileImageUrl} 
-                  alt="Profile" 
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              )}
-              <span className="text-sm font-medium text-gray-900">
-                {user?.firstName} {user?.lastName}
-              </span>
-              {user?.role === "superadmin" && (
-                <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
-                  Super Admin
+              <div className="flex items-center space-x-2">
+                {user?.profileImageUrl && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <img 
+                        src={user.profileImageUrl} 
+                        alt="Profile" 
+                        className="w-8 h-8 rounded-full object-cover cursor-pointer"
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Your profile picture</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                <span className="text-sm font-medium text-gray-700">
+                  {user?.firstName} {user?.lastName}
                 </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full cursor-help">
+                      {user?.role}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Your role: {user?.role === 'admin' ? 'Administrator' : user?.role === 'superadmin' ? 'Super Administrator' : 'Employee'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              
+              {(user?.role === "admin" || user?.role === "superadmin") && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href="/admin">
+                      <Button variant="outline" size="sm">
+                        <Shield className="h-4 w-4 mr-2" />
+                        Admin
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Access admin panel to manage users and dishes</p>
+                  </TooltipContent>
+                </Tooltip>
               )}
-              {user?.role === "admin" && (
-                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                  Admin
-                </span>
-              )}
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" onClick={handleLogout}>
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Sign out of your account</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
-            
-            {user?.role === "admin" && (
-              <Link href="/admin">
-                <Button variant="ghost" size="sm">
-                  <Shield className="h-4 w-4" />
-                </Button>
-              </Link>
-            )}
-            
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4" />
-            </Button>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
     </TooltipProvider>
   );
 }

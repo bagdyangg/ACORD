@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { X, UserPlus } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Admin() {
@@ -25,6 +25,8 @@ export default function Admin() {
   const [processedImages, setProcessedImages] = useState<{ [key: string]: string }>({});
   const [editingUser, setEditingUser] = useState<any>(null);
   const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', role: '' });
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [createForm, setCreateForm] = useState({ firstName: '', lastName: '', email: '', role: 'employee' });
   
   const today = new Date().toISOString().split('T')[0];
 
@@ -793,7 +795,13 @@ export default function Admin() {
           <TabsContent value="users">
             <Card>
               <CardHeader>
-                <CardTitle>Registered Users</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Registered Users</CardTitle>
+                  <Button onClick={() => setShowCreateUser(true)}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Add New User
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
