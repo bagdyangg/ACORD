@@ -37,6 +37,9 @@ export default function Login() {
           description: "Welcome to ACORD!",
         });
         
+        // Small delay for mobile devices to ensure session is properly set
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
         // Force page reload to ensure fresh data
         window.location.href = "/";
       } else {
