@@ -39,15 +39,13 @@ export default function OrderSummary({
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {selectedDishes.map((dish, index) => (
                     <div key={`${dish.id}-${index}`} className="relative">
-                      <img 
-                        src={dish.imagePath || "https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150"} 
-                        alt={`Selected dish ${index + 1}`}
-                        className="w-full h-20 object-cover rounded-lg"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150";
-                        }}
-                      />
+                      {dish.imagePath && (
+                        <img 
+                          src={dish.imagePath} 
+                          alt={`Selected dish ${index + 1}`}
+                          className="w-full h-20 object-cover rounded-lg"
+                        />
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"

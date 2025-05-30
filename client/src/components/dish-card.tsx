@@ -8,7 +8,9 @@ interface DishCardProps {
 }
 
 export default function DishCard({ dish, isSelected, onToggle }: DishCardProps) {
-  const imageUrl = dish.imagePath || "https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400";
+  if (!dish.imagePath) {
+    return null; // Don't render if no image
+  }
 
   return (
     <div 
@@ -18,13 +20,9 @@ export default function DishCard({ dish, isSelected, onToggle }: DishCardProps) 
       onClick={onToggle}
     >
       <img 
-        src={imageUrl} 
+        src={dish.imagePath} 
         alt="Dish" 
         className="w-full h-64 object-cover"
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.src = "https://images.unsplash.com/photo-1546554137-f86b9593a222?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400";
-        }}
       />
       
       {isSelected && (
