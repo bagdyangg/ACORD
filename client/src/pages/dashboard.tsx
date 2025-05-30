@@ -637,16 +637,6 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-2xl font-bold text-secondary">All Orders Management</h3>
-        <div className="flex gap-3">
-          <Button
-            onClick={() => exportOrderSummary.mutate()}
-            disabled={exportOrderSummary.isPending || !ordersSummary || !(ordersSummary as any).dishCounts}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            {exportOrderSummary.isPending ? "Exporting..." : "Export Order Images"}
-          </Button>
-        </div>
       </div>
 
       {/* Today's Orders Summary */}
@@ -792,9 +782,8 @@ export default function Dashboard() {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h5 className="font-semibold text-blue-800 mb-2">Management Instructions</h5>
         <div className="text-blue-700 text-sm space-y-2">
-          <p><strong>Export Order Images:</strong> Download processed images with quantity overlays for restaurant delivery.</p>
-          <p><strong>Create Order:</strong> Generate final order summary for restaurant.</p>
-          <p><strong>Send to Restaurant:</strong> Prepare order data for restaurant notification.</p>
+          <p><strong>Create Order:</strong> Generate final order summary with quantity overlays for restaurant.</p>
+          <p><strong>Send to Restaurant:</strong> Save processed images to selected folder for restaurant delivery.</p>
           <p><strong>Export Report:</strong> Download detailed order report in CSV format.</p>
         </div>
       </div>
