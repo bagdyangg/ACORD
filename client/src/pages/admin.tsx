@@ -667,18 +667,25 @@ export default function Admin() {
   };
 
   const handleExportReport = () => {
-    if (!ordersSummary) return;
+    if (!ordersSummary || !ordersSummary.orders) {
+      toast({
+        title: "Нет данных для экспорта",
+        description: "Сначала выберите дату с заказами",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    // Создаем CSV отчет
-    const csvHeader = "Employee,Email,Dish ID,Quantity,Time\n";
-    const csvData = ordersSummary.orders?.map((order: any) => 
-      `"${order.userName} ${order.userLastName}","${order.userEmail}","${order.dishId}","${order.quantity}","${new Date(order.createdAt).toLocaleString()}"`
-    ).join('\n') || '';
+    // Создаем CSV отчет с правильными полями
+    const csvHeader = "Employee Name,Username,Dish ID,Quantity,Order Time\n";
+    const csvData = ordersSummary.orders.map((order: any) => 
+      `"${order.userName || ''} ${order.userLastName || ''}","${order.userUsername || ''}","${order.dishId}","${order.quantity}","${new Date(order.createdAt).toLocaleString()}"`
+    ).join('\n');
     
     const csv = csvHeader + csvData;
     
     // Создаем и скачиваем файл
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -688,7 +695,7 @@ export default function Admin() {
     
     toast({
       title: "Отчет экспортирован!",
-      description: `Файл lunch-orders-${today}.csv загружен`,
+      description: `Файл lunch-orders-${today}.csv загружен с ${ordersSummary.orders.length} заказами`,
     });
   };
 
@@ -1059,6 +1066,134 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Orders Section */}
+            {ordersSummary && (
+              <div className="space-y-6 mt-8">
+                <h2 className="text-2xl font-bold text-gray-900">Today's Orders</h2>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-blue-900">Today's Stats</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Total Orders:</span>
+                        <span className="font-bold">{ordersSummary.totalOrders}</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span>Most Popular:</span>
+                        <span className="font-bold">{ordersSummary.mostPopular || "N/A"}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-green-900">Order Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                      {Object.entries(ordersSummary.dishCounts || {}).map(([dish, count]) => (
+                        <div key={dish} className="flex justify-between">
+                          <span>{dish}:</span>
+                          <span className="font-bold">{count}x</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Individual Orders</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dish Image</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {ordersSummary.orders?.map((order: any, index: number) => (
+                            <tr key={index}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {order.userName} {order.userLastName}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                {order.dishImagePath && (
+                                  <img 
+                                    src={order.dishImagePath} 
+                                    alt="Dish"
+                                    className="h-12 w-12 object-cover rounded"
+                                  />
+                                )}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">{order.quantity}</td>
+                              <td className="px-6 py-4 text-sm text-gray-500">
+                                {new Date(order.createdAt).toLocaleTimeString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="flex flex-wrap gap-4">
+                  <Button 
+                    className="bg-blue-600 text-white hover:bg-blue-700"
+                    onClick={handleCreateOrder}
+                    disabled={isCreatingOrder || !ordersSummary || ordersSummary.totalOrders === 0}
+                  >
+                    {isCreatingOrder ? "Processing..." : "Create Order"}
+                  </Button>
+                  <Button 
+                    className="bg-accent text-white hover:bg-teal-600"
+                    onClick={handleSendToRestaurant}
+                    disabled={Object.keys(processedImages).length === 0}
+                  >
+                    Send to Restaurant
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={handleExportReport}
+                  >
+                    Export Report
+                  </Button>
+                </div>
+
+                {/* Показываем превью обработанных изображений */}
+                {Object.keys(processedImages).length > 0 && (
+                  <Card className="mt-6">
+                    <CardHeader>
+                      <CardTitle>Processed Images Preview</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {Object.entries(processedImages).map(([dishKey, imageData]) => (
+                          <div key={dishKey} className="text-center">
+                            <img 
+                              src={imageData}
+                              alt={dishKey}
+                              className="w-full h-32 object-cover rounded-lg mb-2"
+                            />
+                            <p className="text-sm font-medium">{dishKey}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="users">
