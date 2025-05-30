@@ -121,6 +121,7 @@ export default function Dashboard() {
         title: "Order Created",
         description: "Order has been successfully created and processed.",
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
     },
     onError: (error) => {
       toast({
@@ -144,6 +145,7 @@ export default function Dashboard() {
         title: "Sent to Restaurant",
         description: "Order has been successfully sent to the restaurant.",
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
     },
     onError: (error) => {
       toast({
@@ -157,7 +159,14 @@ export default function Dashboard() {
   // Export Report functionality
   const exportReportMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("GET", `/api/admin/export-report?date=${today}`);
+      const response = await fetch(`/api/admin/export-report?date=${today}`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       return response.blob();
     },
     onSuccess: (blob) => {
