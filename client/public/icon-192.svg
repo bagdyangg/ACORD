@@ -1,0 +1,8 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="192" height="192" rx="24" fill="#6366f1"/>
+<path d="M48 64H144V80H48V64Z" fill="white"/>
+<path d="M48 96H144V112H48V96Z" fill="white"/>
+<path d="M48 128H112V144H48V128Z" fill="white"/>
+<circle cx="160" cy="136" r="16" fill="#f59e0b"/>
+<text x="96" y="50" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="white">ACORD</text>
+</svg>
