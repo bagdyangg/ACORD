@@ -36,8 +36,8 @@ export default function Admin() {
   
   const today = new Date().toISOString().split('T')[0];
 
-  // Check if user is admin
-  if (user?.role !== "admin") {
+  // Check if user is admin or superadmin
+  if (user?.role !== "admin" && user?.role !== "superadmin") {
     return (
       <div className="min-h-screen bg-neutral">
         <Navigation />
