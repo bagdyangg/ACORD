@@ -109,106 +109,129 @@ export default function Dashboard() {
   });
 
   // Create Order functionality
-  const createOrderMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/admin/create-order", {
-        date: today,
+  const handleCreateOrder = async () => {
+    try {
+      const response = await fetch('/api/admin/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ date: today }),
       });
-      return response.json();
-    },
-    onSuccess: () => {
+
+      if (!response.ok) {
+        throw new Error('Failed to create order');
+      }
+
+      const result = await response.json();
       alert("Order Created Successfully!");
       toast({
-        title: "Order Created",
-        description: "Order has been successfully created and processed.",
+        title: "Order created successfully",
+        description: result.message || "Order has been processed successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
-    },
-    onError: (error) => {
+    } catch (error) {
+      console.error("Error creating order:", error);
       toast({
-        title: "Create Order Failed",
-        description: error.message,
+        title: "Error creating order",
+        description: "Failed to create order",
         variant: "destructive",
       });
-    },
-  });
+    }
+  };
 
   // Send to Restaurant functionality
-  const sendToRestaurantMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/admin/send-to-restaurant", {
-        date: today,
+  const handleSendToRestaurant = async () => {
+    try {
+      const response = await fetch('/api/admin/send-to-restaurant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ date: today }),
       });
-      return response.json();
-    },
-    onSuccess: () => {
+
+      if (!response.ok) {
+        throw new Error('Failed to send to restaurant');
+      }
+
+      const result = await response.json();
       alert("Sent to Restaurant Successfully!");
       toast({
-        title: "Sent to Restaurant",
-        description: "Order has been successfully sent to the restaurant.",
+        title: "Sent to restaurant",
+        description: result.message || "Order has been sent successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
-    },
-    onError: (error) => {
+    } catch (error) {
+      console.error("Error sending to restaurant:", error);
       toast({
-        title: "Send Failed",
-        description: error.message,
+        title: "Error sending to restaurant",
+        description: "Failed to send order",
         variant: "destructive",
       });
-    },
-  });
+    }
+  };
 
   // Export Report functionality
-  const exportReportMutation = useMutation({
-    mutationFn: async () => {
-      console.log("Starting export report for date:", today);
-      const response = await fetch(`/api/admin/export-report?date=${today}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Accept': 'text/csv,application/octet-stream',
-        }
-      });
-      
-      console.log("Export response status:", response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Export error:", errorText);
-        throw new Error(`Export failed: ${response.status} - ${errorText}`);
-      }
-      
-      const blob = await response.blob();
-      console.log("Export blob size:", blob.size);
-      return blob;
-    },
-    onSuccess: (blob) => {
-      console.log("Export successful, downloading file");
-      alert("Export Report Successfully!");
-      // Download the CSV file
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `order-report-${today}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
+  const handleExportReport = () => {
+    if (!detailedOrdersData || detailedOrdersData.length === 0) {
       toast({
-        title: "Report Exported",
-        description: "Order report has been downloaded successfully.",
-      });
-    },
-    onError: (error) => {
-      console.error("Export mutation error:", error);
-      toast({
-        title: "Export Failed",
-        description: error.message,
+        title: "No data to export",
+        description: "Please select a date with orders first",
         variant: "destructive",
       });
-    },
-  });
+      return;
+    }
+
+    try {
+      // Create CSV content
+      const csvHeaders = ['firstName', 'lastName', 'username', 'dishId', 'quantity', 'timestamp'];
+      const csvData = [csvHeaders.join(',')];
+
+      detailedOrdersData.forEach((order: any) => {
+        const row = [
+          order.userName || '',
+          order.userLastName || '',
+          order.userUsername || '',
+          order.dishId || '',
+          order.quantity || '',
+          order.createdAt || ''
+        ];
+        csvData.push(row.join(','));
+      });
+
+      // Create and download file
+      const csvContent = csvData.join('\n');
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `orders_report_${today}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      alert("Export Report Successfully!");
+      toast({
+        title: "Report exported",
+        description: "Orders report has been downloaded successfully",
+      });
+    } catch (error) {
+      console.error("Error exporting report:", error);
+      toast({
+        title: "Export failed",
+        description: "Failed to export report",
+        variant: "destructive",
+      });
+    }
+  };
 
   const toggleDishSelection = (dishId: number) => {
     setSelectedDishes(prev => {
@@ -614,25 +637,25 @@ export default function Dashboard() {
         <div className="flex flex-wrap gap-4">
           <Button 
             className="bg-blue-600 text-white hover:bg-blue-700"
-            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0 || createOrderMutation.isPending}
-            onClick={() => createOrderMutation.mutate()}
+            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0}
+            onClick={handleCreateOrder}
           >
-            {createOrderMutation.isPending ? "Creating..." : "Create Order"}
+            Create Order
           </Button>
           <Button 
             style={{ backgroundColor: '#0d9488', color: 'white' }}
             className="hover:bg-teal-700 border-0"
-            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0 || sendToRestaurantMutation.isPending}
-            onClick={() => sendToRestaurantMutation.mutate()}
+            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0}
+            onClick={handleSendToRestaurant}
           >
-            {sendToRestaurantMutation.isPending ? "Sending..." : "Send to Restaurant"}
+            Send to Restaurant
           </Button>
           <Button 
             variant="outline"
-            disabled={!ordersSummary || (ordersSummary as any).totalOrders === 0 || exportReportMutation.isPending}
-            onClick={() => exportReportMutation.mutate()}
+            disabled={!detailedOrdersData || detailedOrdersData.length === 0}
+            onClick={handleExportReport}
           >
-            {exportReportMutation.isPending ? "Exporting..." : "Export Report"}
+            Export Report
           </Button>
         </div>
       </div>
