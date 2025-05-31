@@ -269,12 +269,29 @@ export default function Admin() {
       return;
     }
 
-    const formData = new FormData();
-    selectedImages.forEach((file) => {
-      formData.append("images", file);
-    });
+    // Upload images one by one since backend expects single file uploads
+    let successCount = 0;
+    for (const file of selectedImages) {
+      try {
+        const formData = new FormData();
+        formData.append("image", file);
+        formData.append("date", today);
+        
+        await uploadMutation.mutateAsync(formData);
+        successCount++;
+      } catch (error) {
+        console.error(`Failed to upload ${file.name}:`, error);
+      }
+    }
 
-    uploadMutation.mutate(formData);
+    if (successCount > 0) {
+      toast({
+        title: "Upload completed",
+        description: `${successCount} out of ${selectedImages.length} images uploaded successfully`,
+      });
+      setSelectedImages([]);
+      setUploadProgress(0);
+    }
   };
 
   const handleSelectDish = (dishId: number) => {
