@@ -573,16 +573,10 @@ export default function Dashboard() {
       {ordersSummary && (
         <div className="mb-8 bg-white rounded-lg shadow p-6">
           <h3 className="text-xl font-semibold mb-4">Today's Order Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{(ordersSummary as any).totalOrders || 0}</div>
               <div className="text-sm text-gray-600">Total Orders</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold text-green-600">
-                {(ordersSummary as any).mostPopular?.imagePath ? 'Available' : 'No orders yet'}
-              </div>
-              <div className="text-sm text-gray-600">Most Popular</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-semibold text-purple-600">
@@ -643,16 +637,10 @@ export default function Dashboard() {
       {ordersSummary && (
         <div className="bg-white rounded-lg shadow p-6">
           <h4 className="text-xl font-semibold mb-4 text-green-900">Today's Orders</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{(ordersSummary as any).totalOrders || 0}</div>
               <div className="text-sm text-gray-600">Total Orders</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold text-green-600">
-                {(ordersSummary as any).mostPopular?.imagePath ? 'Available' : 'No orders yet'}
-              </div>
-              <div className="text-sm text-gray-600">Most Popular</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-semibold text-purple-600">
