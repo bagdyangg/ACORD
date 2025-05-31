@@ -104,10 +104,10 @@ export default function Admin() {
       }
       return response.json();
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       toast({
         title: "Success",
-        description: `${result.count} images uploaded successfully!`,
+        description: "Images uploaded successfully!",
       });
       setSelectedImages([]);
       setUploadProgress(0);
