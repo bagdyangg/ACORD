@@ -120,7 +120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/dishes", isAuthenticated, upload.array("images", 10), async (req: any, res) => {
+  app.post("/api/dishes", isAuthenticated, upload.single("image"), async (req: any, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -132,24 +132,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
-        return res.status(400).json({ message: "At least one image is required" });
+      if (!req.file) {
+        return res.status(400).json({ message: "Image is required" });
       }
 
-      const date = req.body.date || new Date().toISOString().split('T')[0];
-      const createdDishes = [];
+      const dishData = insertDishSchema.parse({
+        imagePath: `/uploads/${req.file.filename}`,
+        date: req.body.date || new Date().toISOString().split('T')[0],
+      });
 
-      for (const file of req.files) {
-        const dishData = insertDishSchema.parse({
-          imagePath: `/uploads/${file.filename}`,
-          date: date,
-        });
-
-        const dish = await storage.createDish(dishData);
-        createdDishes.push(dish);
-      }
-
-      res.status(201).json({ dishes: createdDishes, count: createdDishes.length });
+      const dish = await storage.createDish(dishData);
+      res.status(201).json(dish);
     } catch (error) {
       console.error("Error creating dish:", error);
       res.status(400).json({ message: error instanceof Error ? error.message : "Failed to create dish" });
