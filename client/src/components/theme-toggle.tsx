@@ -18,8 +18,10 @@ export default function ThemeToggle() {
   const updateTheme = (dark: boolean) => {
     if (dark) {
       document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
     }
   };
 
