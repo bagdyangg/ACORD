@@ -17,6 +17,8 @@ export function getSession() {
     });
   }
   
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   return session({
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-change-in-production',
     store: sessionStore,
@@ -24,8 +26,8 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // Отключаем secure для разработки
-      sameSite: 'none', // Более мягкая настройка
+      secure: isProduction, // Use secure cookies in production
+      sameSite: isProduction ? 'lax' : 'lax', // Use lax for better compatibility
       maxAge: sessionTtl,
     },
   });

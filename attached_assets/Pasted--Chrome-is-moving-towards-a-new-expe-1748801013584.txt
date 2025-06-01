@@ -1,0 +1,37 @@
+
+                
+          
+          
+          
+         Chrome is moving towards a new experience that allows users to choose to browse without third-party cookies.
+index-CH2P12Zw.js:171 Router state: {isAuthenticated: false, isLoading: true, user: undefined, error: null}error: nullisAuthenticated: falseisLoading: trueuser: undefined[[Prototype]]: Object
+index-CH2P12Zw.js:171 SW registered:  ServiceWorkerRegistration {installing: null, waiting: null, active: ServiceWorker, navigationPreload: NavigationPreloadManager, scope: 'https://acord.replit.app/', …}active: ServiceWorker {scriptURL: 'https://acord.replit.app/sw.js', state: 'activated', onstatechange: null, onerror: null}backgroundFetch: BackgroundFetchManager {}cookies: CookieStoreManager {}installing: nullnavigationPreload: NavigationPreloadManager {}onupdatefound: nullpaymentManager: PaymentManager {userHint: ''}periodicSync: PeriodicSyncManager {}pushManager: PushManager {}scope: "https://acord.replit.app/"sync: SyncManager {}updateViaCache: "imports"waiting: null[[Prototype]]: ServiceWorkerRegistration
+index-CH2P12Zw.js:128 
+            
+            
+           GET https://acord.replit.app/api/auth/user 401 (Unauthorized)
+queryFn @ index-CH2P12Zw.js:128
+s @ index-CH2P12Zw.js:48
+S @ index-CH2P12Zw.js:48
+start @ index-CH2P12Zw.js:48
+fetch @ index-CH2P12Zw.js:48
+vs @ index-CH2P12Zw.js:48
+onSubscribe @ index-CH2P12Zw.js:48
+subscribe @ index-CH2P12Zw.js:48
+(anonymous) @ index-CH2P12Zw.js:48
+Um @ index-CH2P12Zw.js:38
+Bl @ index-CH2P12Zw.js:40
+go @ index-CH2P12Zw.js:40
+dp @ index-CH2P12Zw.js:40
+cr @ index-CH2P12Zw.js:38
+r1 @ index-CH2P12Zw.js:40
+gr @ index-CH2P12Zw.js:40
+xv @ index-CH2P12Zw.js:40
+b @ index-CH2P12Zw.js:25
+_ @ index-CH2P12Zw.js:25
+index-CH2P12Zw.js:171 Router state: {isAuthenticated: false, isLoading: false, user: null, error: null}
+acord.replit.app/:1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+acord.replit.app/:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+acord.replit.app/:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+acord.replit.app/:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+acord.replit.app/:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
