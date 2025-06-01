@@ -213,6 +213,7 @@ export default function Admin() {
         title: "Success",
         description: "User role updated successfully",
       });
+      setEditingUser(null);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
     onError: (error: any) => {
