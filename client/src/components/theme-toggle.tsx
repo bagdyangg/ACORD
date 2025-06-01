@@ -19,8 +19,8 @@ export default function ThemeToggle() {
     if (dark) {
       document.documentElement.classList.add('dark');
       document.body.classList.add('dark');
-      document.body.style.backgroundColor = '#111827';
-      document.body.style.color = '#f9fafb';
+      document.body.style.backgroundColor = '#1f2937'; // Темно-серый вместо черного
+      document.body.style.color = '#f3f4f6';
     } else {
       document.documentElement.classList.remove('dark');
       document.body.classList.remove('dark');
