@@ -340,6 +340,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/orders", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
+      const date = req.query.date as string;
+      const orderDate = date || new Date().toISOString().split('T')[0];
+      
+      // Delete user's orders for the specified date
+      const success = await storage.deleteUserOrdersForDate(userId, orderDate);
+      
+      if (!success) {
+        return res.status(404).json({ message: "No orders found to delete" });
+      }
+      
+      res.json({ message: "Orders deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting orders:", error);
+      res.status(500).json({ message: "Failed to delete orders" });
+    }
+  });
+
   // Admin routes
   app.get("/api/admin/orders", isAuthenticated, async (req: any, res) => {
     try {

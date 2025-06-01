@@ -9,13 +9,19 @@ interface OrderSummaryProps {
   onConfirm: () => void;
   isLoading: boolean;
   onRemoveDish: (dishId: number) => void;
+  onDeleteOrder?: () => void;
+  hasExistingOrder?: boolean;
+  isDeleting?: boolean;
 }
 
 export default function OrderSummary({ 
   selectedDishes, 
   onConfirm, 
   isLoading, 
-  onRemoveDish 
+  onRemoveDish,
+  onDeleteOrder,
+  hasExistingOrder = false,
+  isDeleting = false
 }: OrderSummaryProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg md:relative md:border-0 md:shadow-none md:bg-transparent md:p-0">
@@ -65,13 +71,31 @@ export default function OrderSummary({
             </div>
             
             <div className="border-t pt-4">
-              <Button 
-                onClick={onConfirm}
-                disabled={selectedDishes.length === 0 || isLoading}
-                className="w-full bg-primary text-white py-3 px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                {isLoading ? "Confirming..." : `Confirm Order (${selectedDishes.length} dishes)`}
-              </Button>
+              {selectedDishes.length > 0 ? (
+                <Button 
+                  onClick={onConfirm}
+                  disabled={isLoading}
+                  className="w-full bg-primary text-white py-3 px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
+                >
+                  {isLoading ? "Confirming..." : `Confirm Order (${selectedDishes.length} dishes)`}
+                </Button>
+              ) : hasExistingOrder && onDeleteOrder ? (
+                <Button 
+                  onClick={onDeleteOrder}
+                  disabled={isDeleting}
+                  variant="destructive"
+                  className="w-full py-3 px-6 rounded-lg font-semibold transition-colors"
+                >
+                  {isDeleting ? "Deleting Order..." : "Delete My Order"}
+                </Button>
+              ) : (
+                <Button 
+                  disabled
+                  className="w-full py-3 px-6 rounded-lg font-semibold bg-gray-300 cursor-not-allowed"
+                >
+                  Select dishes to order
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

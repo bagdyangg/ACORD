@@ -131,6 +131,40 @@ export default function Dashboard() {
     },
   });
 
+  // Delete order mutation
+  const deleteOrderMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(`/api/orders?date=${today}`, {
+        method: "DELETE",
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Order deleted",
+        description: "Your lunch order has been cancelled successfully.",
+      });
+      // Clear selected dishes and refresh data
+      setSelectedDishes([]);
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/detailed-orders"] });
+      
+      // Also manually refetch to ensure fresh data
+      refetchOrdersSummary();
+      if (isAdmin && activeTab === "all-orders") {
+        refetchDetailedOrders();
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Delete failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Create Order functionality - copied from working Admin Panel
   const handleCreateOrder = async () => {
     if (!ordersSummary || !ordersSummary.orders || ordersSummary.orders.length === 0) {
@@ -814,6 +848,9 @@ export default function Dashboard() {
           onConfirm={confirmOrder}
           isLoading={orderMutation.isPending}
           onRemoveDish={(dishId) => setSelectedDishes(prev => prev.filter(id => id !== dishId))}
+          onDeleteOrder={() => deleteOrderMutation.mutate()}
+          hasExistingOrder={existingOrders.length > 0}
+          isDeleting={deleteOrderMutation.isPending}
         />
       )}
     </div>
