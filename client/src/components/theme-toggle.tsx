@@ -19,9 +19,13 @@ export default function ThemeToggle() {
     if (dark) {
       document.documentElement.classList.add('dark');
       document.body.classList.add('dark');
+      document.body.style.backgroundColor = '#111827';
+      document.body.style.color = '#f9fafb';
     } else {
       document.documentElement.classList.remove('dark');
       document.body.classList.remove('dark');
+      document.body.style.backgroundColor = '';
+      document.body.style.color = '';
     }
   };
 
