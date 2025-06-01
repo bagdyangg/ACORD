@@ -159,3 +159,46 @@ html.dark body,
 .dark .text-gray-600 {
   color: #d1d5db !important; /* Более светлый серый для вторичного текста */
 }
+
+/* Кнопки и интерактивные элементы в темной теме */
+.dark button {
+  background-color: #374151 !important;
+  color: #f3f4f6 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .bg-primary {
+  background-color: #3b82f6 !important;
+}
+
+.dark .bg-secondary {
+  background-color: #374151 !important;
+}
+
+.dark .bg-destructive {
+  background-color: #dc2626 !important;
+}
+
+.dark .border {
+  border-color: #4b5563 !important;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #374151 !important;
+  color: #f3f4f6 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .text-black {
+  color: #f3f4f6 !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #374151 !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #4b5563 !important;
+}
