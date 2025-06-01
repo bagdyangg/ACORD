@@ -40,6 +40,7 @@ export interface IStorage {
   // Admin operations
   getOrdersSummary(date: string): Promise<any>;
   getAllUsers(): Promise<User[]>;
+  clearTodayData(date: string): Promise<{ ordersCleared: number; dishesCleared: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -216,6 +217,28 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async clearTodayData(date: string): Promise<{ ordersCleared: number; dishesCleared: number }> {
+    try {
+      // Delete all orders for the specified date
+      const ordersResult = await db.delete(orders)
+        .where(sql`DATE(${orders.createdAt}) = ${date}`)
+        .returning();
+
+      // Delete all dishes for the specified date
+      const dishesResult = await db.delete(dishes)
+        .where(sql`DATE(${dishes.createdAt}) = ${date}`)
+        .returning();
+
+      return {
+        ordersCleared: ordersResult.length,
+        dishesCleared: dishesResult.length
+      };
+    } catch (error) {
+      console.error("Error clearing today's data:", error);
+      throw error;
+    }
   }
 }
 

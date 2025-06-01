@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, UserPlus, Upload, FileText, Download } from "lucide-react";
+import { X, UserPlus, Upload, FileText, Download, Calendar, Trash2, AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
 import type { User, Dish } from "@shared/schema";
 
@@ -271,6 +271,34 @@ export default function Admin() {
       toast({
         title: "Import Failed",
         description: error.message || "Failed to import users",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Clear today's data mutation
+  const clearTodayDataMutation = useMutation({
+    mutationFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      return await apiRequest("/api/admin/clear-today", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: today }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Данные очищены",
+        description: "Все блюда и заказы за сегодня удалены. Можете загружать новое меню.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/dishes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось очистить данные",
         variant: "destructive",
       });
     },
@@ -724,6 +752,12 @@ export default function Admin() {
         id: editingUser.id,
         userData: editForm
       });
+    }
+  };
+
+  const handleNewDaySetup = () => {
+    if (window.confirm("Это действие удалит все блюда и заказы за сегодня. Вы уверены?")) {
+      clearTodayDataMutation.mutate();
     }
   };
 

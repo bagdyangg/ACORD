@@ -507,7 +507,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clear today's data endpoint
+  app.delete("/api/admin/clear-today", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
+      
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
 
+      const { date } = req.body;
+      if (!date) {
+        return res.status(400).json({ message: "Date is required" });
+      }
+
+      // Clear all orders and dishes for the specified date
+      const cleared = await storage.clearTodayData(date);
+      
+      res.json({ 
+        message: "Today's data cleared successfully",
+        clearedOrders: cleared.ordersCleared,
+        clearedDishes: cleared.dishesCleared,
+        date: date
+      });
+    } catch (error) {
+      console.error("Error clearing today's data:", error);
+      res.status(500).json({ message: "Failed to clear today's data" });
+    }
+  });
 
   // Create order endpoint
   app.post("/api/admin/create-order", isAuthenticated, async (req: any, res) => {
