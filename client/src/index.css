@@ -139,23 +139,23 @@
 html.dark,
 html.dark body,
 .dark {
-  background-color: #111827 !important;
-  color: #f9fafb !important;
+  background-color: #1f2937 !important; /* Темно-серый вместо черного */
+  color: #f3f4f6 !important;
 }
 
 .dark .bg-neutral,
 .dark .min-h-screen {
-  background-color: #111827 !important;
+  background-color: #1f2937 !important; /* Темно-серый основной фон */
 }
 
 .dark .bg-white {
-  background-color: #1f2937 !important;
+  background-color: #374151 !important; /* Серый для карточек */
 }
 
 .dark .text-gray-900 {
-  color: #f9fafb !important;
+  color: #f3f4f6 !important; /* Светло-серый текст */
 }
 
 .dark .text-gray-600 {
-  color: #9ca3af !important;
+  color: #d1d5db !important; /* Более светлый серый для вторичного текста */
 }
