@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("my-orders");
   const [processedImages, setProcessedImages] = useState<{ [key: string]: string }>({});
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [orderViewMode, setOrderViewMode] = useState<'dishes' | 'people'>('dishes');
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -709,145 +710,164 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Orders by Dish - Detailed Table */}
+      {/* Orders Analysis - Combined View */}
       {ordersSummary && (ordersSummary as any).orders && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h4 className="text-xl font-semibold mb-4">Orders by Dish</h4>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dish Image</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employees</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {(() => {
-                  // Group orders by dish
-                  const groupedOrders: { [key: string]: { count: number; employees: string[]; dish: any } } = {};
-                  
-                  (ordersSummary as any).orders?.forEach((order: any) => {
-                    const dishKey = `dish_${order.dishId}`;
-                    if (!groupedOrders[dishKey]) {
-                      const dish = dishes.find((d: any) => d.id === order.dishId);
-                      groupedOrders[dishKey] = { 
-                        count: 0, 
-                        employees: [], 
-                        dish: dish 
-                      };
-                    }
-                    groupedOrders[dishKey].count += order.quantity;
-                    groupedOrders[dishKey].employees.push(`${order.userName} ${order.userLastName} (${order.quantity}x)`);
-                  });
-
-                  return Object.entries(groupedOrders).map(([dishKey, data]) => (
-                    <tr key={dishKey}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {data.dish && (
-                          <img 
-                            src={data.dish.imagePath} 
-                            alt="Dish"
-                            className="h-16 w-16 object-cover rounded"
-                          />
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-bold text-gray-900">
-                        {data.count}x
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        <div className="space-y-1">
-                          {data.employees.map((employee, index) => (
-                            <div key={index}>{employee}</div>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  ));
-                })()}
-              </tbody>
-            </table>
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="text-xl font-semibold">Orders Analysis</h4>
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setOrderViewMode('dishes')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  orderViewMode === 'dishes' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                By Dishes
+              </button>
+              <button
+                onClick={() => setOrderViewMode('people')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  orderViewMode === 'people' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                By People
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Orders by People - Detailed Table */}
-      {ordersSummary && (ordersSummary as any).orders && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h4 className="text-xl font-semibold mb-4">Orders by People</h4>
+          
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Dishes</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ordered Dishes</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {(() => {
-                  // Group orders by user
-                  const groupedByUser: { [key: string]: { count: number; dishes: any[]; user: any } } = {};
-                  
-                  (ordersSummary as any).orders?.forEach((order: any) => {
-                    const userKey = `${order.userName}_${order.userLastName}`;
-                    if (!groupedByUser[userKey]) {
-                      groupedByUser[userKey] = { 
-                        count: 0, 
-                        dishes: [],
-                        user: {
-                          firstName: order.userName,
-                          lastName: order.userLastName,
-                          username: order.userUsername
-                        }
-                      };
-                    }
-                    groupedByUser[userKey].count += order.quantity;
+            {orderViewMode === 'dishes' ? (
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dish Image</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employees</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {(() => {
+                    // Group orders by dish
+                    const groupedOrders: { [key: string]: { count: number; employees: string[]; dish: any } } = {};
                     
-                    // Find dish details
-                    const dish = dishes.find((d: any) => d.id === order.dishId);
-                    if (dish) {
-                      groupedByUser[userKey].dishes.push({
-                        dish: dish,
-                        quantity: order.quantity
-                      });
-                    }
-                  });
+                    (ordersSummary as any).orders?.forEach((order: any) => {
+                      const dishKey = `dish_${order.dishId}`;
+                      if (!groupedOrders[dishKey]) {
+                        const dish = dishes.find((d: any) => d.id === order.dishId);
+                        groupedOrders[dishKey] = { 
+                          count: 0, 
+                          employees: [], 
+                          dish: dish 
+                        };
+                      }
+                      groupedOrders[dishKey].count += order.quantity;
+                      groupedOrders[dishKey].employees.push(`${order.userName} ${order.userLastName} (${order.quantity}x)`);
+                    });
 
-                  return Object.entries(groupedByUser).map(([userKey, data]) => (
-                    <tr key={userKey}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {data.user.firstName} {data.user.lastName}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          @{data.user.username}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm font-bold text-gray-900">
-                        {data.count} dishes
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                          {data.dishes.map((item, index) => (
-                            <div key={index} className="flex items-center space-x-2 bg-gray-50 rounded p-2">
-                              {item.dish && (
-                                <img 
-                                  src={item.dish.imagePath} 
-                                  alt="Dish"
-                                  className="h-8 w-8 object-cover rounded"
-                                />
-                              )}
-                              <span className="text-xs font-medium">{item.quantity}x</span>
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  ));
-                })()}
-              </tbody>
-            </table>
+                    return Object.entries(groupedOrders).map(([dishKey, data]) => (
+                      <tr key={dishKey}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {data.dish && (
+                            <img 
+                              src={data.dish.imagePath} 
+                              alt="Dish"
+                              className="h-16 w-16 object-cover rounded"
+                            />
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-bold text-gray-900">
+                          {data.count}x
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          <div className="space-y-1">
+                            {data.employees.map((employee, index) => (
+                              <div key={index}>{employee}</div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    ));
+                  })()}
+                </tbody>
+              </table>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Dishes</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ordered Dishes</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {(() => {
+                    // Group orders by user
+                    const groupedByUser: { [key: string]: { count: number; dishes: any[]; user: any } } = {};
+                    
+                    (ordersSummary as any).orders?.forEach((order: any) => {
+                      const userKey = `${order.userName}_${order.userLastName}`;
+                      if (!groupedByUser[userKey]) {
+                        groupedByUser[userKey] = { 
+                          count: 0, 
+                          dishes: [],
+                          user: {
+                            firstName: order.userName,
+                            lastName: order.userLastName,
+                            username: order.userUsername
+                          }
+                        };
+                      }
+                      groupedByUser[userKey].count += order.quantity;
+                      
+                      // Find dish details
+                      const dish = dishes.find((d: any) => d.id === order.dishId);
+                      if (dish) {
+                        groupedByUser[userKey].dishes.push({
+                          dish: dish,
+                          quantity: order.quantity
+                        });
+                      }
+                    });
+
+                    return Object.entries(groupedByUser).map(([userKey, data]) => (
+                      <tr key={userKey}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            {data.user.firstName} {data.user.lastName}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            @{data.user.username}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm font-bold text-gray-900">
+                          {data.count} dishes
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                            {data.dishes.map((item, index) => (
+                              <div key={index} className="flex items-center space-x-2 bg-gray-50 rounded p-2">
+                                {item.dish && (
+                                  <img 
+                                    src={item.dish.imagePath} 
+                                    alt="Dish"
+                                    className="h-8 w-8 object-cover rounded"
+                                  />
+                                )}
+                                <span className="text-xs font-medium">{item.quantity}x</span>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    ));
+                  })()}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}
