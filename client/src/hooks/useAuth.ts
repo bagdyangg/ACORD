@@ -1,18 +1,28 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import type { User } from "@shared/schema";
 
 export function useAuth() {
-  const { data: user, isLoading, error } = useQuery<User | null>({
+  const [hasInitialized, setHasInitialized] = useState(false);
+  
+  const { data: user, isLoading, error, isSuccess } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
-    retry: false,
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Don't cache (replaces cacheTime in v5)
-    refetchOnMount: true, // Refetch when component mounts
-    refetchOnWindowFocus: true, // Refetch when window gets focus
+    retry: (failureCount, error) => {
+      // Only retry if it's not a 401 (unauthorized)
+      return failureCount < 2 && error.message !== "401";
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes  
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       try {
         const response = await fetch("/api/auth/user", {
           credentials: "include",
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
         });
         
         if (response.status === 401) {
@@ -21,7 +31,7 @@ export function useAuth() {
         
         if (!response.ok) {
           console.error("Auth fetch failed:", response.status, response.statusText);
-          throw new Error(`HTTP ${response.status}`);
+          throw new Error(response.status.toString());
         }
         
         const userData = await response.json();
@@ -29,15 +39,25 @@ export function useAuth() {
         return userData;
       } catch (error) {
         console.error("Auth query error:", error);
-        return null;
+        if (error instanceof Error && error.message === "401") {
+          return null;
+        }
+        throw error;
       }
     },
   });
 
+  // Mark as initialized after first successful query
+  useEffect(() => {
+    if ((isSuccess || error) && !hasInitialized) {
+      setHasInitialized(true);
+    }
+  }, [isSuccess, error, hasInitialized]);
+
   return {
     user,
-    isLoading,
-    isAuthenticated: !!user,
+    isLoading: isLoading || !hasInitialized,
+    isAuthenticated: !!user && hasInitialized,
     error,
   };
 }

@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useState } from "react";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Admin from "@/pages/admin";
@@ -11,13 +12,25 @@ import NotFound from "@/pages/not-found";
 
 function Router() {
   const { isAuthenticated, isLoading, user, error } = useAuth();
+  const [forceRender, setForceRender] = useState(0);
 
   console.log("Router state:", { isAuthenticated, isLoading, user, error });
 
+  // Force re-render when authentication state changes
+  useEffect(() => {
+    if (!isLoading) {
+      setForceRender(prev => prev + 1);
+    }
+  }, [isAuthenticated, isLoading]);
+
+  // Extended loading time to ensure proper state resolution
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -27,33 +40,42 @@ function Router() {
     console.error("Authentication error:", error);
   }
 
+  // Clear render key to force component refresh
+  const renderKey = `${isAuthenticated ? 'auth' : 'noauth'}-${forceRender}`;
+
   // If there's an authentication error and we're not loading, show login
   if (!isLoading && !isAuthenticated) {
     return (
-      <Switch>
-        <Route path="/" component={Login} />
-        <Route component={Login} />
-      </Switch>
+      <div key={renderKey}>
+        <Switch>
+          <Route path="/" component={Login} />
+          <Route component={Login} />
+        </Switch>
+      </div>
     );
   }
 
   // If authenticated, show protected routes
   if (!isLoading && isAuthenticated) {
     return (
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/admin" component={Admin} />
-        <Route component={NotFound} />
-      </Switch>
+      <div key={renderKey}>
+        <Switch>
+          <Route path="/" component={Dashboard} />
+          <Route path="/admin" component={Admin} />
+          <Route component={NotFound} />
+        </Switch>
+      </div>
     );
   }
 
   // Fallback for any other state
   return (
-    <Switch>
-      <Route path="/" component={Login} />
-      <Route component={Login} />
-    </Switch>
+    <div key="fallback">
+      <Switch>
+        <Route path="/" component={Login} />
+        <Route component={Login} />
+      </Switch>
+    </div>
   );
 }
 
