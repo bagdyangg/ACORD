@@ -601,7 +601,7 @@ export default function Dashboard() {
 
   if (dishesLoading) {
     return (
-      <div className="min-h-screen bg-neutral">
+      <div className="min-h-screen bg-neutral dark:bg-gray-900">
         <Navigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -629,7 +629,7 @@ export default function Dashboard() {
       {/* Header Section */}
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-secondary mb-2">Today's Menu</h2>
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-gray-300">
           Select your lunch preferences for <span className="font-semibold">{formatDate(today)}</span>
         </p>
         <div className="mt-4">
@@ -906,7 +906,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-neutral">
+    <div className="min-h-screen bg-neutral dark:bg-gray-900">
       <Navigation />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32 md:pb-8">
