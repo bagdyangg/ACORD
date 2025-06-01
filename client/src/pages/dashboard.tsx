@@ -683,30 +683,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Order Summary Grid */}
-          {(ordersSummary as any).dishCounts && Object.keys((ordersSummary as any).dishCounts).length > 0 && (
-            <div className="mb-6">
-              <h5 className="font-semibold text-lg mb-3 text-green-900">Order Summary</h5>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {Object.entries((ordersSummary as any).dishCounts).map(([dishKey, count]: [string, any]) => {
-                  const dishId = dishKey.replace('dish_', '');
-                  const dish = dishes.find((d: any) => d.id.toString() === dishId);
-                  return (
-                    <div key={dishKey} className="text-center">
-                      {dish && (
-                        <img 
-                          src={dish.imagePath} 
-                          alt="Dish"
-                          className="w-full h-24 object-cover rounded-lg mb-2"
-                        />
-                      )}
-                      <span className="font-bold text-lg">{count}x</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+
         </div>
       )}
 
