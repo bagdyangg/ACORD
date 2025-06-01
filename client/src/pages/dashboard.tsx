@@ -668,7 +668,18 @@ export default function Dashboard() {
       {/* Today's Orders Summary */}
       {ordersSummary && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h4 className="text-xl font-semibold mb-4 text-green-900">Today's Orders</h4>
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="text-xl font-semibold text-green-900">Today's Orders</h4>
+            <Button
+              onClick={handleManualRefresh}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{(ordersSummary as any).totalOrders || 0}</div>
