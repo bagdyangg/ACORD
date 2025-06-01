@@ -945,8 +945,8 @@ export default function Dashboard() {
             <img 
               src={enlargedImage} 
               alt="Enlarged dish"
-              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl cursor-pointer"
+              onClick={() => setEnlargedImage(null)}
             />
             <button
               onClick={() => setEnlargedImage(null)}
