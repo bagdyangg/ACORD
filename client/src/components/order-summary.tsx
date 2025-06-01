@@ -36,8 +36,8 @@ export default function OrderSummary({
               </Badge>
             </div>
             
-            {/* Mobile: Show only selected count or compact preview */}
-            <div className="block md:hidden mb-2">
+            {/* Mobile ONLY: Show compact preview */}
+            <div className="md:hidden mb-2">
               {selectedDishes.length === 0 ? (
                 <div className="text-gray-500 text-center py-2">
                   <p className="text-sm">Select dishes from the menu above</p>
@@ -45,7 +45,7 @@ export default function OrderSummary({
               ) : (
                 <div className="flex gap-1 overflow-x-auto py-1">
                   {selectedDishes.slice(0, 4).map((dish, index) => (
-                    <div key={`${dish.id}-${index}`} className="relative flex-shrink-0">
+                    <div key={`mobile-${dish.id}-${index}`} className="relative flex-shrink-0">
                       {dish.imagePath && (
                         <img 
                           src={dish.imagePath} 
@@ -73,7 +73,7 @@ export default function OrderSummary({
               )}
             </div>
 
-            {/* Desktop: Full preview */}
+            {/* Desktop ONLY: Full preview */}
             <div className="hidden md:block space-y-3 mb-4 min-h-[60px]">
               {selectedDishes.length === 0 ? (
                 <div className="text-gray-500 text-center py-4">
@@ -83,7 +83,7 @@ export default function OrderSummary({
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {selectedDishes.map((dish, index) => (
-                    <div key={`${dish.id}-${index}`} className="relative">
+                    <div key={`desktop-${dish.id}-${index}`} className="relative">
                       {dish.imagePath && (
                         <img 
                           src={dish.imagePath} 
