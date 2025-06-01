@@ -546,6 +546,59 @@ export default function Admin() {
     }
   };
 
+  const handleExportUsers = async () => {
+    try {
+      if (!users || users.length === 0) {
+        toast({
+          title: "No users to export",
+          description: "There are no users in the system to export",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create CSV content
+      const headers = ['ID', 'Username', 'First Name', 'Last Name', 'Role', 'Created At'];
+      const csvContent = [
+        headers.join(','),
+        ...users.map(user => [
+          user.id,
+          user.username,
+          user.firstName || '',
+          user.lastName || '',
+          user.role,
+          user.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''
+        ].map(field => `"${field}"`).join(','))
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      toast({
+        title: "Export completed",
+        description: `Exported ${users.length} users to CSV file`,
+      });
+    } catch (error) {
+      console.error("Export error:", error);
+      toast({
+        title: "Export failed",
+        description: "Failed to export users data",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleExportReport = () => {
     if (!ordersSummary || !ordersSummary.orders) {
       toast({
@@ -922,6 +975,14 @@ export default function Admin() {
                     >
                       <Upload className="mr-2 h-4 w-4" />
                       Import CSV
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleExportUsers}
+                      size="sm"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Export CSV
                     </Button>
                   </div>
                 </div>
