@@ -177,7 +177,7 @@ export default function Admin() {
   const updateUserMutation = useMutation({
     mutationFn: async ({ id, userData }: { id: string; userData: any }) => {
       return await apiRequest(`/api/admin/users/${id}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
@@ -194,6 +194,31 @@ export default function Admin() {
       toast({
         title: "Error",
         description: error.message || "Failed to update user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update user role mutation
+  const updateUserRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      return await apiRequest(`/api/admin/users/${userId}/role`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "User role updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user role",
         variant: "destructive",
       });
     },
@@ -623,10 +648,29 @@ export default function Admin() {
 
   const handleUpdateUser = () => {
     if (!editingUser) return;
-    updateUserMutation.mutate({
-      id: editingUser.id,
-      userData: editForm
-    });
+    
+    // Check if only role is being changed
+    const originalUser = editingUser;
+    const isOnlyRoleChange = (
+      editForm.firstName === originalUser.firstName &&
+      editForm.lastName === originalUser.lastName &&
+      editForm.username === originalUser.username &&
+      editForm.role !== originalUser.role
+    );
+    
+    if (isOnlyRoleChange) {
+      // Use role-specific mutation
+      updateUserRoleMutation.mutate({
+        userId: editingUser.id,
+        role: editForm.role
+      });
+    } else {
+      // Use general user update mutation
+      updateUserMutation.mutate({
+        id: editingUser.id,
+        userData: editForm
+      });
+    }
   };
 
   const handleCreateUser = () => {
