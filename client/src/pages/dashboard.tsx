@@ -590,52 +590,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Today's Order Summary for Everyone */}
-      {ordersSummary && (
-        <div className="mb-8 bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-semibold">Today's Order Summary</h3>
-            <Button
-              onClick={handleManualRefresh}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Refresh
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{(ordersSummary as any).totalOrders || 0}</div>
-              <div className="text-sm text-gray-600">Total Orders</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold text-purple-600">
-                {(ordersSummary as any).dishCounts ? Object.keys((ordersSummary as any).dishCounts).length : 0}
-              </div>
-              <div className="text-sm text-gray-600">Different Dishes</div>
-            </div>
-          </div>
-          {(ordersSummary as any).dishCounts && Object.keys((ordersSummary as any).dishCounts).length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-              {Object.entries((ordersSummary as any).dishCounts).map(([dishId, count]: [string, any]) => {
-                const dish = dishes.find(d => d.id.toString() === dishId);
-                return dish ? (
-                  <div key={dishId} className="text-center">
-                    <img 
-                      src={dish.imagePath} 
-                      alt="Dish"
-                      className="w-16 h-16 object-cover rounded-lg mx-auto mb-1"
-                    />
-                    <div className="text-xs font-semibold">{count} orders</div>
-                  </div>
-                ) : null;
-              })}
-            </div>
-          )}
-        </div>
-      )}
+
 
       {/* Menu Grid */}
       {dishes.length === 0 ? (
