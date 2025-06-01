@@ -24,18 +24,57 @@ export default function OrderSummary({
   isDeleting = false
 }: OrderSummaryProps) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg md:relative md:border-0 md:shadow-none md:bg-transparent md:p-0">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg md:relative md:border-0 md:shadow-none md:bg-transparent">
       <div className="max-w-7xl mx-auto">
-        <Card className="border border-gray-100">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-secondary">Your Order</h3>
-              <Badge variant="secondary">
+        <Card className="border border-gray-100 md:border md:border-gray-100">
+          <CardContent className="p-2 md:p-6">
+            {/* Mobile Compact Header */}
+            <div className="flex items-center justify-between mb-2 md:mb-4">
+              <h3 className="text-lg md:text-xl font-semibold text-secondary">Your Order</h3>
+              <Badge variant="secondary" className="text-xs md:text-sm">
                 {selectedDishes.length} {selectedDishes.length === 1 ? "dish" : "dishes"}
               </Badge>
             </div>
             
-            <div className="space-y-3 mb-4 min-h-[60px]">
+            {/* Mobile: Show only selected count or compact preview */}
+            <div className="md:hidden mb-2">
+              {selectedDishes.length === 0 ? (
+                <div className="text-gray-500 text-center py-2">
+                  <p className="text-sm">Select dishes from the menu above</p>
+                </div>
+              ) : (
+                <div className="flex gap-1 overflow-x-auto py-1">
+                  {selectedDishes.slice(0, 4).map((dish, index) => (
+                    <div key={`${dish.id}-${index}`} className="relative flex-shrink-0">
+                      {dish.imagePath && (
+                        <img 
+                          src={dish.imagePath} 
+                          alt={`Selected dish ${index + 1}`}
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-red-500 text-white rounded-full hover:bg-red-600"
+                        onClick={() => onRemoveDish(dish.id)}
+                        aria-label={`Remove dish ${index + 1}`}
+                      >
+                        <X className="h-2 w-2" />
+                      </Button>
+                    </div>
+                  ))}
+                  {selectedDishes.length > 4 && (
+                    <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded text-xs text-gray-600">
+                      +{selectedDishes.length - 4}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop: Full preview */}
+            <div className="hidden md:block space-y-3 mb-4 min-h-[60px]">
               {selectedDishes.length === 0 ? (
                 <div className="text-gray-500 text-center py-4">
                   <UtensilsCrossed className="h-8 w-8 mx-auto mb-2 text-gray-400" />
@@ -70,28 +109,28 @@ export default function OrderSummary({
               )}
             </div>
             
-            <div className="border-t pt-4">
+            <div className="border-t pt-2 md:pt-4">
               {selectedDishes.length > 0 ? (
                 <Button 
                   onClick={onConfirm}
                   disabled={isLoading}
-                  className="w-full bg-primary text-white py-3 px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
+                  className="w-full bg-primary text-white py-2 md:py-3 px-4 md:px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors text-sm md:text-base"
                 >
-                  {isLoading ? "Confirming..." : `Confirm Order (${selectedDishes.length} dishes)`}
+                  {isLoading ? "Confirming..." : `Confirm Order (${selectedDishes.length})`}
                 </Button>
               ) : hasExistingOrder && onDeleteOrder ? (
                 <Button 
                   onClick={onDeleteOrder}
                   disabled={isDeleting}
                   variant="destructive"
-                  className="w-full py-3 px-6 rounded-lg font-semibold transition-colors"
+                  className="w-full py-2 md:py-3 px-4 md:px-6 rounded-lg font-semibold transition-colors text-sm md:text-base"
                 >
-                  {isDeleting ? "Deleting Order..." : "Delete My Order"}
+                  {isDeleting ? "Deleting..." : "Delete My Order"}
                 </Button>
               ) : (
                 <Button 
                   disabled
-                  className="w-full py-3 px-6 rounded-lg font-semibold bg-gray-300 cursor-not-allowed"
+                  className="w-full py-2 md:py-3 px-4 md:px-6 rounded-lg font-semibold bg-gray-300 cursor-not-allowed text-sm md:text-base"
                 >
                   Select dishes to order
                 </Button>
