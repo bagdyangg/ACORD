@@ -10,7 +10,9 @@ import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user, error } = useAuth();
+
+  console.log("Router state:", { isAuthenticated, isLoading, user, error });
 
   if (isLoading) {
     return (
@@ -20,17 +22,37 @@ function Router() {
     );
   }
 
+  // Add debugging for deployment
+  if (error) {
+    console.error("Authentication error:", error);
+  }
+
+  // If there's an authentication error and we're not loading, show login
+  if (!isLoading && !isAuthenticated) {
+    return (
+      <Switch>
+        <Route path="/" component={Login} />
+        <Route component={Login} />
+      </Switch>
+    );
+  }
+
+  // If authenticated, show protected routes
+  if (!isLoading && isAuthenticated) {
+    return (
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/admin" component={Admin} />
+        <Route component={NotFound} />
+      </Switch>
+    );
+  }
+
+  // Fallback for any other state
   return (
     <Switch>
-      {!isAuthenticated ? (
-        <Route path="/" component={Login} />
-      ) : (
-        <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/admin" component={Admin} />
-        </>
-      )}
-      <Route component={NotFound} />
+      <Route path="/" component={Login} />
+      <Route component={Login} />
     </Switch>
   );
 }
