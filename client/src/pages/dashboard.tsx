@@ -771,6 +771,87 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Orders by People - Detailed Table */}
+      {ordersSummary && (ordersSummary as any).orders && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h4 className="text-xl font-semibold mb-4">Orders by People</h4>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Dishes</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ordered Dishes</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {(() => {
+                  // Group orders by user
+                  const groupedByUser: { [key: string]: { count: number; dishes: any[]; user: any } } = {};
+                  
+                  (ordersSummary as any).orders?.forEach((order: any) => {
+                    const userKey = `${order.userName}_${order.userLastName}`;
+                    if (!groupedByUser[userKey]) {
+                      groupedByUser[userKey] = { 
+                        count: 0, 
+                        dishes: [],
+                        user: {
+                          firstName: order.userName,
+                          lastName: order.userLastName,
+                          username: order.userUsername
+                        }
+                      };
+                    }
+                    groupedByUser[userKey].count += order.quantity;
+                    
+                    // Find dish details
+                    const dish = dishes.find((d: any) => d.id === order.dishId);
+                    if (dish) {
+                      groupedByUser[userKey].dishes.push({
+                        dish: dish,
+                        quantity: order.quantity
+                      });
+                    }
+                  });
+
+                  return Object.entries(groupedByUser).map(([userKey, data]) => (
+                    <tr key={userKey}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {data.user.firstName} {data.user.lastName}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          @{data.user.username}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-bold text-gray-900">
+                        {data.count} dishes
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                          {data.dishes.map((item, index) => (
+                            <div key={index} className="flex items-center space-x-2 bg-gray-50 rounded p-2">
+                              {item.dish && (
+                                <img 
+                                  src={item.dish.imagePath} 
+                                  alt="Dish"
+                                  className="h-8 w-8 object-cover rounded"
+                                />
+                              )}
+                              <span className="text-xs font-medium">{item.quantity}x</span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  ));
+                })()}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="bg-white rounded-lg shadow p-6">
         <h4 className="text-xl font-semibold mb-4">Actions</h4>
