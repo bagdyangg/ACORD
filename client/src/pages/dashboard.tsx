@@ -8,7 +8,7 @@ import DishCard from "@/components/dish-card";
 import OrderSummary from "@/components/order-summary";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Users } from "lucide-react";
+import { Download, FileText, Users, RefreshCw } from "lucide-react";
 import type { Dish, Order } from "@shared/schema";
 
 export default function Dashboard() {
@@ -18,6 +18,18 @@ export default function Dashboard() {
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  // Manual refresh function for admin
+  const handleManualRefresh = async () => {
+    await refetchOrdersSummary();
+    if (isAdmin && activeTab === "all-orders") {
+      await refetchDetailedOrders();
+    }
+    toast({
+      title: "Data refreshed",
+      description: "Order statistics have been updated.",
+    });
+  };
   
   const today = new Date().toISOString().split('T')[0];
   const isAdmin = user?.role === 'admin';
@@ -33,19 +45,19 @@ export default function Dashboard() {
   });
 
   // Fetch orders summary for today (available to all users)
-  const { data: ordersSummary } = useQuery({
+  const { data: ordersSummary, refetch: refetchOrdersSummary } = useQuery({
     queryKey: ["/api/admin/orders", { date: today }],
     retry: false,
     enabled: !!dishes.length, // Only fetch if dishes are loaded
-    refetchInterval: 5000, // Refresh every 5 seconds
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: true, // Refetch when tab becomes active
   });
 
   // Get detailed orders data for admin management
-  const { data: detailedOrdersData } = useQuery({
+  const { data: detailedOrdersData, refetch: refetchDetailedOrders } = useQuery({
     queryKey: ["/api/admin/detailed-orders", { date: today }],
     enabled: isAdmin && activeTab === "all-orders",
     retry: false,
+    refetchOnWindowFocus: true,
   });
 
   // Set selected dishes based on existing orders (only for dishes that still exist)
@@ -99,10 +111,16 @@ export default function Dashboard() {
         title: "Order confirmed!",
         description: "Your lunch order has been placed successfully.",
       });
-      // Invalidate both personal orders and admin orders data
+      // Refresh data immediately after order creation
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/detailed-orders"] });
+      
+      // Also manually refetch to ensure fresh data
+      refetchOrdersSummary();
+      if (isAdmin && activeTab === "all-orders") {
+        refetchDetailedOrders();
+      }
     },
     onError: (error) => {
       toast({
@@ -575,7 +593,18 @@ export default function Dashboard() {
       {/* Today's Order Summary for Everyone */}
       {ordersSummary && (
         <div className="mb-8 bg-white rounded-lg shadow p-6">
-          <h3 className="text-xl font-semibold mb-4">Today's Order Summary</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold">Today's Order Summary</h3>
+            <Button
+              onClick={handleManualRefresh}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{(ordersSummary as any).totalOrders || 0}</div>
