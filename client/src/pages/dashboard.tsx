@@ -12,6 +12,21 @@ import { Download, FileText, Users, RefreshCw } from "lucide-react";
 import type { Dish, Order } from "@shared/schema";
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  
+  // Redirect superadmin to admin panel - they shouldn't see Dashboard
+  if (user?.role === "superadmin") {
+    window.location.href = "/admin";
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to Admin Panel...</p>
+        </div>
+      </div>
+    );
+  }
+
   const [selectedDishes, setSelectedDishes] = useState<number[]>([]);
   const [activeTab, setActiveTab] = useState("my-orders");
   const [processedImages, setProcessedImages] = useState<{ [key: string]: string }>({});
@@ -19,7 +34,6 @@ export default function Dashboard() {
   const [orderViewMode, setOrderViewMode] = useState<'dishes' | 'people'>('dishes');
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user } = useAuth();
 
   // Manual refresh function for admin
   const handleManualRefresh = async () => {
