@@ -60,7 +60,13 @@ function Router() {
     return (
       <div key={renderKey}>
         <Switch>
-          <Route path="/" component={Dashboard} />
+          <Route path="/" component={() => {
+            // Redirect superadmin directly to admin panel
+            if (user?.role === "superadmin") {
+              return <Admin />;
+            }
+            return <Dashboard />;
+          }} />
           <Route path="/admin" component={Admin} />
           <Route component={NotFound} />
         </Switch>
