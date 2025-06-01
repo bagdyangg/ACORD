@@ -37,7 +37,7 @@ export default function OrderSummary({
             </div>
             
             {/* Mobile: Show only selected count or compact preview */}
-            <div className="md:hidden mb-2">
+            <div className="block md:hidden mb-2">
               {selectedDishes.length === 0 ? (
                 <div className="text-gray-500 text-center py-2">
                   <p className="text-sm">Select dishes from the menu above</p>
