@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [processedImages, setProcessedImages] = useState<{ [key: string]: string }>({});
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [orderViewMode, setOrderViewMode] = useState<'dishes' | 'people'>('dishes');
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -752,7 +753,8 @@ export default function Dashboard() {
                             <img 
                               src={data.dish.imagePath} 
                               alt="Dish"
-                              className="h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 object-cover rounded-lg shadow-sm"
+                              className="h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 object-cover rounded-lg shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => setEnlargedImage(data.dish.imagePath)}
                             />
                           )}
                         </td>
@@ -831,7 +833,8 @@ export default function Dashboard() {
                                   <img 
                                     src={item.dish.imagePath} 
                                     alt="Dish"
-                                    className="h-12 w-12 sm:h-14 sm:w-14 object-cover rounded-lg flex-shrink-0"
+                                    className="h-12 w-12 sm:h-14 sm:w-14 object-cover rounded-lg flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => setEnlargedImage(item.dish.imagePath)}
                                   />
                                 )}
                                 <span className="text-sm font-medium text-gray-800">{item.quantity}x</span>
@@ -930,6 +933,31 @@ export default function Dashboard() {
           hasExistingOrder={existingOrders.length > 0}
           isDeleting={deleteOrderMutation.isPending}
         />
+      )}
+
+      {/* Image Enlargement Modal */}
+      {enlargedImage && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-full">
+            <img 
+              src={enlargedImage} 
+              alt="Enlarged dish"
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={() => setEnlargedImage(null)}
+              className="absolute top-4 right-4 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-2 transition-all"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
