@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Settings, LogOut, Shield } from "lucide-react";
 import {
   Tooltip,
@@ -12,6 +12,7 @@ import ThemeToggle from "@/components/theme-toggle";
 
 export default function Navigation() {
   const { user } = useAuth();
+  const [location] = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -96,7 +97,11 @@ export default function Navigation() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link href="/admin">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant={location === "/admin" ? "default" : "outline"} 
+                        size="sm"
+                        className={location === "/admin" ? "bg-primary text-primary-foreground" : ""}
+                      >
                         <Shield className="h-4 w-4 mr-2" />
                         Admin
                       </Button>

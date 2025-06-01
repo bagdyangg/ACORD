@@ -165,18 +165,42 @@ html.dark body,
   background-color: #374151 !important;
   color: #f3f4f6 !important;
   border-color: #4b5563 !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.dark button:hover {
+  background-color: #4b5563 !important;
+  border-color: #6b7280 !important;
+}
+
+.dark button:active,
+.dark button:focus {
+  background-color: #374151 !important;
+  ring-color: #3b82f6 !important;
 }
 
 .dark .bg-primary {
   background-color: #3b82f6 !important;
 }
 
+.dark .bg-primary:hover {
+  background-color: #2563eb !important;
+}
+
 .dark .bg-secondary {
   background-color: #374151 !important;
 }
 
+.dark .bg-secondary:hover {
+  background-color: #4b5563 !important;
+}
+
 .dark .bg-destructive {
   background-color: #dc2626 !important;
+}
+
+.dark .bg-destructive:hover {
+  background-color: #b91c1c !important;
 }
 
 .dark .border {
@@ -189,6 +213,20 @@ html.dark body,
   background-color: #374151 !important;
   color: #f3f4f6 !important;
   border-color: #4b5563 !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.dark input:hover,
+.dark textarea:hover,
+.dark select:hover {
+  border-color: #6b7280 !important;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: #3b82f6 !important;
+  ring-color: #3b82f6 !important;
 }
 
 .dark .text-black {
@@ -201,4 +239,123 @@ html.dark body,
 
 .dark .bg-gray-100 {
   background-color: #4b5563 !important;
+}
+
+/* Активные состояния навигации */
+.dark nav a {
+  color: #d1d5db !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.dark nav a:hover {
+  color: #f3f4f6 !important;
+  background-color: #374151 !important;
+}
+
+.dark nav a.active,
+.dark nav a[aria-current="page"] {
+  color: #3b82f6 !important;
+  background-color: #1e3a8a !important;
+}
+
+/* Карточки и контейнеры */
+.dark .card,
+.dark [role="card"] {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.dark .card:hover,
+.dark [role="card"]:hover {
+  background-color: #4b5563 !important;
+  border-color: #6b7280 !important;
+}
+
+/* Выпадающие меню и диалоги */
+.dark .dropdown-content,
+.dark .popover-content,
+.dark .dialog-content {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+/* Таблицы */
+.dark table {
+  background-color: #374151 !important;
+}
+
+.dark th {
+  background-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+  border-color: #6b7280 !important;
+}
+
+.dark td {
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark tr:hover {
+  background-color: #4b5563 !important;
+}
+
+/* Дополнительные элементы для темной темы */
+.dark .bg-muted {
+  background-color: #374151 !important;
+}
+
+.dark .bg-muted-foreground {
+  color: #9ca3af !important;
+}
+
+.dark .text-muted-foreground {
+  color: #9ca3af !important;
+}
+
+/* Checkbox и radio buttons */
+.dark input[type="checkbox"],
+.dark input[type="radio"] {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark input[type="checkbox"]:checked,
+.dark input[type="radio"]:checked {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+/* Select dropdown */
+.dark select option {
+  background-color: #374151 !important;
+  color: #f3f4f6 !important;
+}
+
+/* Scroll bars */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Shadows для темной темы */
+.dark .shadow,
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
 }
