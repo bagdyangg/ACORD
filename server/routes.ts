@@ -409,7 +409,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { id } = req.params;
       const { role } = req.body;
+      
+      console.log("=== Updating user role ===");
+      console.log("Target user ID:", id);
+      console.log("New role:", role);
+      console.log("Current user:", user?.username, user?.role);
+      
       const updatedUser = await storage.updateUserRole(id, role);
+      console.log("Updated user result:", updatedUser);
+      
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user role:", error);
@@ -467,36 +475,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/users/:id/role", isAuthenticated, async (req: any, res) => {
-    try {
-      const currentUserId = req.user?.id;
-      if (!currentUserId) {
-        return res.status(400).json({ message: "User ID not found" });
-      }
-      const currentUser = await storage.getUser(currentUserId);
-      
-      if (currentUser?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
-      }
 
-      const targetUserId = req.params.id;
-      const { role } = req.body;
-
-      if (!["admin", "employee"].includes(role)) {
-        return res.status(400).json({ message: "Invalid role" });
-      }
-
-      const user = await storage.updateUser(targetUserId, {
-        role,
-        updatedAt: new Date(),
-      });
-
-      res.json(user);
-    } catch (error) {
-      console.error("Error updating user role:", error);
-      res.status(500).json({ message: "Failed to update user role" });
-    }
-  });
 
   // Create order endpoint
   app.post("/api/admin/create-order", isAuthenticated, async (req: any, res) => {
