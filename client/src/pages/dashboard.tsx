@@ -85,9 +85,12 @@ export default function Dashboard() {
   // Create/update order mutation
   const orderMutation = useMutation({
     mutationFn: async (dishIds: number[]) => {
-      const response = await apiRequest("POST", "/api/orders", {
-        dishIds,
-        date: today,
+      const response = await apiRequest("/api/orders", {
+        method: "POST",
+        body: JSON.stringify({
+          dishIds,
+          date: today,
+        }),
       });
       return response.json();
     },
