@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { X, UtensilsCrossed } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Dish } from "@shared/schema";
 
 interface OrderSummaryProps {
@@ -23,6 +24,8 @@ export default function OrderSummary({
   hasExistingOrder = false,
   isDeleting = false
 }: OrderSummaryProps) {
+  const isMobile = useIsMobile();
+  
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg md:relative md:border-0 md:shadow-none md:bg-transparent">
       <div className="max-w-7xl mx-auto">
@@ -44,8 +47,8 @@ export default function OrderSummary({
                 </div>
               ) : (
                 <div>
-                  {/* Mobile: Compact horizontal scroll */}
-                  <div className="block md:hidden">
+                  {isMobile ? (
+                    /* Mobile: Compact horizontal scroll */
                     <div className="flex gap-1 overflow-x-auto py-1">
                       {selectedDishes.slice(0, 4).map((dish, index) => (
                         <div key={`mobile-${dish.id}-${index}`} className="relative flex-shrink-0">
@@ -73,10 +76,8 @@ export default function OrderSummary({
                         </div>
                       )}
                     </div>
-                  </div>
-
-                  {/* Desktop: Grid layout */}
-                  <div className="hidden md:block">
+                  ) : (
+                    /* Desktop: Grid layout */
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       {selectedDishes.map((dish, index) => (
                         <div key={`desktop-${dish.id}-${index}`} className="relative">
@@ -102,7 +103,7 @@ export default function OrderSummary({
                         </div>
                       ))}
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
