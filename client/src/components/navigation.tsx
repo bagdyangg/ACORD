@@ -77,12 +77,12 @@ export default function Navigation() {
                     </TooltipContent>
                   </Tooltip>
                 )}
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
                   {user?.firstName} {user?.lastName}
                 </span>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full cursor-help">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full cursor-help">
                       {user?.role}
                     </span>
                   </TooltipTrigger>
