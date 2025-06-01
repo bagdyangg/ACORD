@@ -56,11 +56,11 @@ export default function OrderSummary({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="absolute -top-1 -right-1 h-4 w-4 p-0 bg-red-500 text-white rounded-full hover:bg-red-600"
+                        className="absolute top-0 right-0 h-5 w-5 p-0 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-md border border-white"
                         onClick={() => onRemoveDish(dish.id)}
                         aria-label={`Remove dish ${index + 1}`}
                       >
-                        <X className="h-2 w-2" />
+                        <X className="h-3 w-3" />
                       </Button>
                     </div>
                   ))}
@@ -94,7 +94,7 @@ export default function OrderSummary({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-red-500 text-white rounded-full hover:bg-red-600"
+                        className="absolute top-1 right-1 h-6 w-6 p-0 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg border-2 border-white z-10"
                         onClick={() => onRemoveDish(dish.id)}
                         aria-label={`Remove dish ${index + 1}`}
                       >
