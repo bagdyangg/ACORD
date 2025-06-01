@@ -21,7 +21,7 @@ export default function Admin() {
   const { user } = useAuth();
   console.log("=== Auth hook result ===", { user });
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("menu");
+  const [activeTab, setActiveTab] = useState(user?.role === "admin" ? "menu" : "users");
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedDishes, setSelectedDishes] = useState<number[]>([]);
@@ -704,12 +704,19 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="menu">Menu Management</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
-          </TabsList>
+          {user?.role === "admin" ? (
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="menu">Menu Management</TabsTrigger>
+              <TabsTrigger value="users">User Management</TabsTrigger>
+            </TabsList>
+          ) : (
+            <TabsList className="grid w-full grid-cols-1">
+              <TabsTrigger value="users">User Management</TabsTrigger>
+            </TabsList>
+          )}
 
-          <TabsContent value="menu" className="space-y-6">
+          {user?.role === "admin" && (
+            <TabsContent value="menu" className="space-y-6">
             <Card className="max-w-2xl mx-auto">
               <CardHeader>
                 <CardTitle>Upload Today's Menu</CardTitle>
@@ -890,8 +897,8 @@ export default function Admin() {
               </CardContent>
             </Card>
 
-
-          </TabsContent>
+            </TabsContent>
+          )}
 
           <TabsContent value="users">
             <Card>
