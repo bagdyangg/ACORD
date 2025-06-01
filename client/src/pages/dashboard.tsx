@@ -752,7 +752,7 @@ export default function Dashboard() {
                             <img 
                               src={data.dish.imagePath} 
                               alt="Dish"
-                              className="h-16 w-16 object-cover rounded"
+                              className="h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 object-cover rounded-lg shadow-sm"
                             />
                           )}
                         </td>
@@ -824,17 +824,17 @@ export default function Dashboard() {
                           {data.count} dishes
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {data.dishes.map((item, index) => (
-                              <div key={index} className="flex items-center space-x-2 bg-gray-50 rounded p-2">
+                              <div key={index} className="flex items-center space-x-3 bg-gray-50 rounded-lg p-3 shadow-sm">
                                 {item.dish && (
                                   <img 
                                     src={item.dish.imagePath} 
                                     alt="Dish"
-                                    className="h-8 w-8 object-cover rounded"
+                                    className="h-12 w-12 sm:h-14 sm:w-14 object-cover rounded-lg flex-shrink-0"
                                   />
                                 )}
-                                <span className="text-xs font-medium">{item.quantity}x</span>
+                                <span className="text-sm font-medium text-gray-800">{item.quantity}x</span>
                               </div>
                             ))}
                           </div>
