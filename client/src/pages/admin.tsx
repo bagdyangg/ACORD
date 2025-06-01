@@ -877,6 +877,15 @@ export default function Admin() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={handleNewDaySetup}
+                      className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      New Day Setup
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => setIsSelectMode(!isSelectMode)}
                     >
                       {isSelectMode ? "Cancel" : "Select Mode"}
