@@ -89,6 +89,28 @@ function App() {
   const [isAppReady, setIsAppReady] = useState(false);
 
   useEffect(() => {
+    // Initialize theme from localStorage on app startup
+    const initializeTheme = () => {
+      // Check if there's any saved theme for any user
+      const allKeys = Object.keys(localStorage);
+      const themeKeys = allKeys.filter(key => key.startsWith('theme_'));
+      
+      if (themeKeys.length > 0) {
+        // Use the most recent theme setting
+        const latestThemeKey = themeKeys[themeKeys.length - 1];
+        const savedTheme = localStorage.getItem(latestThemeKey);
+        
+        if (savedTheme === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.body.classList.add('dark');
+          document.body.style.backgroundColor = '#1f2937';
+          document.body.style.color = '#f3f4f6';
+        }
+      }
+    };
+
+    initializeTheme();
+
     // Ensure app is fully loaded before rendering
     const timer = setTimeout(() => {
       setIsAppReady(true);
