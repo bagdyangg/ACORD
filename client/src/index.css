@@ -394,37 +394,3 @@ html.dark body,
 .dark .flex > div {
   background-color: inherit !important;
 }
-
-/* Дополнительные исправления для белых секций */
-.dark div[class*="bg-"],
-.dark div[class*="space-y"],
-.dark .container > div,
-.dark main > div {
-  background-color: #374151 !important;
-}
-
-/* Специально для модальных окон и popup */
-.dark .modal,
-.dark .popup,
-.dark .overlay {
-  background-color: #374151 !important;
-}
-
-/* Принудительное применение темы ко всем элементам */
-.dark * {
-  border-color: #4b5563 !important;
-}
-
-.dark *:not(img):not(svg):not(path):not(circle):not(rect):not(line) {
-  background-color: inherit !important;
-}
-
-/* Исключения для элементов с явно заданными цветами */
-.dark .bg-primary,
-.dark .bg-primary *,
-.dark .bg-destructive,
-.dark .bg-destructive *,
-.dark .bg-success,
-.dark .bg-success * {
-  background-color: inherit !important;
-}
