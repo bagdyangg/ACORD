@@ -1,19 +1,24 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ThemeToggle() {
   const [isDark, setIsDark] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
-    // Load theme preference from localStorage
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = savedTheme === 'dark' || 
-      (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    
-    setIsDark(prefersDark);
-    updateTheme(prefersDark);
-  }, []);
+    if (user?.id) {
+      // Load theme preference per user
+      const userThemeKey = `theme_${user.id}`;
+      const savedTheme = localStorage.getItem(userThemeKey);
+      const prefersDark = savedTheme === 'dark' || 
+        (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      
+      setIsDark(prefersDark);
+      updateTheme(prefersDark);
+    }
+  }, [user?.id]);
 
   const updateTheme = (dark: boolean) => {
     if (dark) {
@@ -30,10 +35,15 @@ export default function ThemeToggle() {
   };
 
   const toggleTheme = () => {
+    if (!user?.id) return;
+    
     const newTheme = !isDark;
     setIsDark(newTheme);
     updateTheme(newTheme);
-    localStorage.setItem('theme', newTheme ? 'dark' : 'light');
+    
+    // Save theme preference per user
+    const userThemeKey = `theme_${user.id}`;
+    localStorage.setItem(userThemeKey, newTheme ? 'dark' : 'light');
   };
 
   return (
