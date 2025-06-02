@@ -89,7 +89,7 @@ function App() {
   const [isAppReady, setIsAppReady] = useState(false);
 
   useEffect(() => {
-    // Initialize theme from localStorage on app startup
+    // Initialize theme immediately on app startup
     const initializeTheme = () => {
       // Check if there's any saved theme for any user
       const allKeys = Object.keys(localStorage);
@@ -105,18 +105,51 @@ function App() {
           document.body.classList.add('dark');
           document.body.style.backgroundColor = '#1f2937';
           document.body.style.color = '#f3f4f6';
+          
+          // Force apply theme to all elements
+          const style = document.createElement('style');
+          style.textContent = `
+            .dark * { 
+              background-color: #374151 !important; 
+              color: #f3f4f6 !important; 
+              border-color: #4b5563 !important; 
+            }
+            .dark img, .dark svg, .dark path, .dark circle, .dark rect, .dark line { 
+              background-color: transparent !important; 
+            }
+          `;
+          document.head.appendChild(style);
         }
       }
     };
 
+    // Apply theme immediately
     initializeTheme();
+
+    // Monitor for DOM changes and reapply theme
+    const observer = new MutationObserver(() => {
+      if (document.documentElement.classList.contains('dark')) {
+        document.body.style.backgroundColor = '#1f2937';
+        document.body.style.color = '#f3f4f6';
+      }
+    });
+
+    observer.observe(document.body, { 
+      childList: true, 
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class']
+    });
 
     // Ensure app is fully loaded before rendering
     const timer = setTimeout(() => {
       setIsAppReady(true);
-    }, 100);
+    }, 50);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
   }, []);
 
   if (!isAppReady) {
