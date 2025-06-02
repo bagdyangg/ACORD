@@ -359,3 +359,38 @@ html.dark body,
 .dark .shadow-lg {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
 }
+
+/* Секции админ панели */
+.dark .bg-card {
+  background-color: #374151 !important;
+}
+
+.dark .rounded-lg,
+.dark .rounded,
+.dark .rounded-md {
+  background-color: #374151 !important;
+}
+
+.dark .p-4,
+.dark .p-6,
+.dark .p-8 {
+  background-color: #374151 !important;
+}
+
+.dark section {
+  background-color: #374151 !important;
+}
+
+.dark .space-y-4 > div,
+.dark .space-y-6 > div {
+  background-color: #374151 !important;
+}
+
+/* Grid контейнеры */
+.dark .grid > div {
+  background-color: #374151 !important;
+}
+
+.dark .flex > div {
+  background-color: inherit !important;
+}
