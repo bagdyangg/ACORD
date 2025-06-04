@@ -16,17 +16,21 @@ export default function PasswordExpiryBanner() {
 
   // Reset dismissed state when expiry changes
   useEffect(() => {
-    setDismissed(false);
+    if (expiry?.daysUntilExpiry !== undefined) {
+      setDismissed(false);
+    }
   }, [expiry?.daysUntilExpiry]);
 
   if (!expiry || dismissed) return null;
 
   // Show warning if password expires in 14 days or less
-  const shouldShowWarning = expiry.daysUntilExpiry <= 14 || expiry.isExpired;
+  const daysUntilExpiry = expiry.daysUntilExpiry ?? 999;
+  const isExpired = expiry.isExpired ?? false;
+  const shouldShowWarning = daysUntilExpiry <= 14 || isExpired;
   
   if (!shouldShowWarning) return null;
 
-  const isUrgent = expiry.daysUntilExpiry <= 3 || expiry.isExpired;
+  const isUrgent = daysUntilExpiry <= 3 || isExpired;
 
   return (
     <>
@@ -34,11 +38,11 @@ export default function PasswordExpiryBanner() {
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription className="flex items-center justify-between">
           <div>
-            {expiry.isExpired ? (
+            {isExpired ? (
               <span className="font-medium">Your password has expired and must be changed.</span>
             ) : (
               <span>
-                Your password expires in <span className="font-medium">{expiry.daysUntilExpiry} days</span>. 
+                Your password expires in <span className="font-medium">{daysUntilExpiry} days</span>. 
                 Change it now to avoid service interruption.
               </span>
             )}
@@ -51,7 +55,7 @@ export default function PasswordExpiryBanner() {
             >
               Change Password
             </Button>
-            {!expiry.isExpired && (
+            {!isExpired && (
               <Button
                 size="sm"
                 variant="ghost"
