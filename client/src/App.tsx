@@ -1,155 +1,141 @@
-import React, { useState } from "react";
-import { QueryClientProvider } from "@tanstack/react-query";
+import React, { useEffect, useState } from "react";
+import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
-import { useAuth } from "./hooks/useAuth";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/useAuth";
+import Login from "@/pages/login";
+import Dashboard from "@/pages/dashboard";
+import Admin from "@/pages/admin";
+import NotFound from "@/pages/not-found";
 
-function LoginForm() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState("");
+function Router() {
+  const { isAuthenticated, isLoading, user, error } = useAuth();
+  const [forceRender, setForceRender] = useState(0);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setMessage("");
+  console.log("Router state:", { isAuthenticated, isLoading, user, error });
 
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        setMessage("Login successful! Redirecting...");
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      } else {
-        setMessage("Login failed. Please check your credentials.");
-      }
-    } catch (error) {
-      setMessage("Network error. Please try again.");
-    } finally {
-      setIsLoading(false);
+  // Force re-render when authentication state changes
+  useEffect(() => {
+    if (!isLoading) {
+      setForceRender(prev => prev + 1);
     }
-  };
+  }, [isAuthenticated, isLoading]);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-6 text-gray-900">
-          ACORD Lunch Ordering System
-        </h1>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? "Logging in..." : "Login"}
-          </button>
-        </form>
-        
-        {message && (
-          <div className={`mt-4 p-3 rounded ${
-            message.includes("successful") 
-              ? "bg-green-100 text-green-700 border border-green-300" 
-              : "bg-red-100 text-red-700 border border-red-300"
-          }`}>
-            {message}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Dashboard({ user }: { user: any }) {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-bold text-gray-900">ACORD Dashboard</h1>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                {user?.firstName} {user?.lastName} ({user?.role})
-              </span>
-              <button
-                onClick={async () => {
-                  await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-                  window.location.reload();
-                }}
-                className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Welcome to ACORD</h2>
-        <p className="text-gray-600">Your lunch ordering system is now working properly.</p>
-      </div>
-    </div>
-  );
-}
-
-function AuthenticatedApp() {
-  const { isAuthenticated, isLoading, user } = useAuth();
-
+  // Extended loading time to ensure proper state resolution
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return <LoginForm />;
+  // Add debugging for deployment
+  if (error) {
+    console.error("Authentication error:", error);
   }
 
-  return <Dashboard user={user} />;
+  // Clear render key to force component refresh
+  const renderKey = `${isAuthenticated ? 'auth' : 'noauth'}-${forceRender}`;
+
+  // If there's an authentication error and we're not loading, show login
+  if (!isLoading && !isAuthenticated) {
+    return (
+      <div key={renderKey}>
+        <Switch>
+          <Route path="/" component={Login} />
+          <Route component={Login} />
+        </Switch>
+      </div>
+    );
+  }
+
+  // If authenticated, show protected routes
+  if (!isLoading && isAuthenticated) {
+    return (
+      <div key={renderKey}>
+        <Switch>
+          <Route path="/" component={() => {
+            // Redirect superadmin directly to admin panel
+            if (user?.role === "superadmin") {
+              return <Admin />;
+            }
+            return <Dashboard />;
+          }} />
+          <Route path="/admin" component={Admin} />
+          <Route component={NotFound} />
+        </Switch>
+      </div>
+    );
+  }
+
+  // Fallback for any other state
+  return (
+    <div key="fallback">
+      <Switch>
+        <Route path="/" component={Login} />
+        <Route component={Login} />
+      </Switch>
+    </div>
+  );
 }
 
 function App() {
+  const [isAppReady, setIsAppReady] = useState(false);
+
+  useEffect(() => {
+    // Initialize theme from localStorage on app startup
+    const initializeTheme = () => {
+      // Check if there's any saved theme for any user
+      const allKeys = Object.keys(localStorage);
+      const themeKeys = allKeys.filter(key => key.startsWith('theme_'));
+      
+      if (themeKeys.length > 0) {
+        // Use the most recent theme setting
+        const latestThemeKey = themeKeys[themeKeys.length - 1];
+        const savedTheme = localStorage.getItem(latestThemeKey);
+        
+        if (savedTheme === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.body.classList.add('dark');
+          document.body.style.backgroundColor = '#1f2937';
+          document.body.style.color = '#f3f4f6';
+        }
+      }
+    };
+
+    initializeTheme();
+
+    // Ensure app is fully loaded before rendering
+    const timer = setTimeout(() => {
+      setIsAppReady(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!isAppReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Initializing...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthenticatedApp />
+      <TooltipProvider>
+        <Toaster />
+        <Router />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
