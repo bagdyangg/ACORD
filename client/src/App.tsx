@@ -9,6 +9,7 @@ import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
+import ForcePasswordChange from "@/components/force-password-change";
 
 function Router() {
   const { isAuthenticated, isLoading, user, error } = useAuth();
@@ -55,8 +56,17 @@ function Router() {
     );
   }
 
-  // If authenticated, show protected routes
+  // If authenticated, check for force password change
   if (!isLoading && isAuthenticated) {
+    // Check if user needs to change password
+    if (user?.forcePasswordChange) {
+      return (
+        <div key={renderKey}>
+          <ForcePasswordChange onSuccess={() => window.location.reload()} />
+        </div>
+      );
+    }
+
     return (
       <div key={renderKey}>
         <Switch>
