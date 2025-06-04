@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import ResetPasswordModal from "@/components/reset-password-modal";
+import PasswordExpiryBanner from "@/components/password-expiry-banner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +37,8 @@ export default function Admin() {
   const [showImportUsers, setShowImportUsers] = useState(false);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvPreview, setCsvPreview] = useState<any[]>([]);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [selectedUserForReset, setSelectedUserForReset] = useState<User | null>(null);
   
   const today = new Date().toISOString().split('T')[0];
 

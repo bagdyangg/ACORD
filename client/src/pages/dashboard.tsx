@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
 import DishCard from "@/components/dish-card";
 import OrderSummary from "@/components/order-summary";
+import PasswordExpiryBanner from "@/components/password-expiry-banner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Download, FileText, Users, RefreshCw } from "lucide-react";
@@ -910,6 +911,7 @@ export default function Dashboard() {
       <Navigation />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32 md:pb-8">
+        <PasswordExpiryBanner />
         {isAdmin ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8">
