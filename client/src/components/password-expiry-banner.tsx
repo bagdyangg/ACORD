@@ -5,11 +5,16 @@ import { AlertTriangle, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import ChangePasswordModal from "./change-password-modal";
 
+interface PasswordExpiryData {
+  isExpired: boolean;
+  daysUntilExpiry: number;
+}
+
 export default function PasswordExpiryBanner() {
   const [showModal, setShowModal] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  const { data: expiry } = useQuery({
+  const { data: expiry } = useQuery<PasswordExpiryData>({
     queryKey: ["/api/password/expiry"],
     refetchInterval: 24 * 60 * 60 * 1000, // Check once per day
   });

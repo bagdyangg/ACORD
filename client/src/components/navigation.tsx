@@ -4,12 +4,13 @@ import { Link, useLocation } from "wouter";
 import { Settings, LogOut, Shield, Key } from "lucide-react";
 import { useState } from "react";
 import ChangePasswordModal from "./change-password-modal";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+// Temporarily commenting out tooltip imports to fix React hook errors
+// import {
+//   Tooltip,
+//   TooltipContent,
+//   TooltipProvider,
+//   TooltipTrigger,
+// } from "@/components/ui/tooltip";
 import ThemeToggle from "@/components/theme-toggle";
 
 export default function Navigation() {
