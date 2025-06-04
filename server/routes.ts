@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./auth";
-import { insertDishSchema, insertOrderSchema, changePasswordSchema, resetPasswordSchema } from "@shared/schema";
+import { insertDishSchema, insertOrderSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -637,105 +637,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error exporting report:", error);
       res.status(500).json({ message: "Failed to export report" });
-    }
-  });
-
-  // Password management routes
-  app.post("/api/password/change", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(400).json({ message: "User ID not found" });
-      }
-
-      const validation = changePasswordSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({ 
-          message: "Validation failed", 
-          errors: validation.error.errors 
-        });
-      }
-
-      const { currentPassword, newPassword } = validation.data;
-      const result = await storage.changePassword(userId, currentPassword, newPassword);
-      
-      if (!result.success) {
-        return res.status(400).json({ message: result.message });
-      }
-
-      res.json({ message: result.message });
-    } catch (error) {
-      console.error("Error changing password:", error);
-      res.status(500).json({ message: "Failed to change password" });
-    }
-  });
-
-  app.post("/api/admin/password/reset", isAuthenticated, async (req: any, res) => {
-    try {
-      const adminUserId = req.user?.id;
-      if (!adminUserId) {
-        return res.status(400).json({ message: "User ID not found" });
-      }
-      
-      const adminUser = await storage.getUser(adminUserId);
-      if (!isAdmin(adminUser?.role)) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const validation = resetPasswordSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({ 
-          message: "Validation failed", 
-          errors: validation.error.errors 
-        });
-      }
-
-      const { userId, tempPassword } = validation.data;
-      const result = await storage.resetPassword(userId, tempPassword, adminUserId);
-      
-      if (!result.success) {
-        return res.status(400).json({ message: result.message });
-      }
-
-      res.json({ message: result.message });
-    } catch (error) {
-      console.error("Error resetting password:", error);
-      res.status(500).json({ message: "Failed to reset password" });
-    }
-  });
-
-  app.get("/api/password/expiry", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(400).json({ message: "User ID not found" });
-      }
-
-      const expiry = await storage.checkPasswordExpiry(userId);
-      res.json(expiry);
-    } catch (error) {
-      console.error("Error checking password expiry:", error);
-      res.status(500).json({ message: "Failed to check password expiry" });
-    }
-  });
-
-  app.get("/api/admin/password/expired-users", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(400).json({ message: "User ID not found" });
-      }
-      
-      const user = await storage.getUser(userId);
-      if (!isAdmin(user?.role)) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const expiredUsers = await storage.getUsersWithExpiredPasswords();
-      res.json(expiredUsers);
-    } catch (error) {
-      console.error("Error getting expired users:", error);
-      res.status(500).json({ message: "Failed to get expired users" });
     }
   });
 

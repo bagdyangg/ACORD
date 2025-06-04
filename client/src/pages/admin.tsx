@@ -3,10 +3,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import Navigation from "@/components/navigation-simple";
+import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ResetPasswordModal from "@/components/reset-password-modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,8 +35,6 @@ export default function Admin() {
   const [showImportUsers, setShowImportUsers] = useState(false);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvPreview, setCsvPreview] = useState<any[]>([]);
-  const [showResetPassword, setShowResetPassword] = useState(false);
-  const [selectedUserForReset, setSelectedUserForReset] = useState<User | null>(null);
   
   const today = new Date().toISOString().split('T')[0];
 
@@ -89,7 +86,7 @@ export default function Admin() {
   });
 
   // Fetch users (admin only)
-  const { data: users, refetch: refetchUsers } = useQuery({
+  const { data: users } = useQuery({
     queryKey: ["/api/admin/users"],
     enabled: user?.role === "admin" || user?.role === "superadmin",
   });
@@ -1066,36 +1063,23 @@ export default function Admin() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(userData.createdAt).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex gap-2">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => startEditUser(userData)}
+                              >
+                                Edit
+                              </Button>
+                              {userData.role !== 'superadmin' && (
                                 <Button
-                                  variant="outline"
+                                  variant="destructive"
                                   size="sm"
-                                  onClick={() => startEditUser(userData)}
+                                  onClick={() => handleDeleteUser(userData.id)}
                                 >
-                                  Edit
+                                  Delete
                                 </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedUserForReset(userData);
-                                    setShowResetPassword(true);
-                                  }}
-                                  className="text-orange-600 hover:text-orange-700"
-                                >
-                                  Reset Password
-                                </Button>
-                                {userData.role !== 'superadmin' && (
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => handleDeleteUser(userData.id)}
-                                  >
-                                    Delete
-                                  </Button>
-                                )}
-                              </div>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -1312,17 +1296,6 @@ export default function Admin() {
             </Card>
           </div>
         )}
-
-        {/* Reset Password Modal */}
-        <ResetPasswordModal
-          open={showResetPassword}
-          onOpenChange={setShowResetPassword}
-          user={selectedUserForReset}
-          onSuccess={() => {
-            refetchUsers();
-            setSelectedUserForReset(null);
-          }}
-        />
       </div>
     </div>
   );

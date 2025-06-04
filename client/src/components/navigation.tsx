@@ -1,22 +1,18 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { Settings, LogOut, Shield, Key } from "lucide-react";
-import { useState } from "react";
-import ChangePasswordModal from "./change-password-modal";
-// Temporarily commenting out tooltip imports to fix React hook errors
-// import {
-//   Tooltip,
-//   TooltipContent,
-//   TooltipProvider,
-//   TooltipTrigger,
-// } from "@/components/ui/tooltip";
+import { Settings, LogOut, Shield } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import ThemeToggle from "@/components/theme-toggle";
 
 export default function Navigation() {
   const { user } = useAuth();
   const [location] = useLocation();
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -119,17 +115,6 @@ export default function Navigation() {
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" onClick={() => setShowPasswordModal(true)}>
-                    <Key className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Change password</p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
                   <div>
                     <ThemeToggle />
                   </div>
@@ -153,11 +138,6 @@ export default function Navigation() {
           </div>
         </div>
       </nav>
-      
-      <ChangePasswordModal 
-        open={showPasswordModal} 
-        onOpenChange={setShowPasswordModal}
-      />
     </TooltipProvider>
   );
 }
