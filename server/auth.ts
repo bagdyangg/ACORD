@@ -26,8 +26,8 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: isProduction, // Use secure cookies in production
-      sameSite: isProduction ? 'lax' : 'lax', // Use lax for better compatibility
+      secure: false, // Set to false for Replit deployment
+      sameSite: 'lax',
       maxAge: sessionTtl,
     },
   });

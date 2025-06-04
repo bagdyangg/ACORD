@@ -2,7 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import type { User } from "@shared/schema";
 
-export function useAuth() {
+interface AuthState {
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  error: Error | null;
+}
+
+export function useAuth(): AuthState {
   const [hasInitialized, setHasInitialized] = useState(false);
   
   const { data: user, isLoading, error, isSuccess } = useQuery<User | null>({
@@ -55,9 +62,9 @@ export function useAuth() {
   }, [isSuccess, error, hasInitialized]);
 
   return {
-    user,
+    user: user ?? null,
     isLoading: isLoading || !hasInitialized,
     isAuthenticated: !!user && hasInitialized,
-    error,
+    error: error ?? null,
   };
 }
