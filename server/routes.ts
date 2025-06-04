@@ -87,18 +87,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
-      console.log("=== API /auth/user called ===");
-      console.log("req.user from session:", req.user);
-      console.log("session userId:", req.session.userId);
+      // Authentication check
       
       // Get full user data from database
       const userId = req.session.userId;
       if (userId) {
         const fullUser = await storage.getUser(userId);
-        console.log("Full user from database:", fullUser);
+        // Return full user data
         res.json(fullUser);
       } else {
-        console.log("No userId in session, returning req.user");
+        // Fallback to session user
         res.json(req.user);
       }
     } catch (error) {
