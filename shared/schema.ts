@@ -35,6 +35,9 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   password: varchar("password").notNull(), // User password for login
   role: varchar("role").default("employee").notNull(), // employee, admin, superadmin
+  passwordChangedAt: timestamp("password_changed_at").defaultNow(), // When password was last changed
+  forcePasswordChange: boolean("force_password_change").default(false), // Force user to change password
+  passwordResetBy: varchar("password_reset_by"), // Who reset the password (admin/superadmin ID)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -102,3 +105,35 @@ export const updateDishSchema = insertDishSchema.partial();
 
 export type InsertDishType = z.infer<typeof insertDishSchema>;
 export type InsertOrderType = z.infer<typeof insertOrderSchema>;
+
+// Password validation schema
+export const passwordSchema = z.string()
+  .min(12, "Password must be at least 12 characters long")
+  .refine((password) => {
+    const hasLower = /[a-z]/.test(password);
+    const hasUpper = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    
+    const types = [hasLower, hasUpper, hasNumber, hasSymbol].filter(Boolean).length;
+    return types >= 3;
+  }, "Password must contain at least 3 different character types (lowercase, uppercase, numbers, symbols)");
+
+// Change password schema
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: passwordSchema,
+  confirmPassword: z.string()
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"]
+});
+
+// Reset password schema (for admins)
+export const resetPasswordSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  tempPassword: passwordSchema
+});
+
+export type ChangePasswordType = z.infer<typeof changePasswordSchema>;
+export type ResetPasswordType = z.infer<typeof resetPasswordSchema>;
