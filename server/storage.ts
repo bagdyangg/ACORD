@@ -41,12 +41,6 @@ export interface IStorage {
   getOrdersSummary(date: string): Promise<any>;
   getAllUsers(): Promise<User[]>;
   clearTodayData(date: string): Promise<{ ordersCleared: number; dishesCleared: number }>;
-
-  // Password management operations
-  changePassword(userId: string, currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }>;
-  resetPassword(userId: string, newPassword: string, resetBy: string): Promise<{ success: boolean; message: string }>;
-  checkPasswordExpiry(userId: string): Promise<{ isExpired: boolean; daysUntilExpiry: number }>;
-  getUsersWithExpiredPasswords(): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -244,104 +238,6 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error clearing today's data:", error);
       throw error;
-    }
-  }
-
-  // Password management operations
-  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
-    try {
-      // First verify current password
-      const [user] = await db.select().from(users).where(eq(users.id, userId));
-      if (!user) {
-        return { success: false, message: "User not found" };
-      }
-
-      if (user.password !== currentPassword) {
-        return { success: false, message: "Current password is incorrect" };
-      }
-
-      // Check if new password is different from current
-      if (currentPassword === newPassword) {
-        return { success: false, message: "New password must be different from current password" };
-      }
-
-      // Update password and related fields
-      await db.update(users)
-        .set({
-          password: newPassword,
-          passwordChangedAt: new Date(),
-          forcePasswordChange: false,
-          passwordResetBy: null,
-          updatedAt: new Date()
-        })
-        .where(eq(users.id, userId));
-
-      return { success: true, message: "Password changed successfully" };
-    } catch (error) {
-      console.error("Error changing password:", error);
-      return { success: false, message: "Failed to change password" };
-    }
-  }
-
-  async resetPassword(userId: string, newPassword: string, resetBy: string): Promise<{ success: boolean; message: string }> {
-    try {
-      const [user] = await db.select().from(users).where(eq(users.id, userId));
-      if (!user) {
-        return { success: false, message: "User not found" };
-      }
-
-      // Update password and force change
-      await db.update(users)
-        .set({
-          password: newPassword,
-          passwordChangedAt: new Date(),
-          forcePasswordChange: true,
-          passwordResetBy: resetBy,
-          updatedAt: new Date()
-        })
-        .where(eq(users.id, userId));
-
-      return { success: true, message: "Password reset successfully. User must change password on next login." };
-    } catch (error) {
-      console.error("Error resetting password:", error);
-      return { success: false, message: "Failed to reset password" };
-    }
-  }
-
-  async checkPasswordExpiry(userId: string): Promise<{ isExpired: boolean; daysUntilExpiry: number }> {
-    try {
-      const [user] = await db.select().from(users).where(eq(users.id, userId));
-      if (!user || !user.passwordChangedAt) {
-        return { isExpired: true, daysUntilExpiry: 0 };
-      }
-
-      const passwordChangeDate = new Date(user.passwordChangedAt);
-      const currentDate = new Date();
-      const daysSinceChange = Math.floor((currentDate.getTime() - passwordChangeDate.getTime()) / (1000 * 60 * 60 * 24));
-      const daysUntilExpiry = 120 - daysSinceChange;
-
-      return {
-        isExpired: daysSinceChange >= 120,
-        daysUntilExpiry: Math.max(0, daysUntilExpiry)
-      };
-    } catch (error) {
-      console.error("Error checking password expiry:", error);
-      return { isExpired: true, daysUntilExpiry: 0 };
-    }
-  }
-
-  async getUsersWithExpiredPasswords(): Promise<User[]> {
-    try {
-      // Get users whose passwords are older than 120 days
-      const expiredDate = new Date();
-      expiredDate.setDate(expiredDate.getDate() - 120);
-
-      return await db.select()
-        .from(users)
-        .where(sql`${users.passwordChangedAt} < ${expiredDate} OR ${users.passwordChangedAt} IS NULL`);
-    } catch (error) {
-      console.error("Error getting users with expired passwords:", error);
-      return [];
     }
   }
 }

@@ -2,6 +2,7 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import Login from "@/pages/login";
@@ -54,7 +55,7 @@ function Router() {
     );
   }
 
-  // If authenticated, show main application
+  // If authenticated, show protected routes
   if (!isLoading && isAuthenticated) {
     return (
       <div key={renderKey}>
@@ -131,8 +132,10 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Toaster />
-      <Router />
+      <TooltipProvider>
+        <Toaster />
+        <Router />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
