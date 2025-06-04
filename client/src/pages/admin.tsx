@@ -90,7 +90,7 @@ export default function Admin() {
   });
 
   // Fetch users (admin only)
-  const { data: users } = useQuery({
+  const { data: users, refetch: refetchUsers } = useQuery({
     queryKey: ["/api/admin/users"],
     enabled: user?.role === "admin" || user?.role === "superadmin",
   });
@@ -788,6 +788,7 @@ export default function Admin() {
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <PasswordExpiryBanner />
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
           {user?.role === "admin" && (
@@ -1067,23 +1068,36 @@ export default function Admin() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(userData.createdAt).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => startEditUser(userData)}
-                              >
-                                Edit
-                              </Button>
-                              {userData.role !== 'superadmin' && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex gap-2">
                                 <Button
-                                  variant="destructive"
+                                  variant="outline"
                                   size="sm"
-                                  onClick={() => handleDeleteUser(userData.id)}
+                                  onClick={() => startEditUser(userData)}
                                 >
-                                  Delete
+                                  Edit
                                 </Button>
-                              )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedUserForReset(userData);
+                                    setShowResetPassword(true);
+                                  }}
+                                  className="text-orange-600 hover:text-orange-700"
+                                >
+                                  Reset Password
+                                </Button>
+                                {userData.role !== 'superadmin' && (
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleDeleteUser(userData.id)}
+                                  >
+                                    Delete
+                                  </Button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -1300,6 +1314,17 @@ export default function Admin() {
             </Card>
           </div>
         )}
+
+        {/* Reset Password Modal */}
+        <ResetPasswordModal
+          open={showResetPassword}
+          onOpenChange={setShowResetPassword}
+          user={selectedUserForReset}
+          onSuccess={() => {
+            refetchUsers();
+            setSelectedUserForReset(null);
+          }}
+        />
       </div>
     </div>
   );
