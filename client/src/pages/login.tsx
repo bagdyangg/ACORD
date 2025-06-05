@@ -52,7 +52,7 @@ export default function Login() {
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "Login failed",
         description: "Network error. Please try again.",
         variant: "destructive",
       });
@@ -62,21 +62,17 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 px-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <img 
-              src="/logo.jpeg" 
-              alt="ACORD Logo" 
-              className="w-16 h-16 object-contain rounded-lg"
-            />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+      <Card className="w-full max-w-md mx-4">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 w-20 h-20 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center">
+            <span className="text-white font-bold text-2xl">A</span>
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-            Welcome to ACORD
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            ACORD
           </CardTitle>
-          <CardDescription className="text-gray-600 dark:text-gray-300">
-            Your lunch ordering system
+          <CardDescription>
+            Sign in to your account to access the lunch ordering system
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -86,12 +82,11 @@ export default function Login() {
               <Input
                 id="username"
                 type="text"
-                placeholder="Enter your username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username"
                 required
-                autoComplete="username"
-                className="w-full"
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -99,17 +94,16 @@ export default function Login() {
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
                 required
-                autoComplete="current-password"
-                className="w-full"
+                disabled={isLoading}
               />
             </div>
             <Button 
               type="submit" 
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" 
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
               disabled={isLoading}
             >
               {isLoading ? "Signing in..." : "Sign In"}

@@ -9,12 +9,7 @@ const app = express();
 // Add CORS headers for production deployment
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  const allowedOrigins = [
-    'https://acord.replit.app', 
-    'http://localhost:5000',
-    'https://*.replit.dev',
-    'https://*.replit.app'
-  ];
+  const allowedOrigins = ['https://acord.replit.app', 'http://localhost:5000'];
   
   if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
