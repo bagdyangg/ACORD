@@ -37,7 +37,11 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const [url, params] = queryKey as [string, any?];
+    const searchParams = params ? new URLSearchParams(params).toString() : "";
+    const fullUrl = searchParams ? `${url}?${searchParams}` : url;
+    
+    const res = await fetch(fullUrl, {
       credentials: "include",
       headers: {
         "Cache-Control": "no-cache",

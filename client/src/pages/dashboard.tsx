@@ -35,6 +35,9 @@ export default function Dashboard() {
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const today = new Date().toISOString().split('T')[0];
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+
   // Manual refresh function for admin
   const handleManualRefresh = async () => {
     await refetchOrdersSummary();
@@ -46,9 +49,6 @@ export default function Dashboard() {
       description: "Order statistics have been updated.",
     });
   };
-  
-  const today = new Date().toISOString().split('T')[0];
-  const isAdmin = user?.role === 'admin';
 
   // Fetch dishes for today
   const { data: dishes = [], isLoading: dishesLoading } = useQuery<Dish[]>({
