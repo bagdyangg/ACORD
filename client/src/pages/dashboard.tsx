@@ -183,7 +183,7 @@ export default function Dashboard() {
 
   // Create Order functionality - copied from working Admin Panel
   const handleCreateOrder = async () => {
-    if (!ordersSummary || !ordersSummary.orders || ordersSummary.orders.length === 0) {
+    if (!ordersSummary || !(ordersSummary as any)?.orders || (ordersSummary as any).orders.length === 0) {
       toast({
         title: "No orders found",
         description: "There are no orders for today to process",
@@ -198,7 +198,7 @@ export default function Dashboard() {
       // Process the orders to create the combined order structure
       const ordersByDish: { [key: string]: { count: number; employees: string[] } } = {};
       
-      ordersSummary.orders.forEach((order: any) => {
+      (ordersSummary as any).orders.forEach((order: any) => {
         const dishKey = `dish_${order.dishId}`;
         if (!ordersByDish[dishKey]) {
           ordersByDish[dishKey] = { count: 0, employees: [] };
@@ -391,7 +391,7 @@ export default function Dashboard() {
       const csvHeaders = ['firstName', 'lastName', 'username', 'dishId', 'quantity', 'timestamp'];
       const csvData = [csvHeaders.join(',')];
 
-      detailedOrdersData.forEach((order: any) => {
+      (detailedOrdersData as any[])?.forEach((order: any) => {
         const row = [
           order.userName || '',
           order.userLastName || '',
@@ -460,13 +460,13 @@ export default function Dashboard() {
   // Export functionality for admin
   const exportOrderSummary = useMutation({
     mutationFn: async () => {
-      if (!ordersSummary?.dishCounts) {
+      if (!(ordersSummary as any)?.dishCounts) {
         throw new Error("No order data to export");
       }
 
       const processedImages = [];
       
-      for (const [dishId, count] of Object.entries(ordersSummary.dishCounts)) {
+      for (const [dishId, count] of Object.entries((ordersSummary as any).dishCounts)) {
         const dish = dishes.find(d => d.id.toString() === dishId);
         if (!dish) continue;
 
@@ -499,7 +499,7 @@ export default function Dashboard() {
               ctx!.textAlign = 'center';
               ctx!.textBaseline = 'middle';
               ctx!.fillText(
-                count.toString(),
+                (count as number).toString(),
                 img.width / 2,
                 img.height / 2
               );
