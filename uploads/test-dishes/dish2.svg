@@ -1,0 +1,8 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#FFF8DC"/>
+  <ellipse cx="200" cy="150" rx="120" ry="60" fill="#FFD700"/>
+  <path d="M100 150 Q200 100 300 150 Q200 200 100 150" fill="#FF4500"/>
+  <circle cx="150" cy="130" r="8" fill="#32CD32"/>
+  <circle cx="250" cy="130" r="8" fill="#32CD32"/>
+  <text x="200" y="250" text-anchor="middle" font-family="Arial" font-size="16" fill="#8B4513">Caesar Salad</text>
+</svg>
