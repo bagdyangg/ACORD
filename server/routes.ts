@@ -1,12 +1,17 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./auth";
 import { insertDishSchema, insertOrderSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 import express from "express";
+
+// Helper function to check admin access
+const isAdmin = (userRole: string | undefined): boolean => {
+  return userRole === "admin" || userRole === "superadmin";
+};
 
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -42,11 +47,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/uploads", express.static(uploadDir));
 
   // Auth routes
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
+      const user = await storage.authenticateUser(username, password);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+
+      req.session.userId = user.id;
+      
+      // Ensure session is saved before responding (important for production)
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Session save failed" });
+        }
+        res.json({ message: "Login successful", user: { id: user.id, username: user.username, role: user.role } });
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Failed to logout" });
+      }
+      res.json({ message: "Logout successful" });
+    });
+  });
+
   app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      console.log("=== API /auth/user called ===");
+      console.log("req.user from session:", req.user);
+      console.log("session userId:", req.session.userId);
+      
+      // Get full user data from database
+      const userId = req.session.userId;
+      if (userId) {
+        const fullUser = await storage.getUser(userId);
+        console.log("Full user from database:", fullUser);
+        res.json(fullUser);
+      } else {
+        console.log("No userId in session, returning req.user");
+        res.json(req.user);
+      }
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -67,19 +121,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dishes = await storage.getDishesByDate(today);
       }
       
-      res.json(dishes);
+      res.json(dishes || []);
     } catch (error) {
       console.error("Error fetching dishes:", error);
-      res.status(500).json({ message: "Failed to fetch dishes" });
+      res.status(500).json({ message: "Failed to fetch dishes", error: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 
   app.post("/api/dishes", isAuthenticated, upload.single("image"), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin") {
+      if (!isAdmin(user?.role) && user?.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -102,10 +159,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/dishes/:id", isAuthenticated, upload.single("image"), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin") {
+      if (!isAdmin(user?.role)) {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -135,10 +195,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/dishes/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin") {
+      if (!isAdmin(user?.role)) {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -156,10 +219,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/dishes/bulk-delete", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
+      
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { dishIds } = req.body;
+      if (!Array.isArray(dishIds) || dishIds.length === 0) {
+        return res.status(400).json({ message: "No dish IDs provided" });
+      }
+
+      let deletedCount = 0;
+      const errors = [];
+      
+      for (const dishId of dishIds) {
+        try {
+          const success = await storage.deleteDish(parseInt(dishId));
+          if (success) deletedCount++;
+        } catch (error) {
+          errors.push({
+            dishId: parseInt(dishId),
+            error: error instanceof Error ? error.message : "Unknown error"
+          });
+        }
+      }
+      
+      const response = {
+        message: `${deletedCount} dishes deleted successfully`,
+        deletedCount,
+        total: dishIds.length,
+        errors: errors.length > 0 ? errors : undefined
+      };
+      
+      if (errors.length > 0 && deletedCount === 0) {
+        return res.status(400).json(response);
+      }
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Error bulk deleting dishes:", error);
+      res.status(500).json({ message: "Failed to delete dishes" });
+    }
+  });
+
   // Order routes
   app.get("/api/orders", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
       const date = req.query.date as string;
       
       let orders;
@@ -169,16 +286,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orders = await storage.getOrdersByUser(userId);
       }
       
-      res.json(orders);
+      res.json(orders || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
-      res.status(500).json({ message: "Failed to fetch orders" });
+      res.status(500).json({ message: "Failed to fetch orders", error: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 
   app.post("/api/orders", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const { dishIds, date } = req.body;
 
       if (!Array.isArray(dishIds) || dishIds.length === 0) {
@@ -220,13 +340,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/orders", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
+      const date = req.query.date as string;
+      const orderDate = date || new Date().toISOString().split('T')[0];
+      
+      // Delete user's orders for the specified date
+      const success = await storage.deleteUserOrdersForDate(userId, orderDate);
+      
+      if (!success) {
+        return res.status(404).json({ message: "No orders found to delete" });
+      }
+      
+      res.json({ message: "Orders deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting orders:", error);
+      res.status(500).json({ message: "Failed to delete orders" });
+    }
+  });
+
   // Admin routes
   app.get("/api/admin/orders", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin") {
+      if (!isAdmin(user?.role)) {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -242,10 +389,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
       
-      if (user?.role !== "admin") {
+      if (!isAdmin(user?.role) && user?.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
@@ -257,32 +407,236 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/users/:id/role", isAuthenticated, async (req: any, res) => {
+  app.post("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUserId = req.user.claims.sub;
-      const currentUser = await storage.getUser(currentUserId);
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
       
-      if (currentUser?.role !== "admin") {
+      if (!isAdmin(user?.role) && user?.role !== "superadmin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const targetUserId = req.params.id;
-      const { role } = req.body;
+      const newUser = await storage.createUser(req.body);
+      res.json(newUser);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
 
-      if (!["admin", "employee"].includes(role)) {
-        return res.status(400).json({ message: "Invalid role" });
+  app.put("/api/admin/users/:id/role", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
+      
+      if (!isAdmin(user?.role) && user?.role !== "superadmin") {
+        return res.status(403).json({ message: "Admin access required" });
       }
 
-      const user = await storage.upsertUser({
-        id: targetUserId,
-        role,
-        updatedAt: new Date(),
-      });
-
-      res.json(user);
+      const { id } = req.params;
+      const { role } = req.body;
+      
+      console.log("=== Updating user role ===");
+      console.log("Target user ID:", id);
+      console.log("New role:", role);
+      console.log("Current user:", user?.username, user?.role);
+      
+      const updatedUser = await storage.updateUserRole(id, role);
+      console.log("Updated user result:", updatedUser);
+      
+      res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user role:", error);
       res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
+
+  app.put("/api/admin/users/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
+      
+      if (!isAdmin(user?.role) && user?.role !== "superadmin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { id } = req.params;
+      const updatedUser = await storage.updateUser(id, req.body);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
+      
+      if (!isAdmin(user?.role) && user?.role !== "superadmin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { id } = req.params;
+      if (id === 'superadmin-001') {
+        return res.status(403).json({ message: "Cannot delete super admin" });
+      }
+
+      const success = await storage.deleteUser(id);
+      if (success) {
+        res.json({ message: "User deleted successfully" });
+      } else {
+        res.status(404).json({ message: "User not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  // Clear today's data endpoint
+  app.delete("/api/admin/clear-today", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
+      
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { date } = req.body;
+      if (!date) {
+        return res.status(400).json({ message: "Date is required" });
+      }
+
+      // Clear all orders and dishes for the specified date
+      const cleared = await storage.clearTodayData(date);
+      
+      res.json({ 
+        message: "Today's data cleared successfully",
+        clearedOrders: cleared.ordersCleared,
+        clearedDishes: cleared.dishesCleared,
+        date: date
+      });
+    } catch (error) {
+      console.error("Error clearing today's data:", error);
+      res.status(500).json({ message: "Failed to clear today's data" });
+    }
+  });
+
+  // Create order endpoint
+  app.post("/api/admin/create-order", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
+      
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { date = new Date().toISOString().split('T')[0] } = req.body;
+      const ordersSummary = await storage.getOrdersSummary(date);
+      
+      if (!ordersSummary || ordersSummary.totalOrders === 0) {
+        return res.status(400).json({ message: "No orders to process" });
+      }
+
+      res.json({ 
+        message: "Order created successfully", 
+        orderCount: ordersSummary.totalOrders,
+        date: date 
+      });
+    } catch (error) {
+      console.error("Error creating order:", error);
+      res.status(500).json({ message: "Failed to create order" });
+    }
+  });
+
+  // Send to restaurant endpoint
+  app.post("/api/admin/send-to-restaurant", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
+      
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { date = new Date().toISOString().split('T')[0] } = req.body;
+      const ordersSummary = await storage.getOrdersSummary(date);
+      
+      if (!ordersSummary || ordersSummary.totalOrders === 0) {
+        return res.status(400).json({ message: "No orders to send" });
+      }
+
+      res.json({ 
+        message: "Order sent to restaurant successfully", 
+        orderCount: ordersSummary.totalOrders,
+        date: date 
+      });
+    } catch (error) {
+      console.error("Error sending to restaurant:", error);
+      res.status(500).json({ message: "Failed to send to restaurant" });
+    }
+  });
+
+  // Export report endpoint
+  app.get("/api/admin/export-report", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      const user = await storage.getUser(userId);
+      
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { date = new Date().toISOString().split('T')[0] } = req.query;
+      const orders = await storage.getOrdersWithDetails(date as string);
+      
+      if (!orders || orders.length === 0) {
+        return res.status(400).json({ message: "No orders to export" });
+      }
+
+      // Create CSV content
+      const csvHeader = "Date,Employee,Dish ID,Quantity,Order Time\n";
+      const csvRows = orders.map(order => 
+        `${date},"${order.userName} ${order.userLastName}",${order.dishId},${order.quantity},"${new Date(order.createdAt).toLocaleTimeString()}"`
+      ).join('\n');
+      
+      const csvContent = csvHeader + csvRows;
+
+      // Set headers for file download
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=order-report-${date}.csv`);
+      res.send(csvContent);
+    } catch (error) {
+      console.error("Error exporting report:", error);
+      res.status(500).json({ message: "Failed to export report" });
     }
   });
 

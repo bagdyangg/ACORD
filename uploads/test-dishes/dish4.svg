@@ -1,0 +1,6 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#FFFAF0"/>
+  <ellipse cx="200" cy="150" rx="100" ry="40" fill="#DEB887"/>
+  <path d="M120 150 Q150 120 180 150 Q210 120 240 150" fill="#F0E68C"/>
+  <text x="200" y="250" text-anchor="middle" font-family="Arial" font-size="16" fill="#8B4513">Pasta Carbonara</text>
+</svg>

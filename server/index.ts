@@ -1,8 +1,31 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+const log = (message: string, ...args: any[]) => console.log(`[express] ${message}`, ...args);
+import { storage } from "./storage";
+import { setupVite, serveStatic } from "./vite";
 
 const app = express();
+
+// Add CORS headers for production deployment
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = ['https://acord.replit.app', 'http://localhost:5000'];
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -36,7 +59,29 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
+export default (async () => {
+  // Initialize superadmin user if it doesn't exist
+  try {
+    const existingAdmin = await storage.getUser('superadmin-001');
+    if (!existingAdmin) {
+      await storage.createUser({
+        id: 'superadmin-001',
+        firstName: 'Super',
+        lastName: 'Admin',
+        username: 'admin',
+        password: 'admin123',
+        role: 'admin',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      log("Superadmin user created: username=admin, password=admin123");
+    } else {
+      log("Superadmin user already exists");
+    }
+  } catch (error) {
+    log("Error initializing superadmin:", error);
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

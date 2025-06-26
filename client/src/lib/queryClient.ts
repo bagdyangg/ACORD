@@ -8,14 +8,22 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  method: string,
   url: string,
-  data?: unknown | undefined,
+  options?: {
+    method?: string;
+    headers?: Record<string, string>;
+    body?: string;
+  },
 ): Promise<Response> {
   const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    method: options?.method || "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-cache",
+      "Pragma": "no-cache",
+      ...options?.headers,
+    },
+    body: options?.body,
     credentials: "include",
   });
 
@@ -29,8 +37,16 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const [url, params] = queryKey as [string, any?];
+    const searchParams = params ? new URLSearchParams(params).toString() : "";
+    const fullUrl = searchParams ? `${url}?${searchParams}` : url;
+    
+    const res = await fetch(fullUrl, {
       credentials: "include",
+      headers: {
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+      },
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
@@ -46,9 +62,12 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
+      refetchOnWindowFocus: true,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes
+      retry: (failureCount, error) => {
+        return failureCount < 2 && !error.message.includes("401");
+      },
     },
     mutations: {
       retry: false,

@@ -10,14 +10,16 @@ import {
   type InsertOrder,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations - mandatory for Replit Auth
+  // User operations - for username/password authentication
   getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  authenticateUser(username: string, password: string): Promise<User | undefined>;
   createUser(user: UpsertUser): Promise<User>;
   updateUserRole(id: string, role: string): Promise<User | undefined>;
+  updateUser(id: string, userData: Partial<UpsertUser>): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
 
   // Dish operations
@@ -38,6 +40,7 @@ export interface IStorage {
   // Admin operations
   getOrdersSummary(date: string): Promise<any>;
   getAllUsers(): Promise<User[]>;
+  clearTodayData(date: string): Promise<{ ordersCleared: number; dishesCleared: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -47,18 +50,15 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async authenticateUser(username: string, password: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(
+      and(eq(users.username, username), eq(users.password, password))
+    );
     return user;
   }
 
@@ -74,6 +74,15 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .update(users)
       .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateUser(id: string, userData: Partial<UpsertUser>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ ...userData, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     return user;
@@ -114,8 +123,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteDish(id: number): Promise<boolean> {
-    const result = await db.delete(dishes).where(eq(dishes.id, id));
-    return result.rowCount > 0;
+    try {
+      // Check if there are any orders for this dish
+      const existingOrders = await db.select().from(orders).where(eq(orders.dishId, id));
+      if (existingOrders.length > 0) {
+        throw new Error(`Cannot delete dish: ${existingOrders.length} orders exist for this dish`);
+      }
+
+      const result = await db.delete(dishes).where(eq(dishes.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error("Error deleting dish:", error);
+      throw error;
+    }
   }
 
   // Order operations
@@ -145,7 +165,7 @@ export class DatabaseStorage implements IStorage {
         dishImagePath: dishes.imagePath,
         userName: users.firstName,
         userLastName: users.lastName,
-        userEmail: users.email,
+        userUsername: users.username,
       })
       .from(orders)
       .innerJoin(dishes, eq(orders.dishId, dishes.id))
@@ -170,7 +190,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(orders)
       .where(and(eq(orders.userId, userId), eq(orders.orderDate, date)));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Admin operations
@@ -197,6 +217,28 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async clearTodayData(date: string): Promise<{ ordersCleared: number; dishesCleared: number }> {
+    try {
+      // Delete all orders for the specified date
+      const ordersResult = await db.delete(orders)
+        .where(sql`DATE(${orders.createdAt}) = ${date}`)
+        .returning();
+
+      // Delete all dishes for the specified date
+      const dishesResult = await db.delete(dishes)
+        .where(sql`DATE(${dishes.createdAt}) = ${date}`)
+        .returning();
+
+      return {
+        ordersCleared: ordersResult.length,
+        dishesCleared: dishesResult.length
+      };
+    } catch (error) {
+      console.error("Error clearing today's data:", error);
+      throw error;
+    }
   }
 }
 
