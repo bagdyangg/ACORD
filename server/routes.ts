@@ -419,7 +419,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const newUser = await storage.createUser(req.body);
+      // Validate required fields
+      const { firstName, lastName, username, password, role } = req.body;
+      if (!firstName || !lastName || !username || !password) {
+        return res.status(400).json({ message: "Missing required fields: firstName, lastName, username, password" });
+      }
+
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+
+      // Generate unique user ID
+      const userIdPrefix = "user-" + Math.random().toString(36).substr(2, 6) + "-" + Math.random().toString(36).substr(2, 3) + "-" + Date.now().toString().slice(-2);
+      
+      const userData = {
+        id: userIdPrefix,
+        firstName,
+        lastName,
+        username,
+        password,
+        role: role || 'employee'
+      };
+
+      const newUser = await storage.createUser(userData);
       res.json(newUser);
     } catch (error) {
       console.error("Error creating user:", error);
