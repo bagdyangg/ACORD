@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>ACORD - Lunch Ordering System</title>
     
-    <!-- Cache Control -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
+    <!-- Cache Control for development - allow reasonable caching -->
+    <meta http-equiv="Cache-Control" content="max-age=300, must-revalidate" />
+    <meta http-equiv="Pragma" content="cache" />
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
@@ -31,6 +30,24 @@
   </head>
   <body>
     <div id="root"></div>
+    
+    <!-- Cache debugging helper -->
+    <script>
+      // Debug cache issues
+      if (window.location.search.includes('clear-cache')) {
+        console.log('Cache clear requested via URL parameter');
+        if ('caches' in window) {
+          caches.keys().then(names => {
+            names.forEach(name => caches.delete(name));
+            localStorage.clear();
+            sessionStorage.clear();
+            console.log('All caches cleared');
+            window.location.href = window.location.pathname;
+          });
+        }
+      }
+    </script>
+    
     <script type="module" src="/src/main.tsx"></script>
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>

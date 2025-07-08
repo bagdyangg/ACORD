@@ -664,6 +664,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cache clearing endpoint for debugging
+  app.get("/api/clear-cache", (req, res) => {
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    res.send(`
+      <html>
+        <head>
+          <title>Cache Clearing</title>
+          <script>
+            console.log('Starting cache clear...');
+            
+            // Clear all caches
+            if ('caches' in window) {
+              caches.keys().then(names => {
+                names.forEach(name => {
+                  console.log('Deleting cache:', name);
+                  caches.delete(name);
+                });
+              });
+            }
+            
+            // Clear storage
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Unregister service worker
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(registrations => {
+                registrations.forEach(registration => {
+                  console.log('Unregistering SW:', registration);
+                  registration.unregister();
+                });
+              });
+            }
+            
+            alert('Cache cleared! Redirecting to app...');
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 1000);
+          </script>
+        </head>
+        <body>
+          <h1>Clearing Cache...</h1>
+          <p>Please wait while we clear your cache and reload the application.</p>
+        </body>
+      </html>
+    `);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
