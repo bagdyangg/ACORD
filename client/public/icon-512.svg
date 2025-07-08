@@ -1,8 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="512" height="512" rx="64" fill="#6366f1"/>
-<path d="M128 171H384V213H128V171Z" fill="white"/>
-<path d="M128 256H384V298H128V256Z" fill="white"/>
-<path d="M128 341H298V383H128V341Z" fill="white"/>
-<circle cx="426" cy="362" r="42" fill="#f59e0b"/>
-<text x="256" y="130" font-family="Arial, sans-serif" font-size="64" font-weight="bold" text-anchor="middle" fill="white">ACORD</text>
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#6366f1"/>
+  
+  <!-- Stylized restaurant/food icon -->
+  <g transform="translate(128, 128)">
+    <!-- Fork -->
+    <path d="M40 20V80C40 92 32 100 20 100C8 100 0 92 0 80V20" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    <path d="M20 20V60" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <path d="M10 20V40" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <path d="M30 20V40" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    
+    <!-- Knife -->
+    <path d="M80 20L80 100" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    <path d="M70 30L90 30" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    
+    <!-- Plate -->
+    <ellipse cx="160" cy="80" rx="60" ry="20" fill="none" stroke="white" stroke-width="12"/>
+    <ellipse cx="160" cy="80" rx="40" ry="12" fill="white" opacity="0.3"/>
+    
+    <!-- Food items -->
+    <circle cx="160" cy="70" r="15" fill="white" opacity="0.8"/>
+    <circle cx="140" cy="80" r="10" fill="white" opacity="0.6"/>
+    <circle cx="180" cy="85" r="10" fill="white" opacity="0.6"/>
+    <circle cx="150" cy="90" r="8" fill="white" opacity="0.5"/>
+    <circle cx="170" cy="75" r="8" fill="white" opacity="0.5"/>
+  </g>
+  
+  <!-- App name -->
+  <text x="256" y="450" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="36" font-weight="bold">ACORD</text>
+  <text x="256" y="480" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="18" opacity="0.8">Lunch System</text>
 </svg>

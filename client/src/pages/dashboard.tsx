@@ -644,12 +644,12 @@ export default function Dashboard() {
 
       {/* Menu Grid */}
       {dishes.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-500 text-lg">No dishes available for today</div>
-          <p className="text-gray-400 mt-2">Check back later or contact admin</p>
+        <div className="text-center py-8 sm:py-12">
+          <div className="text-gray-500 text-base sm:text-lg">No dishes available for today</div>
+          <p className="text-gray-400 mt-2 text-sm sm:text-base">Check back later or contact admin</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-20 sm:mb-8">
           {dishes.map((dish) => (
             <DishCard
               key={dish.id}
@@ -906,13 +906,13 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-neutral dark:bg-gray-900">
+    <div className="min-h-screen bg-neutral dark:bg-gray-900 smooth-scroll">
       <Navigation />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32 md:pb-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8 pb-24 md:pb-8 safe-area-inset-bottom">
         {isAdmin ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-8">
               <TabsTrigger value="my-orders" className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
                 My Orders
