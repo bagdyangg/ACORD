@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./auth";
 import { insertDishSchema, insertOrderSchema } from "@shared/schema";
+import { changePasswordSchema, resetPasswordSchema } from "@shared/password-utils";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -714,6 +715,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
         </body>
       </html>
     `);
+  });
+
+  // Password management routes
+  app.post("/api/auth/change-password", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+
+      const result = changePasswordSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const { currentPassword, newPassword } = result.data;
+      const success = await storage.changePassword(userId, currentPassword, newPassword);
+
+      if (!success) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ message: "Failed to change password" });
+    }
+  });
+
+  app.post("/api/admin/reset-password", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const result = resetPasswordSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const { userId: targetUserId, temporaryPassword, mustChangePassword } = result.data;
+      const success = await storage.resetPassword(targetUserId, temporaryPassword, mustChangePassword);
+
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
+  app.get("/api/auth/password-status", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const expiryStatus = await storage.checkPasswordExpiry(userId);
+
+      res.json({
+        mustChangePassword: user.mustChangePassword,
+        isExpired: expiryStatus.isExpired,
+        daysUntilExpiry: expiryStatus.daysUntilExpiry,
+        passwordExpiryDays: user.passwordExpiryDays
+      });
+    } catch (error) {
+      console.error("Error checking password status:", error);
+      res.status(500).json({ message: "Failed to check password status" });
+    }
+  });
+
+  app.put("/api/admin/password-expiry/:userId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (user?.role !== "superadmin") {
+        return res.status(403).json({ message: "Superadmin access required" });
+      }
+
+      const { userId: targetUserId } = req.params;
+      const { days } = req.body;
+
+      if (!days || days < 1 || days > 365) {
+        return res.status(400).json({ message: "Days must be between 1 and 365" });
+      }
+
+      const success = await storage.updatePasswordExpiryDays(targetUserId, days);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "Password expiry updated successfully" });
+    } catch (error) {
+      console.error("Error updating password expiry:", error);
+      res.status(500).json({ message: "Failed to update password expiry" });
+    }
   });
 
   const httpServer = createServer(app);
