@@ -104,6 +104,13 @@ The application requires the following environment variables:
 
 ## Changelog
 
+- July 08, 2025. **ACORD v1.1.1** - Major cache fixing update:
+  - Fixed critical caching issues preventing first page load
+  - Implemented network-first Service Worker strategy
+  - Added automatic cache versioning and cleanup
+  - Created cache debugging tools and emergency clear endpoints
+  - Improved static file serving with proper cache headers
+  - Added cache troubleshooting documentation
 - July 02, 2025. Initial setup
 
 ## User Preferences

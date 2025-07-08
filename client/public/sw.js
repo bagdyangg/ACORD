@@ -1,28 +1,12 @@
-const CACHE_NAME = 'acord-v1';
-const STATIC_CACHE = 'acord-static-v1';
-const DYNAMIC_CACHE = 'acord-dynamic-v1';
-
-// Files to cache for offline use
-const STATIC_FILES = [
-  '/',
-  '/index.html',
-  '/src/main.tsx',
-  '/src/App.tsx',
-  '/src/index.css',
-  '/manifest.json'
-];
+// Version the cache to force updates
+const CACHE_VERSION = 'v1.1.1';
+const STATIC_CACHE = `acord-static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `acord-dynamic-${CACHE_VERSION}`;
 
 // Install service worker
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then((cache) => {
-        return cache.addAll(STATIC_FILES);
-      })
-      .then(() => {
-        return self.skipWaiting();
-      })
-  );
+  // Skip waiting to activate new service worker immediately
+  self.skipWaiting();
 });
 
 // Activate service worker
@@ -32,33 +16,33 @@ self.addEventListener('activate', (event) => {
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
+            // Delete ALL old caches to force fresh start
             if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
+              console.log('Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             }
           })
         );
       })
       .then(() => {
+        // Take control of all clients immediately
         return self.clients.claim();
       })
   );
 });
 
-// Fetch events - cache strategy
+// Fetch events - Network First strategy to prevent stale cache issues
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Handle API requests
+  // Handle API requests - Always network first, no caching for auth/critical data
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Cache successful API responses for dishes and user data
-          if (response.ok && (
-            url.pathname.includes('/api/dishes') ||
-            url.pathname.includes('/api/auth/user')
-          )) {
+          // Only cache non-critical API responses
+          if (response.ok && url.pathname.includes('/api/dishes')) {
             const responseClone = response.clone();
             caches.open(DYNAMIC_CACHE)
               .then((cache) => {
@@ -68,42 +52,53 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // Return cached response if network fails
-          return caches.match(request);
+          // Only fallback to cache for dishes API
+          if (url.pathname.includes('/api/dishes')) {
+            return caches.match(request);
+          }
+          // For other APIs, return network error
+          return new Response('Network Error', {
+            status: 503,
+            statusText: 'Service Unavailable'
+          });
         })
     );
     return;
   }
 
-  // Handle static files
-  if (STATIC_FILES.some(file => url.pathname === file || url.pathname.endsWith(file))) {
-    event.respondWith(
-      caches.match(request)
-        .then((response) => {
-          return response || fetch(request);
-        })
-    );
-    return;
-  }
-
-  // Handle navigation requests
+  // Handle navigation requests - Network first, cache fallback
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            // Cache successful navigation responses
+            const responseClone = response.clone();
+            caches.open(STATIC_CACHE)
+              .then((cache) => {
+                cache.put(request, responseClone);
+              });
+          }
+          return response;
+        })
         .catch(() => {
-          return caches.match('/index.html');
+          // Fallback to cached version only if network fails
+          return caches.match(request)
+            .then((cachedResponse) => {
+              return cachedResponse || caches.match('/');
+            });
         })
     );
     return;
   }
 
-  // Default strategy: network first, then cache
+  // Handle static assets - Network first to get latest versions
   event.respondWith(
     fetch(request)
       .then((response) => {
         if (response.ok) {
           const responseClone = response.clone();
-          caches.open(DYNAMIC_CACHE)
+          caches.open(STATIC_CACHE)
             .then((cache) => {
               cache.put(request, responseClone);
             });
