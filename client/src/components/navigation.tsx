@@ -34,16 +34,16 @@ export default function Navigation() {
 
   return (
     <TooltipProvider>
-      <nav className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 shadow-sm border-b border-purple-200 dark:border-gray-700 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
+      <nav className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 shadow-sm border-b border-purple-200 dark:border-gray-700 sticky top-0 z-50 safe-area-inset-top">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            <div className="flex items-center space-x-2 sm:space-x-3">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <img 
                     src="/logo.jpeg" 
                     alt="ACORD Logo" 
-                    className="w-10 h-10 object-contain rounded-lg cursor-pointer"
+                    className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-lg cursor-pointer"
                   />
                 </TooltipTrigger>
                 <TooltipContent>
@@ -53,7 +53,7 @@ export default function Navigation() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link href="/">
-                    <h1 className="text-2xl font-bold text-primary cursor-pointer">ACORD</h1>
+                    <h1 className="text-xl sm:text-2xl font-bold text-primary cursor-pointer">ACORD</h1>
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -62,7 +62,7 @@ export default function Navigation() {
               </Tooltip>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="flex items-center space-x-2">
                 {user?.profileImageUrl && (
                   <Tooltip>
