@@ -4,6 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
+import PasswordManagement from "@/components/admin/password-management";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, UserPlus, Upload, FileText, Download, Calendar, Trash2, AlertTriangle } from "lucide-react";
+import { X, UserPlus, Upload, FileText, Download, Calendar, Trash2, AlertTriangle, Shield } from "lucide-react";
 import { Link } from "wouter";
 import type { User, Dish } from "@shared/schema";
 
@@ -21,7 +22,7 @@ export default function Admin() {
   const { user } = useAuth();
   console.log("=== Auth hook result ===", { user });
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState(user?.role === "admin" ? "menu" : "users");
+  const [activeTab, setActiveTab] = useState(user?.role === "admin" ? "menu" : "passwords");
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedDishes, setSelectedDishes] = useState<number[]>([]);
@@ -795,13 +796,15 @@ export default function Admin() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           {user?.role === "admin" ? (
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="menu">Menu Management</TabsTrigger>
               <TabsTrigger value="users">User Management</TabsTrigger>
+              <TabsTrigger value="passwords">Password Management</TabsTrigger>
             </TabsList>
           ) : (
-            <TabsList className="grid w-full grid-cols-1">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="users">User Management</TabsTrigger>
+              <TabsTrigger value="passwords">Password Management</TabsTrigger>
             </TabsList>
           )}
 
@@ -998,6 +1001,31 @@ export default function Admin() {
 
             </TabsContent>
           )}
+
+          <TabsContent value="passwords">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="h-5 w-5" />
+                  <span>Password Management</span>
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  Manage user passwords, reset credentials, and configure password policies
+                </p>
+              </CardHeader>
+              <CardContent>
+                {users && Array.isArray(users) && users.length > 0 ? (
+                  <div className="space-y-4">
+                    {users.map((userData: any) => (
+                      <PasswordManagement key={userData.id} user={userData} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-500 py-8">No users found</p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="users">
             <Card>
