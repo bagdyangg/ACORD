@@ -104,6 +104,15 @@ The application requires the following environment variables:
 
 ## Changelog
 
+- July 08, 2025. **ACORD v1.2** - Password Management System:
+  - Implemented comprehensive password management with configurable policies
+  - Added password expiry system (default 120 days, admin configurable)
+  - Created password change interface with validation (min 8 chars, letters+numbers)
+  - Added admin password reset functionality with temporary passwords
+  - Implemented forced password change mechanism for security
+  - Added password status monitoring and expiry warnings
+  - Created password management admin panel for user administration
+  - Added navigation improvements for mobile Samsung S24 Ultra compatibility
 - July 08, 2025. **ACORD v1.1.1** - Major cache fixing update:
   - Fixed critical caching issues preventing first page load
   - Implemented network-first Service Worker strategy

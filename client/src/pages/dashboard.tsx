@@ -4,6 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
+import PasswordExpiryBanner from "@/components/password-expiry-banner";
 import DishCard from "@/components/dish-card";
 import OrderSummary from "@/components/order-summary";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -626,6 +627,9 @@ export default function Dashboard() {
   // Render content for regular users (non-admin)
   const renderUserContent = () => (
     <>
+      {/* Password Expiry Banner */}
+      <PasswordExpiryBanner />
+
       {/* Header Section */}
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-secondary mb-2">Today's Menu</h2>

@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Admin from "@/pages/admin";
+import ChangePassword from "@/pages/change-password";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -68,6 +69,7 @@ function Router() {
             return <Dashboard />;
           }} />
           <Route path="/admin" component={Admin} />
+          <Route path="/change-password" component={ChangePassword} />
           <Route component={NotFound} />
         </Switch>
       </div>
