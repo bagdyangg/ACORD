@@ -828,6 +828,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         requireSpecialChars: false,
         maxAgeDays: 120,
         preventReuse: 3,
+        warningDays: 7,
       };
 
       res.json(policy);
@@ -849,7 +850,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { minLength, requireUppercase, requireLowercase, requireNumbers, requireSpecialChars, maxAgeDays, preventReuse } = req.body;
+      const { minLength, requireUppercase, requireLowercase, requireNumbers, requireSpecialChars, maxAgeDays, preventReuse, warningDays } = req.body;
 
       // Validate input
       if (!minLength || minLength < 4 || minLength > 50) {
@@ -858,6 +859,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!maxAgeDays || maxAgeDays < 1 || maxAgeDays > 365) {
         return res.status(400).json({ message: "Invalid max age days" });
+      }
+
+      if (!warningDays || warningDays < 1 || warningDays >= maxAgeDays) {
+        return res.status(400).json({ message: "Warning days must be between 1 and less than max age days" });
       }
 
       // In a real implementation, you would store this in the database

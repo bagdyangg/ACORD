@@ -17,6 +17,7 @@ interface PasswordPolicy {
   requireSpecialChars: boolean;
   maxAgeDays: number;
   preventReuse: number;
+  warningDays: number;
 }
 
 export default function PasswordPolicySettings() {
@@ -31,6 +32,7 @@ export default function PasswordPolicySettings() {
     requireSpecialChars: false,
     maxAgeDays: 120,
     preventReuse: 3,
+    warningDays: 7,
   });
 
   const { data: currentPolicy } = useQuery<PasswordPolicy>({
@@ -97,6 +99,15 @@ export default function PasswordPolicySettings() {
       return;
     }
 
+    if (policy.warningDays < 1 || policy.warningDays >= policy.maxAgeDays) {
+      toast({
+        title: "Invalid Settings",
+        description: "Warning period must be between 1 day and less than expiry period",
+        variant: "destructive",
+      });
+      return;
+    }
+
     updatePolicyMutation.mutate(policy);
   };
 
@@ -109,6 +120,7 @@ export default function PasswordPolicySettings() {
       requireSpecialChars: false,
       maxAgeDays: 120,
       preventReuse: 3,
+      warningDays: 7,
     });
   };
 
@@ -144,6 +156,7 @@ export default function PasswordPolicySettings() {
             <div>Min length: <Badge variant="outline">{policy.minLength} chars</Badge></div>
             <div>Required types: <Badge variant="outline">{getRequiredTypesCount()}/4</Badge></div>
             <div>Max age: <Badge variant="outline">{policy.maxAgeDays} days</Badge></div>
+            <div>Warning period: <Badge variant="outline">{policy.warningDays} days</Badge></div>
             <div>Prevent reuse: <Badge variant="outline">{policy.preventReuse} passwords</Badge></div>
           </div>
         </div>
@@ -234,6 +247,29 @@ export default function PasswordPolicySettings() {
               <SelectItem value="365">365 days</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Warning Period */}
+        <div className="space-y-3">
+          <Label htmlFor="warningDays">Expiry Warning Period (Days)</Label>
+          <Select
+            value={policy.warningDays.toString()}
+            onValueChange={(value) => setPolicy({ ...policy, warningDays: parseInt(value) })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1 day before</SelectItem>
+              <SelectItem value="3">3 days before</SelectItem>
+              <SelectItem value="7">7 days before (default)</SelectItem>
+              <SelectItem value="14">14 days before</SelectItem>
+              <SelectItem value="30">30 days before</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-gray-500">
+            Users will see warnings when their password expires in {policy.warningDays} days or less
+          </p>
         </div>
 
         {/* Reuse Prevention */}
