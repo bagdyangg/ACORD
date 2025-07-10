@@ -27,6 +27,7 @@ export default function ResetPasswordButton({ user }: ResetPasswordButtonProps) 
           "Content-Type": "application/json",
         },
         credentials: "include",
+        body: JSON.stringify({}), // Send empty JSON object since we only need the userId from URL params
       });
 
       console.log("Reset password response status:", response.status);
