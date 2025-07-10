@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { usePasswordAuth } from "@/hooks/use-password-auth";
 import { useEffect, useState } from "react";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
@@ -13,6 +14,7 @@ import NotFound from "@/pages/not-found";
 
 function Router() {
   const { isAuthenticated, isLoading, user, error } = useAuth();
+  const { requiresPasswordChange, isLoading: passwordLoading } = usePasswordAuth();
   const [forceRender, setForceRender] = useState(0);
 
   console.log("Router state:", { isAuthenticated, isLoading, user, error });
@@ -25,7 +27,7 @@ function Router() {
   }, [isAuthenticated, isLoading]);
 
   // Extended loading time to ensure proper state resolution
-  if (isLoading) {
+  if (isLoading || passwordLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
@@ -56,8 +58,20 @@ function Router() {
     );
   }
 
-  // If authenticated, show protected routes
-  if (!isLoading && isAuthenticated) {
+  // If authenticated, check password status and show appropriate routes
+  if (!isLoading && !passwordLoading && isAuthenticated) {
+    // Force password change if required
+    if (requiresPasswordChange) {
+      return (
+        <div key={renderKey}>
+          <Switch>
+            <Route path="/change-password" component={ChangePassword} />
+            <Route component={() => <ChangePassword />} />
+          </Switch>
+        </div>
+      );
+    }
+
     return (
       <div key={renderKey}>
         <Switch>
