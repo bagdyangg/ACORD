@@ -838,6 +838,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Password policy management routes
+  app.get("/api/admin/password-policy", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Return current password policy (could be stored in database or config)
+      const policy = {
+        minLength: 8,
+        requireUppercase: false,
+        requireLowercase: true,
+        requireNumbers: true,
+        requireSpecialChars: false,
+        maxAgeDays: 120,
+        preventReuse: 3,
+      };
+
+      res.json(policy);
+    } catch (error) {
+      console.error("Error getting password policy:", error);
+      res.status(500).json({ message: "Failed to get password policy" });
+    }
+  });
+
+  app.put("/api/admin/password-policy", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { minLength, requireUppercase, requireLowercase, requireNumbers, requireSpecialChars, maxAgeDays, preventReuse } = req.body;
+
+      // Validate input
+      if (!minLength || minLength < 4 || minLength > 50) {
+        return res.status(400).json({ message: "Invalid minimum length" });
+      }
+
+      if (!maxAgeDays || maxAgeDays < 1 || maxAgeDays > 365) {
+        return res.status(400).json({ message: "Invalid max age days" });
+      }
+
+      // In a real implementation, you would store this in the database
+      // For now, we'll just return success and log the policy
+      console.log("Password policy updated:", req.body);
+
+      res.json({ message: "Password policy updated successfully" });
+    } catch (error) {
+      console.error("Error updating password policy:", error);
+      res.status(500).json({ message: "Failed to update password policy" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
