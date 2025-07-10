@@ -26,8 +26,18 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Debug middleware to check request body
+app.use((req, res, next) => {
+  console.log("=== RAW REQUEST DEBUG ===");
+  console.log("Method:", req.method);
+  console.log("URL:", req.url);
+  console.log("Content-Type:", req.headers['content-type']);
+  console.log("Content-Length:", req.headers['content-length']);
+  next();
+});
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();

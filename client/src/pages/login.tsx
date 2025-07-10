@@ -32,14 +32,20 @@ export default function Login() {
     console.log("Attempting login with:", { username, passwordLength: password.length });
 
     try {
+      const loginData = { username: username.trim(), password: password.trim() };
+      console.log("Sending login data:", loginData);
+      
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
-        body: JSON.stringify({ username: username.trim(), password: password.trim() }),
+        body: JSON.stringify(loginData),
         credentials: "include",
       });
+      
+      console.log("Login response status:", response.status);
 
       if (response.ok) {
         // Clear all cached data and force refresh
