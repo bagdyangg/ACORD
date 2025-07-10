@@ -104,6 +104,16 @@ The application requires the following environment variables:
 
 ## Changelog
 
+- July 10, 2025. **ACORD v1.2.5** - Comprehensive Cache Resolution System:
+  - Implemented aggressive cache-busting strategy with Service Worker v1.2.4
+  - Added automatic version detection and cache clearing every 5 seconds
+  - Created zero-cache policy for all API requests with no-store directive
+  - Implemented complete cache clearing on version mismatch with localStorage tracking
+  - Added network-first strategy with cache reload for all static assets
+  - Created automatic service worker unregistration and re-registration system
+  - Added version.json endpoint for real-time version checking
+  - Eliminated need for manual Ctrl+Shift+R after updates
+  - Fixed critical production issue preventing app loading after version updates
 - July 10, 2025. **ACORD v1.2.4** - Professional Releases Page:
   - Added industry-standard releases page at /releases route accessible via top-right navigation
   - Created comprehensive changelog with version history, feature descriptions, and release dates

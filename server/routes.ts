@@ -668,6 +668,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Version endpoint for automatic cache management
+  app.get("/version.json", (req, res) => {
+    res.set({
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    res.json({
+      version: "1.2.5",
+      timestamp: new Date().toISOString(),
+      buildId: "acord-1.2.5-comprehensive-cache-fix"
+    });
+  });
+
   // Cache clearing endpoint for debugging
   app.get("/api/clear-cache", (req, res) => {
     res.set({
