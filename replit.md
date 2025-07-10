@@ -107,8 +107,9 @@ The application requires the following environment variables:
 - July 10, 2025. **ACORD v1.2.1** - Reset Password Button Integration:
   - Moved Reset Password functionality from separate tab to User Management table Actions column
   - Added instant password reset button alongside Edit/Delete actions for streamlined workflow
-  - Implemented automatic clipboard copying of temporary passwords (8 characters)
+  - Implemented automatic clipboard copying of temporary passwords (exactly 8 characters)
   - Fixed API endpoint conflicts and JSON parsing issues for reliable password reset operations
+  - Fixed password generation algorithm to guarantee exactly 8 characters using secure character set
   - Enhanced user experience with one-click password reset and automatic password copying
 - July 08, 2025. **ACORD v1.2** - Password Management System:
   - Implemented comprehensive password management with configurable policies
