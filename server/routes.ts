@@ -903,34 +903,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Reset password endpoint for admin
-  app.post("/api/admin/reset-password/:userId", (req, res, next) => {
-    console.log("=== Reset password middleware check ===");
-    console.log("Session:", req.session);
-    console.log("User from session:", req.user);
-    console.log("Session userId:", req.session?.userId);
-    isAuthenticated(req, res, next);
-  }, async (req: any, res) => {
+  // Reset password endpoint for admin - moved up before catch-all routes
+  app.post("/api/admin/reset-password/:userId", async (req: any, res) => {
     try {
-      console.log("=== Password reset request ===");
-      console.log("User session:", req.user);
-      console.log("Target user ID:", req.params.userId);
+      console.log("=== Password reset request received ===");
+      console.log("Headers:", req.headers);
+      console.log("Session exists:", !!req.session);
+      console.log("Session userId:", req.session?.userId);
       
-      const adminUserId = req.user?.id;
-      if (!adminUserId) {
-        console.log("No admin user ID found in session");
-        return res.status(401).json({ message: "Admin user ID not found" });
+      // Manual authentication check since middleware seems to have issues
+      if (!req.session || !req.session.userId) {
+        console.log("No session or userId found");
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const adminUser = await storage.getUser(req.session.userId);
+      if (!adminUser) {
+        console.log("Admin user not found in database");
+        return res.status(401).json({ message: "User not found" });
       }
       
-      const adminUser = await storage.getUser(adminUserId);
-      console.log("Admin user from database:", adminUser);
+      console.log("Admin user:", adminUser.username, "role:", adminUser.role);
       
-      if (!isAdmin(adminUser?.role)) {
-        console.log("User is not admin, role:", adminUser?.role);
+      if (!isAdmin(adminUser.role)) {
+        console.log("User is not admin, role:", adminUser.role);
         return res.status(403).json({ message: "Admin access required" });
       }
 
       const { userId: targetUserId } = req.params;
+      console.log("Target user ID:", targetUserId);
       
       // Check if target user exists
       const targetUser = await storage.getUser(targetUserId);
@@ -948,6 +949,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Password reset success:", success);
       
       if (!success) {
+        console.log("Password reset failed");
         return res.status(500).json({ message: "Failed to reset password" });
       }
 
