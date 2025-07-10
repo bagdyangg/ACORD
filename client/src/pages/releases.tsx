@@ -21,6 +21,46 @@ interface Release {
 
 const releases: Release[] = [
   {
+    version: "v1.3.0",
+    date: "2025-07-10",
+    type: "minor",
+    status: "stable",
+    title: "Enhanced Image Management System with Integrity Validation",
+    description: "Advanced image integrity validation and broken image prevention system with automatic file cleanup.",
+    features: [
+      {
+        type: "feature",
+        title: "Automatic Image File Validation",
+        description: "Real-time validation of image files in dish API endpoints to prevent broken image display"
+      },
+      {
+        type: "improvement",
+        title: "Intelligent Image Filtering",
+        description: "Smart filtering system that automatically excludes dishes with missing image files"
+      },
+      {
+        type: "improvement",
+        title: "Enhanced Data Cleanup",
+        description: "Improved clearTodayData function with proper file cleanup and orphaned record management"
+      },
+      {
+        type: "feature",
+        title: "Image Integrity Monitoring",
+        description: "Detailed logging system for tracking and identifying missing image files"
+      },
+      {
+        type: "fix",
+        title: "Broken Image Resolution",
+        description: "Fixed critical issue with orphaned dish records showing broken image placeholders"
+      },
+      {
+        type: "improvement",
+        title: "File Path Handling",
+        description: "Enhanced support for multiple upload formats and improved file system consistency"
+      }
+    ]
+  },
+  {
     version: "v1.2.3",
     date: "2025-07-10",
     type: "minor",

@@ -2,7 +2,7 @@
 
 ## Overview
 
-ACORD is a production-ready WhatsApp-integrated lunch ordering system designed for office environments. The system features an image-only menu selection interface optimized for mobile WhatsApp workflow, comprehensive order management, and real-time analytics. The application is currently in version 1.2.3 (ACORD-v1.2.3-stable) and has been validated with extensive testing including cache optimization, file management, login tracking, and comprehensive system stability verification.
+ACORD is a production-ready WhatsApp-integrated lunch ordering system designed for office environments. The system features an image-only menu selection interface optimized for mobile WhatsApp workflow, comprehensive order management, and real-time analytics. The application is currently in version 1.3.0 (ACORD-v1.3.0-stable) and has been validated with extensive testing including advanced image management, integrity validation, cache optimization, and comprehensive system stability verification.
 
 ## System Architecture
 
@@ -103,6 +103,23 @@ The application requires the following environment variables:
 - **Local Setup**: Development and testing environment configuration
 
 ## Changelog
+
+- July 10, 2025. **ACORD v1.3.0 (STABLE)** - Enhanced Image Management System with Integrity Validation:
+
+  **Image Management & Integrity:**
+  - Added automatic image file validation in dish API endpoints
+  - Implemented intelligent filtering to prevent broken image display
+  - Enhanced clearTodayData function with proper file cleanup
+  - Added detailed logging for missing image files identification
+  - Fixed critical issue with orphaned dish records showing broken images
+  - Improved file path handling for multiple upload formats
+  
+  **System Reliability:**
+  - Eliminated broken image placeholders in menu display
+  - Enhanced data consistency between database and filesystem
+  - Improved error handling for file operations
+  - Added proactive image integrity checking
+  - Streamlined dish management with automatic cleanup
 
 - July 10, 2025. **ACORD v1.2.3 (STABLE)** - Complete System Enhancement with Login Tracking, Cache Optimization & File Management:
   
