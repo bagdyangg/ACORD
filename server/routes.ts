@@ -63,6 +63,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       req.session.userId = user.id;
       
+      // Update last login timestamp
+      await storage.updateLastLogin(user.id);
+      
       // Ensure session is saved before responding (important for production)
       req.session.save((err) => {
         if (err) {

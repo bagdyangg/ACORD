@@ -53,6 +53,9 @@ export interface IStorage {
   // User activation operations
   activateUser(userId: string): Promise<boolean>;
   deactivateUser(userId: string): Promise<boolean>;
+
+  // Login tracking
+  updateLastLogin(userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -336,6 +339,16 @@ export class DatabaseStorage implements IStorage {
     const [updatedUser] = await db
       .update(users)
       .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return !!updatedUser;
+  }
+
+  async updateLastLogin(userId: string): Promise<boolean> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ lastLoginAt: new Date(), updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning();
 

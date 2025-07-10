@@ -104,6 +104,14 @@ The application requires the following environment variables:
 
 ## Changelog
 
+- July 10, 2025. **ACORD v1.2.3** - Last Login Tracking System:
+  - Added lastLoginAt field to users schema to track login timestamps
+  - Implemented automatic last login timestamp recording on successful authentication
+  - Added "Last Login" column to User Management table with relative time display (e.g., "2h ago", "3d ago")
+  - Enhanced user table with absolute timestamp details (date and time) shown as secondary information
+  - Added getRelativeTime() helper function for user-friendly time display
+  - Updated database storage with updateLastLogin() method to track user activity
+  - Shows "Never logged in" for users who haven't accessed the system yet
 - July 10, 2025. **ACORD v1.2.2** - User Activation/Deactivation System:
   - Added isActive field to users schema with default true value
   - Implemented user activation and deactivation functionality in User Management interface

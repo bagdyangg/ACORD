@@ -810,6 +810,25 @@ export default function Admin() {
     }
   };
 
+  const getRelativeTime = (date: string | null) => {
+    if (!date) return "Never";
+    
+    const now = new Date().getTime();
+    const loginTime = new Date(date).getTime();
+    const diffMs = now - loginTime;
+    
+    const minutes = Math.floor(diffMs / (1000 * 60));
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 30) return `${days}d ago`;
+    
+    return new Date(date).toLocaleDateString();
+  };
+
   return (
     <div className="min-h-screen bg-neutral dark:bg-gray-900">
       <Navigation />
@@ -1083,6 +1102,7 @@ export default function Admin() {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Active</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Login</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                         </tr>
@@ -1110,6 +1130,18 @@ export default function Admin() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               {getPasswordStatusBadge(userData)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {userData.lastLoginAt ? (
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{getRelativeTime(userData.lastLoginAt)}</span>
+                                  <span className="text-xs text-gray-400">
+                                    {new Date(userData.lastLoginAt).toLocaleDateString()} {new Date(userData.lastLoginAt).toLocaleTimeString()}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400 italic">Never logged in</span>
+                              )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(userData.createdAt).toLocaleDateString()}

@@ -36,6 +36,7 @@ export const users = pgTable("users", {
   password: varchar("password").notNull(), // User password for login
   role: varchar("role").default("employee").notNull(), // employee, admin, superadmin
   isActive: boolean("is_active").default(true).notNull(), // User activation status
+  lastLoginAt: timestamp("last_login_at", { withTimezone: true }), // Last login timestamp
   passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }).defaultNow().notNull(),
   mustChangePassword: boolean("must_change_password").default(false).notNull(),
   passwordExpiryDays: integer("password_expiry_days").default(120).notNull(),
