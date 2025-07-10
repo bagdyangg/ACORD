@@ -931,11 +931,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`Admin ${adminUser.username} reset password for user ${targetUserId}`);
+      console.log("FINAL PASSWORD BEING SENT TO CLIENT:", tempPassword, "LENGTH:", tempPassword.length);
       
-      res.json({ 
+      const responseData = { 
         message: "Password reset successfully",
         tempPassword: tempPassword
-      });
+      };
+      
+      console.log("RESPONSE DATA:", JSON.stringify(responseData));
+      res.json(responseData);
     } catch (error) {
       console.error("Error resetting password:", error);
       res.status(500).json({ message: "Failed to reset password" });
