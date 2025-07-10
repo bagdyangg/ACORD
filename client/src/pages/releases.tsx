@@ -21,42 +21,12 @@ interface Release {
 
 const releases: Release[] = [
   {
-    version: "v1.2.5",
-    date: "2025-07-10",
-    type: "patch",
-    status: "stable",
-    title: "Comprehensive Cache Resolution System",
-    description: "Implemented aggressive cache-busting strategy to eliminate the need for manual cache clearing after updates.",
-    features: [
-      {
-        type: "fix",
-        title: "Automatic Cache Clearing",
-        description: "No more Ctrl+Shift+R required - automatic cache invalidation on version updates"
-      },
-      {
-        type: "improvement",
-        title: "Zero-Cache API Strategy",
-        description: "All API requests now use no-store directive for real-time data accuracy"
-      },
-      {
-        type: "improvement",
-        title: "Version Detection System",
-        description: "Real-time monitoring for version changes with automatic cache clearing"
-      },
-      {
-        type: "fix",
-        title: "Service Worker Optimization",
-        description: "Complete service worker lifecycle management with aggressive cache busting"
-      }
-    ]
-  },
-  {
     version: "v1.2.3",
     date: "2025-07-10",
     type: "minor",
     status: "stable",
-    title: "Last Login Tracking System & Admin Access Enhancement",
-    description: "Added comprehensive user activity tracking with last login timestamps and confirmed admin access to password policy settings.",
+    title: "Last Login Tracking, Admin Access & Cache Resolution System",
+    description: "Added comprehensive user activity tracking, confirmed admin access to password policies, and implemented automatic cache management to eliminate manual refresh issues.",
     features: [
       {
         type: "feature",
@@ -77,6 +47,26 @@ const releases: Release[] = [
         type: "security",
         title: "Admin Password Policy Access",
         description: "Confirmed admin users have full access to Password Policy settings alongside superadmin users"
+      },
+      {
+        type: "fix",
+        title: "Automatic Cache Clearing",
+        description: "No more Ctrl+Shift+R required - automatic cache invalidation on version updates"
+      },
+      {
+        type: "improvement",
+        title: "Zero-Cache API Strategy",
+        description: "All API requests now use no-store directive for real-time data accuracy"
+      },
+      {
+        type: "improvement",
+        title: "Version Detection System",
+        description: "Real-time monitoring for version changes with automatic cache clearing"
+      },
+      {
+        type: "fix",
+        title: "Service Worker Optimization",
+        description: "Complete service worker lifecycle management with aggressive cache busting"
       }
     ]
   },

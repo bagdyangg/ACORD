@@ -676,10 +676,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       'Pragma': 'no-cache',
       'Expires': '0'
     });
-    res.json({
-      version: "1.2.5",
+res.json({
+      version: "1.2.3",
       timestamp: new Date().toISOString(),
-      buildId: "acord-1.2.5-comprehensive-cache-fix"
+      buildId: "acord-1.2.3-with-cache-fix"
     });
   });
 

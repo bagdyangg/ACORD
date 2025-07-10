@@ -104,8 +104,17 @@ The application requires the following environment variables:
 
 ## Changelog
 
-- July 10, 2025. **ACORD v1.2.5** - Comprehensive Cache Resolution System:
-  - Implemented aggressive cache-busting strategy with Service Worker v1.2.4
+- July 10, 2025. **ACORD v1.2.3** - Last Login Tracking System & Admin Access Enhancement & Cache Resolution:
+  - Added lastLoginAt field to users schema to track login timestamps
+  - Implemented automatic last login timestamp recording on successful authentication
+  - Added "Last Login" column to User Management table with relative time display (e.g., "2h ago", "3d ago")
+  - Enhanced user table with absolute timestamp details (date and time) shown as secondary information
+  - Added getRelativeTime() helper function for user-friendly time display
+  - Updated database storage with updateLastLogin() method to track user activity
+  - Shows "Never logged in" for users who haven't accessed the system yet
+  - Confirmed admin users have full access to Password Policy settings alongside superadmin users
+  - Verified isAdmin() function properly validates both 'admin' and 'superadmin' roles for policy management
+  - Implemented aggressive cache-busting strategy with Service Worker v1.2.3
   - Added automatic version detection and cache clearing every 5 seconds
   - Created zero-cache policy for all API requests with no-store directive
   - Implemented complete cache clearing on version mismatch with localStorage tracking
@@ -114,7 +123,6 @@ The application requires the following environment variables:
   - Added version.json endpoint for real-time version checking
   - Eliminated need for manual Ctrl+Shift+R after updates
   - Fixed critical production issue preventing app loading after version updates
-- July 10, 2025. **ACORD v1.2.4** - Professional Releases Page:
   - Added industry-standard releases page at /releases route accessible via top-right navigation
   - Created comprehensive changelog with version history, feature descriptions, and release dates
   - Implemented visual badges for version types (Major/Minor/Patch) and status (Stable/Beta/Deprecated)
