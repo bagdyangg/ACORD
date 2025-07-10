@@ -914,7 +914,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Generate temporary password (8 characters)
-      const tempPassword = Math.random().toString(36).slice(2, 10);
+      const tempPassword = Math.random().toString(36).substring(2, 10);
       console.log("Generated temp password:", tempPassword);
       
       // Reset the password
