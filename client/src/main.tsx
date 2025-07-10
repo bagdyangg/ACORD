@@ -85,7 +85,7 @@ if ('serviceWorker' in navigator) {
     });
   }
   
-  // Check for version updates every 5 seconds
+  // Check for version updates every 30 seconds (more reasonable)
   setInterval(() => {
     fetch('/version.json?t=' + Date.now())
       .then(res => res.json())
@@ -99,7 +99,7 @@ if ('serviceWorker' in navigator) {
         }
       })
       .catch(() => {}); // Ignore fetch errors
-  }, 5000);
+  }, 30000);
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
