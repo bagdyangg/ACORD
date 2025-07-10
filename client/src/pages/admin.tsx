@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, UserPlus, Upload, FileText, Download, Calendar, Trash2, AlertTriangle, Shield, UserCheck } from "lucide-react";
+import { X, UserPlus, Upload, FileText, Download, Calendar, Trash2, AlertTriangle, Shield, UserCheck, Clock } from "lucide-react";
 import { Link } from "wouter";
 import type { User, Dish } from "@shared/schema";
 
@@ -782,6 +782,24 @@ export default function Admin() {
     }
   };
 
+  const getPasswordStatusBadge = (user: any) => {
+    if (user.mustChangePassword) {
+      return <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />Must Change</Badge>;
+    }
+    
+    // Calculate days until expiry
+    const passwordAge = Math.floor((Date.now() - new Date(user.passwordChangedAt).getTime()) / (1000 * 60 * 60 * 24));
+    const daysUntilExpiry = user.passwordExpiryDays - passwordAge;
+    
+    if (daysUntilExpiry <= 0) {
+      return <Badge variant="destructive"><Clock className="h-3 w-3 mr-1" />Expired</Badge>;
+    } else if (daysUntilExpiry <= 7) {
+      return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Expires Soon ({daysUntilExpiry}d)</Badge>;
+    } else {
+      return <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />Active ({daysUntilExpiry}d)</Badge>;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-neutral dark:bg-gray-900">
       <Navigation />
@@ -1078,6 +1096,7 @@ export default function Admin() {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                         </tr>
@@ -1097,6 +1116,9 @@ export default function Admin() {
                               <Badge variant={userData.role === 'admin' ? 'default' : userData.role === 'superadmin' ? 'destructive' : 'secondary'}>
                                 {userData.role}
                               </Badge>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {getPasswordStatusBadge(userData)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(userData.createdAt).toLocaleDateString()}
