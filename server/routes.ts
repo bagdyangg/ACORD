@@ -815,8 +815,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const user = await storage.getUser(userId);
-      if (user?.role !== "superadmin") {
-        return res.status(403).json({ message: "Superadmin access required" });
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
       }
 
       const { userId: targetUserId } = req.params;

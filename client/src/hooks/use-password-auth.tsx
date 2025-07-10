@@ -14,6 +14,9 @@ export function usePasswordAuth() {
   
   const { data: passwordStatus, isLoading } = useQuery<PasswordStatus>({
     queryKey: ["/api/auth/password-status"],
+    enabled: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always check password status
   });
 
   useEffect(() => {
