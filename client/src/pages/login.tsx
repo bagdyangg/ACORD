@@ -18,13 +18,26 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
 
+    // Validate form data
+    if (!username.trim() || !password.trim()) {
+      toast({
+        title: "Login failed",
+        description: "Username and password are required",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    console.log("Attempting login with:", { username, passwordLength: password.length });
+
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: username.trim(), password: password.trim() }),
         credentials: "include",
       });
 
