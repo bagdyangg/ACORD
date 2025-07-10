@@ -241,6 +241,36 @@ export class DatabaseStorage implements IStorage {
         .where(sql`DATE(${orders.createdAt}) = ${date}`)
         .returning();
 
+      // Get dishes that will be deleted to remove their image files
+      const dishesToDelete = await db.select()
+        .from(dishes)
+        .where(sql`DATE(${dishes.createdAt}) = ${date}`);
+
+      // Delete image files from filesystem
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      for (const dish of dishesToDelete) {
+        try {
+          // Handle both absolute and relative paths
+          let imagePath: string;
+          if (dish.imagePath.startsWith('/uploads/')) {
+            imagePath = path.resolve(process.cwd(), dish.imagePath.substring(1));
+          } else if (dish.imagePath.startsWith('uploads/')) {
+            imagePath = path.resolve(process.cwd(), dish.imagePath);
+          } else {
+            imagePath = path.resolve(process.cwd(), 'uploads', path.basename(dish.imagePath));
+          }
+          
+          if (fs.existsSync(imagePath)) {
+            fs.unlinkSync(imagePath);
+            console.log('Deleted image file:', imagePath);
+          }
+        } catch (fileError) {
+          console.warn('Failed to delete image file:', dish.imagePath, fileError);
+        }
+      }
+
       // Delete all dishes for the specified date
       const dishesResult = await db.delete(dishes)
         .where(sql`DATE(${dishes.createdAt}) = ${date}`)
