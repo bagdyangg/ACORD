@@ -906,25 +906,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reset password endpoint for admin
   app.post("/api/admin/reset-password/:userId", isAuthenticated, async (req: any, res) => {
     try {
+      console.log("=== Password reset request ===");
+      console.log("User session:", req.user);
+      console.log("Target user ID:", req.params.userId);
+      
       const adminUserId = req.user?.id;
       if (!adminUserId) {
-        return res.status(400).json({ message: "Admin user ID not found" });
+        console.log("No admin user ID found in session");
+        return res.status(401).json({ message: "Admin user ID not found" });
       }
       
       const adminUser = await storage.getUser(adminUserId);
+      console.log("Admin user from database:", adminUser);
+      
       if (!isAdmin(adminUser?.role)) {
+        console.log("User is not admin, role:", adminUser?.role);
         return res.status(403).json({ message: "Admin access required" });
       }
 
       const { userId: targetUserId } = req.params;
       
+      // Check if target user exists
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) {
+        console.log("Target user not found:", targetUserId);
+        return res.status(404).json({ message: "User not found" });
+      }
+      
       // Generate temporary password
       const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+      console.log("Generated temp password:", tempPassword);
       
       // Reset the password
       const success = await storage.resetPassword(targetUserId, tempPassword, true);
+      console.log("Password reset success:", success);
+      
       if (!success) {
-        return res.status(404).json({ message: "User not found" });
+        return res.status(500).json({ message: "Failed to reset password" });
       }
 
       console.log(`Admin ${adminUser.username} reset password for user ${targetUserId}`);
