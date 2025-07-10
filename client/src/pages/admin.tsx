@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
 import PasswordManagement from "@/components/admin/password-management";
 import PasswordPolicySettings from "@/components/admin/password-policy-settings";
+import ResetPasswordButton from "@/components/admin/reset-password-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -797,14 +798,16 @@ export default function Admin() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           {user?.role === "admin" ? (
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="menu">Menu Management</TabsTrigger>
               <TabsTrigger value="users">User Management</TabsTrigger>
+              <TabsTrigger value="passwords">Password Management</TabsTrigger>
               <TabsTrigger value="policy">Password Policy</TabsTrigger>
             </TabsList>
           ) : (
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="users">User Management</TabsTrigger>
+              <TabsTrigger value="passwords">Password Management</TabsTrigger>
               <TabsTrigger value="policy">Password Policy</TabsTrigger>
             </TabsList>
           )}
@@ -1005,6 +1008,31 @@ export default function Admin() {
 
 
 
+          <TabsContent value="passwords">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="h-5 w-5" />
+                  <span>Password Management</span>
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  Manage user passwords, reset credentials, and configure password policies
+                </p>
+              </CardHeader>
+              <CardContent>
+                {users && Array.isArray(users) && users.length > 0 ? (
+                  <div className="space-y-4">
+                    {users.map((userData: any) => (
+                      <PasswordManagement key={userData.id} user={userData} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-500 py-8">No users found</p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="policy">
             <PasswordPolicySettings />
           </TabsContent>
@@ -1013,15 +1041,7 @@ export default function Admin() {
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle className="flex items-center space-x-2">
-                      <UserCheck className="h-5 w-5" />
-                      <span>User Management</span>
-                    </CardTitle>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Manage users, roles, and password settings
-                    </p>
-                  </div>
+                  <CardTitle>Registered Users</CardTitle>
                   <div className="flex gap-2">
                     <Button
                       onClick={() => setShowCreateUser(true)}
@@ -1063,7 +1083,7 @@ export default function Admin() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
-                        {users.flatMap((userData: any) => [
+                        {users.map((userData: any) => (
                           <tr key={userData.id}>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm font-medium text-gray-900">
@@ -1081,31 +1101,29 @@ export default function Admin() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(userData.createdAt).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => startEditUser(userData)}
-                              >
-                                Edit
-                              </Button>
-                              {userData.role !== 'superadmin' && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex space-x-2">
                                 <Button
-                                  variant="destructive"
+                                  variant="outline"
                                   size="sm"
-                                  onClick={() => handleDeleteUser(userData.id)}
+                                  onClick={() => startEditUser(userData)}
                                 >
-                                  Delete
+                                  Edit
                                 </Button>
-                              )}
-                            </td>
-                          </tr>,
-                          <tr key={`${userData.id}-password`} className="bg-gray-50">
-                            <td colSpan={5} className="px-6 py-4">
-                              <PasswordManagement user={userData} />
+                                <ResetPasswordButton user={userData} />
+                                {userData.role !== 'superadmin' && (
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleDeleteUser(userData.id)}
+                                  >
+                                    Delete
+                                  </Button>
+                                )}
+                              </div>
                             </td>
                           </tr>
-                        ])}
+                        ))}
                       </tbody>
                     </table>
                   </div>
