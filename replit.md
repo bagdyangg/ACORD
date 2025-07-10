@@ -104,7 +104,7 @@ The application requires the following environment variables:
 
 ## Changelog
 
-- July 10, 2025. **ACORD v1.2.3** - Last Login Tracking System & Admin Access Enhancement & Cache Resolution:
+- July 10, 2025. **ACORD v1.2.3** - Last Login Tracking System, Admin Access, Cache Resolution & File Cleanup:
   - Added lastLoginAt field to users schema to track login timestamps
   - Implemented automatic last login timestamp recording on successful authentication
   - Added "Last Login" column to User Management table with relative time display (e.g., "2h ago", "3d ago")
@@ -123,6 +123,8 @@ The application requires the following environment variables:
   - Added version.json endpoint for real-time version checking
   - Eliminated need for manual Ctrl+Shift+R after updates
   - Fixed critical production issue preventing app loading after version updates
+  - Enhanced data cleanup to properly remove image files when clearing daily data
+  - Fixed broken image display issue after clearing today's orders and dishes
   - Added industry-standard releases page at /releases route accessible via top-right navigation
   - Created comprehensive changelog with version history, feature descriptions, and release dates
   - Implemented visual badges for version types (Major/Minor/Patch) and status (Stable/Beta/Deprecated)
