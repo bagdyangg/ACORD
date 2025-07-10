@@ -112,6 +112,8 @@ The application requires the following environment variables:
   - Fixed password generation algorithm to guarantee exactly 8 characters using secure character set
   - Added "Status" column to User Management table showing password status badges (Active, Expires Soon, Expired, Must Change)
   - Removed individual "Expiry Settings" buttons - password policies are now centrally managed in Password Policy tab
+  - Completely removed "Password Management" tab as functionality was duplicated in User Management
+  - Streamlined admin interface from 4 tabs to 3 tabs (Menu, Users, Policy) for admins and 3 to 2 tabs for superadmins
   - Enhanced user experience with one-click password reset and automatic password copying
 - July 08, 2025. **ACORD v1.2** - Password Management System:
   - Implemented comprehensive password management with configurable policies
