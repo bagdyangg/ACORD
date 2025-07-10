@@ -668,6 +668,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Service Worker endpoint - serve from client/public
+  app.get("/sw.js", (req, res) => {
+    res.set({
+      'Content-Type': 'application/javascript',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
+    const swPath = path.resolve(import.meta.dirname, '../client/public/sw.js');
+    res.sendFile(swPath);
+  });
+
+  // Serve other files from client/public in development
+  app.use('/cache-clear.js', (req, res) => {
+    res.set({
+      'Content-Type': 'application/javascript',
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
+    });
+    const cacheClearPath = path.resolve(import.meta.dirname, '../client/public/cache-clear.js');
+    res.sendFile(cacheClearPath);
+  });
+
   // Version endpoint for automatic cache management
   app.get("/version.json", (req, res) => {
     res.set({
