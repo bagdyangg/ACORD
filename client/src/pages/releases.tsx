@@ -21,6 +21,36 @@ interface Release {
 
 const releases: Release[] = [
   {
+    version: "v1.2.5",
+    date: "2025-07-10",
+    type: "patch",
+    status: "stable",
+    title: "Comprehensive Cache Resolution System",
+    description: "Implemented aggressive cache-busting strategy to eliminate the need for manual cache clearing after updates.",
+    features: [
+      {
+        type: "fix",
+        title: "Automatic Cache Clearing",
+        description: "No more Ctrl+Shift+R required - automatic cache invalidation on version updates"
+      },
+      {
+        type: "improvement",
+        title: "Zero-Cache API Strategy",
+        description: "All API requests now use no-store directive for real-time data accuracy"
+      },
+      {
+        type: "improvement",
+        title: "Version Detection System",
+        description: "Real-time monitoring for version changes with automatic cache clearing"
+      },
+      {
+        type: "fix",
+        title: "Service Worker Optimization",
+        description: "Complete service worker lifecycle management with aggressive cache busting"
+      }
+    ]
+  },
+  {
     version: "v1.2.3",
     date: "2025-07-10",
     type: "minor",
