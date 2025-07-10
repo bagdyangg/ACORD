@@ -7,6 +7,7 @@ import Navigation from "@/components/navigation";
 
 import PasswordPolicySettings from "@/components/admin/password-policy-settings";
 import ResetPasswordButton from "@/components/admin/reset-password-button";
+import ActivationButton from "@/components/admin/activation-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1080,6 +1081,7 @@ export default function Admin() {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Active</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -1102,13 +1104,18 @@ export default function Admin() {
                               </Badge>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
+                              <Badge variant={userData.isActive ? 'default' : 'secondary'}>
+                                {userData.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
                               {getPasswordStatusBadge(userData)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(userData.createdAt).toLocaleDateString()}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex space-x-2">
+                              <div className="flex space-x-2 flex-wrap gap-1">
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -1117,6 +1124,7 @@ export default function Admin() {
                                   Edit
                                 </Button>
                                 <ResetPasswordButton user={userData} />
+                                <ActivationButton user={userData} currentUserId={user?.id || ''} />
                                 {userData.role !== 'superadmin' && (
                                   <Button
                                     variant="destructive"
