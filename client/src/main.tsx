@@ -19,15 +19,21 @@ if ('serviceWorker' in navigator) {
       });
     });
     
-    // Register new service worker
-    navigator.serviceWorker.register('/sw.js')
+    // Register new service worker with error handling
+    navigator.serviceWorker.register('/sw.js', {
+      scope: '/',
+      updateViaCache: 'none'
+    })
       .then((registration) => {
         console.log('SW registered: ', registration);
         
-        // Check for updates every 10 seconds (more aggressive)
+        // Check for updates every 60 seconds with error handling
         setInterval(() => {
-          registration.update();
-        }, 10000);
+          registration.update().catch(err => {
+            // Silently ignore SW update errors to prevent spam
+            console.debug('SW update check failed:', err.message);
+          });
+        }, 60000);
         
         // Handle updates
         registration.addEventListener('updatefound', () => {
@@ -47,7 +53,8 @@ if ('serviceWorker' in navigator) {
         });
       })
       .catch((registrationError) => {
-        console.log('SW registration failed: ', registrationError);
+        console.warn('SW registration failed:', registrationError.message);
+        // Don't retry to avoid error spam
       });
   });
   
