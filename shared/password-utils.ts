@@ -50,5 +50,10 @@ export function getDaysUntilExpiry(passwordChangedAt: Date, expiryDays: number):
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
+export function shouldShowExpiryWarning(passwordChangedAt: Date, expiryDays: number, warningDays: number): boolean {
+  const daysUntilExpiry = getDaysUntilExpiry(passwordChangedAt, expiryDays);
+  return daysUntilExpiry <= warningDays && daysUntilExpiry > 0;
+}
+
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

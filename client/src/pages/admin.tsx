@@ -94,6 +94,12 @@ export default function Admin() {
     enabled: user?.role === "admin" || user?.role === "superadmin",
   });
 
+  // Fetch password policy
+  const { data: passwordPolicy } = useQuery({
+    queryKey: ["/api/admin/password-policy"],
+    enabled: user?.role === "admin" || user?.role === "superadmin",
+  });
+
   // Upload dishes mutation
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -791,9 +797,12 @@ export default function Admin() {
     const passwordAge = Math.floor((Date.now() - new Date(user.passwordChangedAt).getTime()) / (1000 * 60 * 60 * 24));
     const daysUntilExpiry = user.passwordExpiryDays - passwordAge;
     
+    // Use configured warning days from password policy, fallback to 7 days
+    const warningDays = passwordPolicy?.warningDays || 7;
+    
     if (daysUntilExpiry <= 0) {
       return <Badge variant="destructive"><Clock className="h-3 w-3 mr-1" />Expired</Badge>;
-    } else if (daysUntilExpiry <= 7) {
+    } else if (daysUntilExpiry <= warningDays) {
       return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Expires Soon ({daysUntilExpiry}d)</Badge>;
     } else {
       return <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />Active ({daysUntilExpiry}d)</Badge>;

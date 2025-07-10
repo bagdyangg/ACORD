@@ -115,6 +115,9 @@ The application requires the following environment variables:
   - Completely removed "Password Management" tab as functionality was duplicated in User Management
   - Streamlined admin interface from 4 tabs to 3 tabs (Menu, Users, Policy) for admins and 3 to 2 tabs for superadmins
   - Enhanced user experience with one-click password reset and automatic password copying
+  - Added configurable expiry warning periods (1, 3, 7, 14, 30 days) in Password Policy settings
+  - Updated status badge logic to use administrator-configured warning periods instead of fixed 7-day threshold
+  - Enhanced password policy interface with warning period configuration and validation
 - July 08, 2025. **ACORD v1.2** - Password Management System:
   - Implemented comprehensive password management with configurable policies
   - Added password expiry system (default 120 days, admin configurable)
