@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, UserPlus, Upload, FileText, Download, Calendar, Trash2, AlertTriangle, Shield } from "lucide-react";
+import { X, UserPlus, Upload, FileText, Download, Calendar, Trash2, AlertTriangle, Shield, UserCheck } from "lucide-react";
 import { Link } from "wouter";
 import type { User, Dish } from "@shared/schema";
 
@@ -797,16 +797,14 @@ export default function Admin() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           {user?.role === "admin" ? (
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="menu">Menu Management</TabsTrigger>
               <TabsTrigger value="users">User Management</TabsTrigger>
-              <TabsTrigger value="passwords">Password Management</TabsTrigger>
               <TabsTrigger value="policy">Password Policy</TabsTrigger>
             </TabsList>
           ) : (
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="users">User Management</TabsTrigger>
-              <TabsTrigger value="passwords">Password Management</TabsTrigger>
               <TabsTrigger value="policy">Password Policy</TabsTrigger>
             </TabsList>
           )}
@@ -1005,30 +1003,7 @@ export default function Admin() {
             </TabsContent>
           )}
 
-          <TabsContent value="passwords">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Shield className="h-5 w-5" />
-                  <span>Password Management</span>
-                </CardTitle>
-                <p className="text-sm text-gray-600">
-                  Manage user passwords, reset credentials, and configure password policies
-                </p>
-              </CardHeader>
-              <CardContent>
-                {users && Array.isArray(users) && users.length > 0 ? (
-                  <div className="space-y-4">
-                    {users.map((userData: any) => (
-                      <PasswordManagement key={userData.id} user={userData} />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-gray-500 py-8">No users found</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+
 
           <TabsContent value="policy">
             <PasswordPolicySettings />
@@ -1038,7 +1013,15 @@ export default function Admin() {
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle>Registered Users</CardTitle>
+                  <div>
+                    <CardTitle className="flex items-center space-x-2">
+                      <UserCheck className="h-5 w-5" />
+                      <span>User Management</span>
+                    </CardTitle>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Manage users, roles, and password settings
+                    </p>
+                  </div>
                   <div className="flex gap-2">
                     <Button
                       onClick={() => setShowCreateUser(true)}
@@ -1080,7 +1063,7 @@ export default function Admin() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
-                        {users.map((userData: any) => (
+                        {users.flatMap((userData: any) => [
                           <tr key={userData.id}>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm font-medium text-gray-900">
@@ -1116,8 +1099,13 @@ export default function Admin() {
                                 </Button>
                               )}
                             </td>
+                          </tr>,
+                          <tr key={`${userData.id}-password`} className="bg-gray-50">
+                            <td colSpan={5} className="px-6 py-4">
+                              <PasswordManagement user={userData} />
+                            </td>
                           </tr>
-                        ))}
+                        ])}
                       </tbody>
                     </table>
                   </div>
