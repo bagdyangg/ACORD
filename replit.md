@@ -104,6 +104,16 @@ The application requires the following environment variables:
 
 ## Changelog
 
+- July 10, 2025. **ACORD v1.2.2** - User Activation/Deactivation System:
+  - Added isActive field to users schema with default true value
+  - Implemented user activation and deactivation functionality in User Management interface
+  - Created ActivationButton component with Activate/Deactivate toggle functionality
+  - Added "Active" status column to User Management table showing Active/Inactive badges
+  - Added API endpoints for user activation: PUT /api/admin/users/:userId/activate and /api/admin/users/:userId/deactivate
+  - Enhanced authentication to check isActive status - inactive users cannot log in
+  - Added security protections: cannot deactivate yourself or superadmin users
+  - Integrated activation controls into existing User Management table alongside Edit/Reset Password/Delete actions
+  - Updated database storage with activateUser() and deactivateUser() methods in DatabaseStorage
 - July 10, 2025. **ACORD v1.2.1** - Reset Password Button Integration & Status Management:
   - Moved Reset Password functionality from separate tab to User Management table Actions column
   - Added instant password reset button alongside Edit/Delete actions for streamlined workflow

@@ -951,6 +951,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User activation endpoints
+  app.put("/api/admin/users/:userId/activate", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId: targetUserId } = req.params;
+      const success = await storage.activateUser(targetUserId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "User activated successfully" });
+    } catch (error) {
+      console.error("Error activating user:", error);
+      res.status(500).json({ message: "Failed to activate user" });
+    }
+  });
+
+  app.put("/api/admin/users/:userId/deactivate", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId: targetUserId } = req.params;
+      
+      // Prevent deactivating superadmin or self
+      if (targetUserId === userId) {
+        return res.status(400).json({ message: "Cannot deactivate yourself" });
+      }
+
+      const targetUser = await storage.getUser(targetUserId);
+      if (targetUser?.role === "superadmin") {
+        return res.status(400).json({ message: "Cannot deactivate superadmin" });
+      }
+
+      const success = await storage.deactivateUser(targetUserId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "User deactivated successfully" });
+    } catch (error) {
+      console.error("Error deactivating user:", error);
+      res.status(500).json({ message: "Failed to deactivate user" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

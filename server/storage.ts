@@ -49,6 +49,10 @@ export interface IStorage {
   resetPassword(userId: string, newPassword: string, mustChange?: boolean): Promise<boolean>;
   checkPasswordExpiry(userId: string): Promise<{ isExpired: boolean; daysUntilExpiry: number }>;
   updatePasswordExpiryDays(userId: string, days: number): Promise<boolean>;
+
+  // User activation operations
+  activateUser(userId: string): Promise<boolean>;
+  deactivateUser(userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -65,7 +69,7 @@ export class DatabaseStorage implements IStorage {
 
   async authenticateUser(username: string, password: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(
-      and(eq(users.username, username), eq(users.password, password))
+      and(eq(users.username, username), eq(users.password, password), eq(users.isActive, true))
     );
     return user;
   }
@@ -312,6 +316,26 @@ export class DatabaseStorage implements IStorage {
     const [updatedUser] = await db
       .update(users)
       .set({ passwordExpiryDays: days })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return !!updatedUser;
+  }
+
+  async activateUser(userId: string): Promise<boolean> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ isActive: true, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return !!updatedUser;
+  }
+
+  async deactivateUser(userId: string): Promise<boolean> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ isActive: false, updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning();
 
