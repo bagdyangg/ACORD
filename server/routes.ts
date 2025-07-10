@@ -904,7 +904,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reset password endpoint for admin
-  app.post("/api/admin/reset-password/:userId", isAuthenticated, async (req: any, res) => {
+  app.post("/api/admin/reset-password/:userId", (req, res, next) => {
+    console.log("=== Reset password middleware check ===");
+    console.log("Session:", req.session);
+    console.log("User from session:", req.user);
+    console.log("Session userId:", req.session?.userId);
+    isAuthenticated(req, res, next);
+  }, async (req: any, res) => {
     try {
       console.log("=== Password reset request ===");
       console.log("User session:", req.user);
