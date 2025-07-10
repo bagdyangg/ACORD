@@ -4,6 +4,10 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
+
+import PasswordPolicySettings from "@/components/admin/password-policy-settings";
+import ResetPasswordButton from "@/components/admin/reset-password-button";
+import ActivationButton from "@/components/admin/activation-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, UserPlus, Upload, FileText, Download, Calendar, Trash2, AlertTriangle } from "lucide-react";
+import { X, UserPlus, Upload, FileText, Download, Calendar, Trash2, AlertTriangle, Shield, UserCheck, Clock } from "lucide-react";
 import { Link } from "wouter";
 import type { User, Dish } from "@shared/schema";
 
@@ -88,6 +92,12 @@ export default function Admin() {
   // Fetch users (admin only)
   const { data: users } = useQuery({
     queryKey: ["/api/admin/users"],
+    enabled: user?.role === "admin" || user?.role === "superadmin",
+  });
+
+  // Fetch password policy
+  const { data: passwordPolicy } = useQuery({
+    queryKey: ["/api/admin/password-policy"],
     enabled: user?.role === "admin" || user?.role === "superadmin",
   });
 
@@ -779,6 +789,46 @@ export default function Admin() {
     }
   };
 
+  const getPasswordStatusBadge = (user: any) => {
+    if (user.mustChangePassword) {
+      return <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />Must Change</Badge>;
+    }
+    
+    // Calculate days until expiry
+    const passwordAge = Math.floor((Date.now() - new Date(user.passwordChangedAt).getTime()) / (1000 * 60 * 60 * 24));
+    const daysUntilExpiry = user.passwordExpiryDays - passwordAge;
+    
+    // Use configured warning days from password policy, fallback to 7 days
+    const warningDays = passwordPolicy?.warningDays || 7;
+    
+    if (daysUntilExpiry <= 0) {
+      return <Badge variant="destructive"><Clock className="h-3 w-3 mr-1" />Expired</Badge>;
+    } else if (daysUntilExpiry <= warningDays) {
+      return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Expires Soon ({daysUntilExpiry}d)</Badge>;
+    } else {
+      return <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />Active ({daysUntilExpiry}d)</Badge>;
+    }
+  };
+
+  const getRelativeTime = (date: string | null) => {
+    if (!date) return "Never";
+    
+    const now = new Date().getTime();
+    const loginTime = new Date(date).getTime();
+    const diffMs = now - loginTime;
+    
+    const minutes = Math.floor(diffMs / (1000 * 60));
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 30) return `${days}d ago`;
+    
+    return new Date(date).toLocaleDateString();
+  };
+
   return (
     <div className="min-h-screen bg-neutral dark:bg-gray-900">
       <Navigation />
@@ -795,13 +845,15 @@ export default function Admin() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           {user?.role === "admin" ? (
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="menu">Menu Management</TabsTrigger>
               <TabsTrigger value="users">User Management</TabsTrigger>
+              <TabsTrigger value="policy">Password Policy</TabsTrigger>
             </TabsList>
           ) : (
-            <TabsList className="grid w-full grid-cols-1">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="users">User Management</TabsTrigger>
+              <TabsTrigger value="policy">Password Policy</TabsTrigger>
             </TabsList>
           )}
 
@@ -999,6 +1051,14 @@ export default function Admin() {
             </TabsContent>
           )}
 
+
+
+
+
+          <TabsContent value="policy">
+            <PasswordPolicySettings />
+          </TabsContent>
+
           <TabsContent value="users">
             <Card>
               <CardHeader>
@@ -1040,6 +1100,9 @@ export default function Admin() {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Active</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Login</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                         </tr>
@@ -1060,26 +1123,50 @@ export default function Admin() {
                                 {userData.role}
                               </Badge>
                             </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <Badge variant={userData.isActive ? 'default' : 'secondary'}>
+                                {userData.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {getPasswordStatusBadge(userData)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {userData.lastLoginAt ? (
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{getRelativeTime(userData.lastLoginAt)}</span>
+                                  <span className="text-xs text-gray-400">
+                                    {new Date(userData.lastLoginAt).toLocaleDateString()} {new Date(userData.lastLoginAt).toLocaleTimeString()}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400 italic">Never logged in</span>
+                              )}
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(userData.createdAt).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => startEditUser(userData)}
-                              >
-                                Edit
-                              </Button>
-                              {userData.role !== 'superadmin' && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex space-x-2 flex-wrap gap-1">
                                 <Button
-                                  variant="destructive"
+                                  variant="outline"
                                   size="sm"
-                                  onClick={() => handleDeleteUser(userData.id)}
+                                  onClick={() => startEditUser(userData)}
                                 >
-                                  Delete
+                                  Edit
                                 </Button>
-                              )}
+                                <ResetPasswordButton user={userData} />
+                                <ActivationButton user={userData} currentUserId={user?.id || ''} />
+                                {userData.role !== 'superadmin' && (
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleDeleteUser(userData.id)}
+                                  >
+                                    Delete
+                                  </Button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}

@@ -9,8 +9,10 @@ import {
   type Order,
   type InsertOrder,
 } from "@shared/schema";
+import { isPasswordExpired, getDaysUntilExpiry } from "@shared/password-utils";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
+import bcrypt from "bcrypt";
 
 export interface IStorage {
   // User operations - for username/password authentication
@@ -41,6 +43,19 @@ export interface IStorage {
   getOrdersSummary(date: string): Promise<any>;
   getAllUsers(): Promise<User[]>;
   clearTodayData(date: string): Promise<{ ordersCleared: number; dishesCleared: number }>;
+
+  // Password operations
+  changePassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean>;
+  resetPassword(userId: string, newPassword: string, mustChange?: boolean): Promise<boolean>;
+  checkPasswordExpiry(userId: string): Promise<{ isExpired: boolean; daysUntilExpiry: number }>;
+  updatePasswordExpiryDays(userId: string, days: number): Promise<boolean>;
+
+  // User activation operations
+  activateUser(userId: string): Promise<boolean>;
+  deactivateUser(userId: string): Promise<boolean>;
+
+  // Login tracking
+  updateLastLogin(userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -57,7 +72,7 @@ export class DatabaseStorage implements IStorage {
 
   async authenticateUser(username: string, password: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(
-      and(eq(users.username, username), eq(users.password, password))
+      and(eq(users.username, username), eq(users.password, password), eq(users.isActive, true))
     );
     return user;
   }
@@ -239,6 +254,105 @@ export class DatabaseStorage implements IStorage {
       console.error("Error clearing today's data:", error);
       throw error;
     }
+  }
+
+  // Password operations
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+    if (!user) return false;
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentPasswordValid) return false;
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password and reset flags
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        password: hashedPassword,
+        passwordChangedAt: new Date(),
+        mustChangePassword: false,
+      })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return !!updatedUser;
+  }
+
+  async resetPassword(userId: string, newPassword: string, mustChange: boolean = true): Promise<boolean> {
+    const user = await this.getUser(userId);
+    if (!user) return false;
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password and set flags
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        password: hashedPassword,
+        passwordChangedAt: new Date(),
+        mustChangePassword: mustChange,
+      })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return !!updatedUser;
+  }
+
+  async checkPasswordExpiry(userId: string): Promise<{ isExpired: boolean; daysUntilExpiry: number }> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      return { isExpired: true, daysUntilExpiry: 0 };
+    }
+
+    const isExpired = isPasswordExpired(user.passwordChangedAt, user.passwordExpiryDays);
+    const daysUntilExpiry = getDaysUntilExpiry(user.passwordChangedAt, user.passwordExpiryDays);
+
+    return { isExpired, daysUntilExpiry };
+  }
+
+  async updatePasswordExpiryDays(userId: string, days: number): Promise<boolean> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ passwordExpiryDays: days })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return !!updatedUser;
+  }
+
+  async activateUser(userId: string): Promise<boolean> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ isActive: true, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return !!updatedUser;
+  }
+
+  async deactivateUser(userId: string): Promise<boolean> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return !!updatedUser;
+  }
+
+  async updateLastLogin(userId: string): Promise<boolean> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ lastLoginAt: new Date(), updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return !!updatedUser;
   }
 }
 

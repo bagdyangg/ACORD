@@ -1,0 +1,168 @@
+# WhatsApp Lunch Ordering System (ACORD)
+
+## Overview
+
+ACORD is a production-ready WhatsApp-integrated lunch ordering system designed for office environments. The system features an image-only menu selection interface optimized for mobile WhatsApp workflow, comprehensive order management, and real-time analytics. The application is currently in version 1.1 (ACORD-v1.1-stable) and has been validated with 27 users, 5 dishes, and 11+ confirmed orders.
+
+## System Architecture
+
+### Frontend Architecture
+- **Framework**: React 18 with TypeScript and Vite build system
+- **UI Library**: Radix UI components with shadcn/ui styling system
+- **Styling**: Tailwind CSS with custom theme configuration
+- **State Management**: TanStack React Query for server state management
+- **Routing**: Wouter for lightweight client-side routing
+- **PWA Features**: Service Worker implementation for offline functionality
+
+### Backend Architecture
+- **Runtime**: Node.js with Express.js framework
+- **Authentication**: Custom session-based authentication with username/password
+- **File Upload**: Multer middleware for image handling
+- **API Design**: RESTful API endpoints with role-based access control
+- **Session Storage**: PostgreSQL-backed session management using connect-pg-simple
+
+### Database Layer
+- **Database**: PostgreSQL with Drizzle ORM
+- **Connection**: Neon serverless PostgreSQL connection
+- **Schema Management**: Type-safe schema definitions with Drizzle Kit migrations
+- **Tables**: Users, dishes, orders, and sessions with proper relationships
+
+## Key Components
+
+### Authentication System
+- Role-based access control (employee/admin/superadmin)
+- Session-based authentication with secure cookie configuration
+- User management with username/password credentials
+- Protected API endpoints with middleware validation
+
+### Menu Management
+- Image-only dish system optimized for WhatsApp sharing
+- Daily menu reset functionality for fresh content
+- Bulk image upload capability for administrators
+- Secure file serving through Express static middleware
+
+### Order Processing
+- Real-time order creation and modification
+- User-specific order history tracking
+- Visual dish selection with confirmation interface
+- Mobile-optimized order summary component
+
+### Administrative Features
+- Comprehensive order analytics and statistics
+- User management interface with role assignment
+- CSV export functionality for data analysis
+- Order processing with quantity overlay generation
+
+## Data Flow
+
+1. **User Authentication**: Users log in with username/password credentials
+2. **Menu Loading**: Daily dishes are fetched and displayed as image cards
+3. **Order Selection**: Users select dishes through visual interface
+4. **Order Submission**: Selected dishes are submitted as order records
+5. **Admin Processing**: Administrators view orders and generate processed images
+6. **Data Export**: Order data can be exported for restaurant integration
+
+## External Dependencies
+
+### Core Dependencies
+- **@neondatabase/serverless**: PostgreSQL database connection
+- **drizzle-orm**: Type-safe database ORM
+- **express**: Web application framework
+- **multer**: File upload handling
+- **connect-pg-simple**: PostgreSQL session store
+
+### UI Dependencies
+- **@radix-ui/***: Comprehensive UI component library
+- **@tanstack/react-query**: Server state management
+- **tailwindcss**: Utility-first CSS framework
+- **lucide-react**: Icon library
+
+### Development Tools
+- **vite**: Fast build tool and development server
+- **typescript**: Type safety and development experience
+- **drizzle-kit**: Database schema management
+
+## Deployment Strategy
+
+### Environment Configuration
+The application requires the following environment variables:
+- `DATABASE_URL`: PostgreSQL connection string
+- `SESSION_SECRET`: Secure session encryption key
+- `NODE_ENV`: Environment designation (development/production)
+- `PORT`: Application server port (defaults to 5000)
+
+### Build Process
+1. Frontend build: `vite build` compiles React application to static assets
+2. Backend build: `esbuild` bundles Node.js server code
+3. Database setup: `drizzle-kit push` applies schema changes
+4. Production start: Serves built application with Express
+
+### Deployment Options
+- **Docker**: Complete containerized deployment with docker-compose
+- **Traditional Server**: Standard Node.js deployment on existing infrastructure
+- **Local Setup**: Development and testing environment configuration
+
+## Changelog
+
+- July 10, 2025. **ACORD v1.2.4** - Professional Releases Page:
+  - Added industry-standard releases page at /releases route accessible via top-right navigation
+  - Created comprehensive changelog with version history, feature descriptions, and release dates
+  - Implemented visual badges for version types (Major/Minor/Patch) and status (Stable/Beta/Deprecated)
+  - Added feature categorization with icons (Feature/Improvement/Fix/Security) for better organization
+  - Integrated releases page into main navigation with FileText icon and active state highlighting
+  - Enhanced user experience with detailed release descriptions and professional layout design
+- July 10, 2025. **ACORD v1.2.3** - Last Login Tracking System:
+  - Added lastLoginAt field to users schema to track login timestamps
+  - Implemented automatic last login timestamp recording on successful authentication
+  - Added "Last Login" column to User Management table with relative time display (e.g., "2h ago", "3d ago")
+  - Enhanced user table with absolute timestamp details (date and time) shown as secondary information
+  - Added getRelativeTime() helper function for user-friendly time display
+  - Updated database storage with updateLastLogin() method to track user activity
+  - Shows "Never logged in" for users who haven't accessed the system yet
+- July 10, 2025. **ACORD v1.2.2** - User Activation/Deactivation System:
+  - Added isActive field to users schema with default true value
+  - Implemented user activation and deactivation functionality in User Management interface
+  - Created ActivationButton component with Activate/Deactivate toggle functionality
+  - Added "Active" status column to User Management table showing Active/Inactive badges
+  - Added API endpoints for user activation: PUT /api/admin/users/:userId/activate and /api/admin/users/:userId/deactivate
+  - Enhanced authentication to check isActive status - inactive users cannot log in
+  - Added security protections: cannot deactivate yourself or superadmin users
+  - Integrated activation controls into existing User Management table alongside Edit/Reset Password/Delete actions
+  - Updated database storage with activateUser() and deactivateUser() methods in DatabaseStorage
+- July 10, 2025. **ACORD v1.2.1** - Reset Password Button Integration & Status Management:
+  - Moved Reset Password functionality from separate tab to User Management table Actions column
+  - Added instant password reset button alongside Edit/Delete actions for streamlined workflow
+  - Implemented automatic clipboard copying of temporary passwords (exactly 8 characters)
+  - Fixed API endpoint conflicts and JSON parsing issues for reliable password reset operations
+  - Fixed password generation algorithm to guarantee exactly 8 characters using secure character set
+  - Added "Status" column to User Management table showing password status badges (Active, Expires Soon, Expired, Must Change)
+  - Removed individual "Expiry Settings" buttons - password policies are now centrally managed in Password Policy tab
+  - Completely removed "Password Management" tab as functionality was duplicated in User Management
+  - Streamlined admin interface from 4 tabs to 3 tabs (Menu, Users, Policy) for admins and 3 to 2 tabs for superadmins
+  - Enhanced user experience with one-click password reset and automatic password copying
+  - Added configurable expiry warning periods (1, 3, 7, 14, 30 days) in Password Policy settings
+  - Updated status badge logic to use administrator-configured warning periods instead of fixed 7-day threshold
+  - Enhanced password policy interface with warning period configuration and validation
+- July 08, 2025. **ACORD v1.2** - Password Management System:
+  - Implemented comprehensive password management with configurable policies
+  - Added password expiry system (default 120 days, admin configurable)
+  - Created password change interface with validation (min 8 chars, letters+numbers)
+  - Added admin password reset functionality with temporary passwords
+  - Implemented forced password change mechanism with app-level blocking
+  - Added password status monitoring and expiry warnings
+  - Created password management admin panel for user administration
+  - Fixed critical integration issues with password enforcement
+  - Corrected admin access rights for password expiry configuration
+  - Added navigation improvements for mobile Samsung S24 Ultra compatibility
+- July 08, 2025. **ACORD v1.1.1** - Major cache fixing update:
+  - Fixed critical caching issues preventing first page load
+  - Implemented network-first Service Worker strategy
+  - Added automatic cache versioning and cleanup
+  - Created cache debugging tools and emergency clear endpoints
+  - Improved static file serving with proper cache headers
+  - Added cache troubleshooting documentation
+- July 02, 2025. Initial setup
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.

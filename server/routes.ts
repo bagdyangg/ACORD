@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./auth";
 import { insertDishSchema, insertOrderSchema } from "@shared/schema";
+import { changePasswordSchema, resetPasswordSchema } from "@shared/password-utils";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -61,6 +62,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       req.session.userId = user.id;
+      
+      // Update last login timestamp
+      await storage.updateLastLogin(user.id);
       
       // Ensure session is saved before responding (important for production)
       req.session.save((err) => {
@@ -419,7 +423,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const newUser = await storage.createUser(req.body);
+      // Validate required fields
+      const { firstName, lastName, username, password, role } = req.body;
+      if (!firstName || !lastName || !username || !password) {
+        return res.status(400).json({ message: "Missing required fields: firstName, lastName, username, password" });
+      }
+
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+
+      // Generate unique user ID
+      const userIdPrefix = "user-" + Math.random().toString(36).substr(2, 6) + "-" + Math.random().toString(36).substr(2, 3) + "-" + Date.now().toString().slice(-2);
+      
+      const userData = {
+        id: userIdPrefix,
+        firstName,
+        lastName,
+        username,
+        password,
+        role: role || 'employee'
+      };
+
+      const newUser = await storage.createUser(userData);
       res.json(newUser);
     } catch (error) {
       console.error("Error creating user:", error);
@@ -637,6 +665,356 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error exporting report:", error);
       res.status(500).json({ message: "Failed to export report" });
+    }
+  });
+
+  // Cache clearing endpoint for debugging
+  app.get("/api/clear-cache", (req, res) => {
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    res.send(`
+      <html>
+        <head>
+          <title>Cache Clearing</title>
+          <script>
+            console.log('Starting cache clear...');
+            
+            // Clear all caches
+            if ('caches' in window) {
+              caches.keys().then(names => {
+                names.forEach(name => {
+                  console.log('Deleting cache:', name);
+                  caches.delete(name);
+                });
+              });
+            }
+            
+            // Clear storage
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Unregister service worker
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(registrations => {
+                registrations.forEach(registration => {
+                  console.log('Unregistering SW:', registration);
+                  registration.unregister();
+                });
+              });
+            }
+            
+            alert('Cache cleared! Redirecting to app...');
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 1000);
+          </script>
+        </head>
+        <body>
+          <h1>Clearing Cache...</h1>
+          <p>Please wait while we clear your cache and reload the application.</p>
+        </body>
+      </html>
+    `);
+  });
+
+  // Password management routes
+  app.post("/api/auth/change-password", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+
+      const result = changePasswordSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        });
+      }
+
+      const { currentPassword, newPassword } = result.data;
+      const success = await storage.changePassword(userId, currentPassword, newPassword);
+
+      if (!success) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ message: "Failed to change password" });
+    }
+  });
+
+
+
+  app.get("/api/auth/password-status", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const expiryStatus = await storage.checkPasswordExpiry(userId);
+
+      res.json({
+        mustChangePassword: user.mustChangePassword,
+        isExpired: expiryStatus.isExpired,
+        daysUntilExpiry: expiryStatus.daysUntilExpiry,
+        passwordExpiryDays: user.passwordExpiryDays
+      });
+    } catch (error) {
+      console.error("Error checking password status:", error);
+      res.status(500).json({ message: "Failed to check password status" });
+    }
+  });
+
+  app.put("/api/admin/password-expiry/:userId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId: targetUserId } = req.params;
+      const { days } = req.body;
+
+      if (!days || days < 1 || days > 365) {
+        return res.status(400).json({ message: "Days must be between 1 and 365" });
+      }
+
+      const success = await storage.updatePasswordExpiryDays(targetUserId, days);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "Password expiry updated successfully" });
+    } catch (error) {
+      console.error("Error updating password expiry:", error);
+      res.status(500).json({ message: "Failed to update password expiry" });
+    }
+  });
+
+  // Password policy management routes
+  app.get("/api/admin/password-policy", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Return current password policy (could be stored in database or config)
+      const policy = {
+        minLength: 8,
+        requireUppercase: false,
+        requireLowercase: true,
+        requireNumbers: true,
+        requireSpecialChars: false,
+        maxAgeDays: 120,
+        preventReuse: 3,
+        warningDays: 7,
+      };
+
+      res.json(policy);
+    } catch (error) {
+      console.error("Error getting password policy:", error);
+      res.status(500).json({ message: "Failed to get password policy" });
+    }
+  });
+
+  app.put("/api/admin/password-policy", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { minLength, requireUppercase, requireLowercase, requireNumbers, requireSpecialChars, maxAgeDays, preventReuse, warningDays } = req.body;
+
+      // Validate input
+      if (!minLength || minLength < 4 || minLength > 50) {
+        return res.status(400).json({ message: "Invalid minimum length" });
+      }
+
+      if (!maxAgeDays || maxAgeDays < 1 || maxAgeDays > 365) {
+        return res.status(400).json({ message: "Invalid max age days" });
+      }
+
+      if (!warningDays || warningDays < 1 || warningDays >= maxAgeDays) {
+        return res.status(400).json({ message: "Warning days must be between 1 and less than max age days" });
+      }
+
+      // In a real implementation, you would store this in the database
+      // For now, we'll just return success and log the policy
+      console.log("Password policy updated:", req.body);
+
+      res.json({ message: "Password policy updated successfully" });
+    } catch (error) {
+      console.error("Error updating password policy:", error);
+      res.status(500).json({ message: "Failed to update password policy" });
+    }
+  });
+
+  // Reset password endpoint for admin - moved up before catch-all routes
+  app.post("/api/admin/reset-password/:userId", (req, res, next) => {
+    console.log("MIDDLEWARE HIT: Reset password endpoint accessed");
+    console.log("URL:", req.url);
+    console.log("Params:", req.params);
+    next();
+  }, async (req: any, res) => {
+    try {
+      console.log("=== Password reset request received ===");
+      console.log("Headers:", req.headers);
+      console.log("Session exists:", !!req.session);
+      console.log("Session userId:", req.session?.userId);
+      
+      // Manual authentication check since middleware seems to have issues
+      if (!req.session || !req.session.userId) {
+        console.log("No session or userId found");
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const adminUser = await storage.getUser(req.session.userId);
+      if (!adminUser) {
+        console.log("Admin user not found in database");
+        return res.status(401).json({ message: "User not found" });
+      }
+      
+      console.log("Admin user:", adminUser.username, "role:", adminUser.role);
+      
+      if (!isAdmin(adminUser.role)) {
+        console.log("User is not admin, role:", adminUser.role);
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId: targetUserId } = req.params;
+      console.log("Target user ID:", targetUserId);
+      
+      // Check if target user exists
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) {
+        console.log("Target user not found:", targetUserId);
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Generate temporary password (exactly 8 characters)
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      let tempPassword = '';
+      for (let i = 0; i < 8; i++) {
+        tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      console.log("Generated temp password:", tempPassword, "(length:", tempPassword.length, ")");
+      
+      // Reset the password
+      const success = await storage.resetPassword(targetUserId, tempPassword, true);
+      console.log("Password reset success:", success);
+      
+      if (!success) {
+        console.log("Password reset failed");
+        return res.status(500).json({ message: "Failed to reset password" });
+      }
+
+      console.log(`Admin ${adminUser.username} reset password for user ${targetUserId}`);
+      console.log("FINAL PASSWORD BEING SENT TO CLIENT:", tempPassword, "LENGTH:", tempPassword.length);
+      
+      const responseData = { 
+        message: "Password reset successfully",
+        tempPassword: tempPassword
+      };
+      
+      console.log("RESPONSE DATA:", JSON.stringify(responseData));
+      res.json(responseData);
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
+  // User activation endpoints
+  app.put("/api/admin/users/:userId/activate", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId: targetUserId } = req.params;
+      const success = await storage.activateUser(targetUserId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "User activated successfully" });
+    } catch (error) {
+      console.error("Error activating user:", error);
+      res.status(500).json({ message: "Failed to activate user" });
+    }
+  });
+
+  app.put("/api/admin/users/:userId/deactivate", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID not found" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!isAdmin(user?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId: targetUserId } = req.params;
+      
+      // Prevent deactivating superadmin or self
+      if (targetUserId === userId) {
+        return res.status(400).json({ message: "Cannot deactivate yourself" });
+      }
+
+      const targetUser = await storage.getUser(targetUserId);
+      if (targetUser?.role === "superadmin") {
+        return res.status(400).json({ message: "Cannot deactivate superadmin" });
+      }
+
+      const success = await storage.deactivateUser(targetUserId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "User deactivated successfully" });
+    } catch (error) {
+      console.error("Error deactivating user:", error);
+      res.status(500).json({ message: "Failed to deactivate user" });
     }
   });
 

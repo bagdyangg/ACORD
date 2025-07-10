@@ -18,7 +18,7 @@ export default function DishCard({ dish, isSelected, onToggle }: DishCardProps) 
 
   return (
     <div 
-      className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer relative ${
+      className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer relative touch-manipulation ${
         isSelected ? "ring-4 ring-accent" : ""
       }`}
       onClick={onToggle}
@@ -26,7 +26,7 @@ export default function DishCard({ dish, isSelected, onToggle }: DishCardProps) 
       <img 
         src={dish.imagePath} 
         alt="Dish" 
-        className="w-full h-64 object-cover"
+        className="w-full h-48 sm:h-64 object-cover"
       />
       
       {isSelected && (

@@ -27,10 +27,10 @@ export default function OrderSummary({
   const isMobile = useIsMobile();
   
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg md:relative md:border-0 md:shadow-none md:bg-transparent">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg md:relative md:border-0 md:shadow-none md:bg-transparent safe-area-inset-bottom">
       <div className="max-w-7xl mx-auto">
-        <Card className="border border-gray-100 md:border md:border-gray-100">
-          <CardContent className="p-2 md:p-6">
+        <Card className="border-0 md:border md:border-gray-100 rounded-none md:rounded-lg">
+          <CardContent className="p-3 md:p-6">
             {/* Mobile Compact Header */}
             <div className="flex items-center justify-between mb-2 md:mb-4">
               <h3 className="text-lg md:text-xl font-semibold text-secondary">Your Order</h3>

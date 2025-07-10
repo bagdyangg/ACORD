@@ -1,8 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="192" height="192" rx="24" fill="#6366f1"/>
-<path d="M48 64H144V80H48V64Z" fill="white"/>
-<path d="M48 96H144V112H48V96Z" fill="white"/>
-<path d="M48 128H112V144H48V128Z" fill="white"/>
-<circle cx="160" cy="136" r="16" fill="#f59e0b"/>
-<text x="96" y="50" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="white">ACORD</text>
+  <!-- Background circle -->
+  <circle cx="96" cy="96" r="92" fill="#6366f1"/>
+  
+  <!-- Stylized restaurant/food icon -->
+  <g transform="translate(48, 48)">
+    <!-- Fork -->
+    <path d="M20 4V32C20 36 16 40 12 40C8 40 4 36 4 32V4" stroke="white" stroke-width="4" stroke-linecap="round"/>
+    <path d="M12 4V20" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    <path d="M8 4V12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    <path d="M16 4V12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    
+    <!-- Knife -->
+    <path d="M32 4L32 40" stroke="white" stroke-width="4" stroke-linecap="round"/>
+    <path d="M28 8L36 8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    
+    <!-- Plate -->
+    <ellipse cx="64" cy="32" rx="24" ry="8" fill="none" stroke="white" stroke-width="4"/>
+    <ellipse cx="64" cy="32" rx="16" ry="4" fill="white" opacity="0.3"/>
+    
+    <!-- Food item -->
+    <circle cx="64" cy="28" r="6" fill="white" opacity="0.8"/>
+    <circle cx="58" cy="32" r="4" fill="white" opacity="0.6"/>
+    <circle cx="70" cy="34" r="4" fill="white" opacity="0.6"/>
+  </g>
+  
+  <!-- App name hint -->
+  <text x="96" y="172" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">ACORD</text>
 </svg>
