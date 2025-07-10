@@ -20,27 +20,45 @@ export default function ResetPasswordButton({ user }: ResetPasswordButtonProps) 
 
   const resetPasswordMutation = useMutation({
     mutationFn: async () => {
+      console.log("Resetting password for user:", user.id);
       const response = await fetch(`/api/admin/reset-password/${user.id}`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         credentials: "include",
       });
 
+      console.log("Reset password response status:", response.status);
+      
       if (!response.ok) {
-        const error = await response.json();
+        const errorText = await response.text();
+        console.log("Reset password error response:", errorText);
+        let error;
+        try {
+          error = JSON.parse(errorText);
+        } catch {
+          error = { message: `HTTP ${response.status}: ${errorText}` };
+        }
         throw new Error(error.message || "Failed to reset password");
       }
 
-      return response.json();
+      const data = await response.json();
+      console.log("Reset password success data:", data);
+      return data;
     },
     onSuccess: (data) => {
+      console.log("Password reset successful:", data);
       toast({
         title: "Password Reset Successful",
         description: `New temporary password for ${user.firstName} ${user.lastName}: ${data.tempPassword}`,
+        duration: 10000, // Show for 10 seconds so admin can copy the password
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setIsResetting(false);
     },
     onError: (error: Error) => {
+      console.error("Password reset error:", error);
       toast({
         title: "Reset Failed",
         description: error.message,
