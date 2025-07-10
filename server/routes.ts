@@ -125,7 +125,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dishes = await storage.getDishesByDate(today);
       }
       
-      res.json(dishes || []);
+      // Filter out dishes with missing image files
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      const validDishes = (dishes || []).filter(dish => {
+        try {
+          let imagePath: string;
+          if (dish.imagePath.startsWith('/uploads/')) {
+            imagePath = path.resolve(process.cwd(), dish.imagePath.substring(1));
+          } else if (dish.imagePath.startsWith('uploads/')) {
+            imagePath = path.resolve(process.cwd(), dish.imagePath);
+          } else {
+            imagePath = path.resolve(process.cwd(), 'uploads', path.basename(dish.imagePath));
+          }
+          
+          const exists = fs.existsSync(imagePath);
+          if (!exists) {
+            console.log(`Image file missing for dish ${dish.id}: ${imagePath}`);
+          }
+          return exists;
+        } catch (error) {
+          console.warn('Error checking image file for dish:', dish.id, error);
+          return false;
+        }
+      });
+      
+      res.json(validDishes);
     } catch (error) {
       console.error("Error fetching dishes:", error);
       res.status(500).json({ message: "Failed to fetch dishes", error: error instanceof Error ? error.message : "Unknown error" });
