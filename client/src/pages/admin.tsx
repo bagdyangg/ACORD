@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/navigation";
 import PasswordManagement from "@/components/admin/password-management";
+import PasswordPolicySettings from "@/components/admin/password-policy-settings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -796,15 +797,17 @@ export default function Admin() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           {user?.role === "admin" ? (
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="menu">Menu Management</TabsTrigger>
               <TabsTrigger value="users">User Management</TabsTrigger>
               <TabsTrigger value="passwords">Password Management</TabsTrigger>
+              <TabsTrigger value="policy">Password Policy</TabsTrigger>
             </TabsList>
           ) : (
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="users">User Management</TabsTrigger>
               <TabsTrigger value="passwords">Password Management</TabsTrigger>
+              <TabsTrigger value="policy">Password Policy</TabsTrigger>
             </TabsList>
           )}
 
@@ -1025,6 +1028,10 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="policy">
+            <PasswordPolicySettings />
           </TabsContent>
 
           <TabsContent value="users">
