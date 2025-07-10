@@ -872,7 +872,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reset password endpoint for admin - moved up before catch-all routes
-  app.post("/api/admin/reset-password/:userId", async (req: any, res) => {
+  app.post("/api/admin/reset-password/:userId", (req, res, next) => {
+    console.log("MIDDLEWARE HIT: Reset password endpoint accessed");
+    console.log("URL:", req.url);
+    console.log("Params:", req.params);
+    next();
+  }, async (req: any, res) => {
     try {
       console.log("=== Password reset request received ===");
       console.log("Headers:", req.headers);
