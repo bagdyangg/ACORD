@@ -104,6 +104,13 @@ The application requires the following environment variables:
 
 ## Changelog
 
+- July 10, 2025. **ACORD v1.2.4** - Professional Releases Page:
+  - Added industry-standard releases page at /releases route accessible via top-right navigation
+  - Created comprehensive changelog with version history, feature descriptions, and release dates
+  - Implemented visual badges for version types (Major/Minor/Patch) and status (Stable/Beta/Deprecated)
+  - Added feature categorization with icons (Feature/Improvement/Fix/Security) for better organization
+  - Integrated releases page into main navigation with FileText icon and active state highlighting
+  - Enhanced user experience with detailed release descriptions and professional layout design
 - July 10, 2025. **ACORD v1.2.3** - Last Login Tracking System:
   - Added lastLoginAt field to users schema to track login timestamps
   - Implemented automatic last login timestamp recording on successful authentication
