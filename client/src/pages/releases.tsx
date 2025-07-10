@@ -25,8 +25,8 @@ const releases: Release[] = [
     date: "2025-07-10",
     type: "minor",
     status: "stable",
-    title: "Last Login Tracking System",
-    description: "Added comprehensive user activity tracking with last login timestamps and user-friendly time display.",
+    title: "Last Login Tracking System & Admin Access Enhancement",
+    description: "Added comprehensive user activity tracking with last login timestamps and confirmed admin access to password policy settings.",
     features: [
       {
         type: "feature",
@@ -42,6 +42,11 @@ const releases: Release[] = [
         type: "improvement",
         title: "User Activity Insights",
         description: "Administrators can now monitor user engagement and system usage patterns"
+      },
+      {
+        type: "security",
+        title: "Admin Password Policy Access",
+        description: "Confirmed admin users have full access to Password Policy settings alongside superadmin users"
       }
     ]
   },

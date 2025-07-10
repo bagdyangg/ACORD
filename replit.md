@@ -111,7 +111,7 @@ The application requires the following environment variables:
   - Added feature categorization with icons (Feature/Improvement/Fix/Security) for better organization
   - Integrated releases page into main navigation with FileText icon and active state highlighting
   - Enhanced user experience with detailed release descriptions and professional layout design
-- July 10, 2025. **ACORD v1.2.3** - Last Login Tracking System:
+- July 10, 2025. **ACORD v1.2.3** - Last Login Tracking System & Admin Access Enhancement:
   - Added lastLoginAt field to users schema to track login timestamps
   - Implemented automatic last login timestamp recording on successful authentication
   - Added "Last Login" column to User Management table with relative time display (e.g., "2h ago", "3d ago")
@@ -119,6 +119,8 @@ The application requires the following environment variables:
   - Added getRelativeTime() helper function for user-friendly time display
   - Updated database storage with updateLastLogin() method to track user activity
   - Shows "Never logged in" for users who haven't accessed the system yet
+  - Confirmed admin users have full access to Password Policy settings alongside superadmin users
+  - Verified isAdmin() function properly validates both 'admin' and 'superadmin' roles for policy management
 - July 10, 2025. **ACORD v1.2.2** - User Activation/Deactivation System:
   - Added isActive field to users schema with default true value
   - Implemented user activation and deactivation functionality in User Management interface
