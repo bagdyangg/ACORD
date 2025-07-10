@@ -747,39 +747,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/reset-password", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(400).json({ message: "User ID not found" });
-      }
-      
-      const user = await storage.getUser(userId);
-      if (!isAdmin(user?.role)) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
 
-      const result = resetPasswordSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ 
-          message: "Validation failed", 
-          errors: result.error.errors 
-        });
-      }
-
-      const { userId: targetUserId, temporaryPassword, mustChangePassword } = result.data;
-      const success = await storage.resetPassword(targetUserId, temporaryPassword, mustChangePassword);
-
-      if (!success) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.json({ message: "Password reset successfully" });
-    } catch (error) {
-      console.error("Error resetting password:", error);
-      res.status(500).json({ message: "Failed to reset password" });
-    }
-  });
 
   app.get("/api/auth/password-status", isAuthenticated, async (req: any, res) => {
     try {
