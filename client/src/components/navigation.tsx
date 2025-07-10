@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { Settings, LogOut, Shield, Lock } from "lucide-react";
+import { Settings, LogOut, Shield, Lock, FileText } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -107,6 +107,23 @@ export default function Navigation() {
                   </TooltipContent>
                 </Tooltip>
               )}
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/releases">
+                    <Button 
+                      variant={location === "/releases" ? "default" : "ghost"} 
+                      size="sm"
+                      className={location === "/releases" ? "bg-primary text-primary-foreground" : ""}
+                    >
+                      <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>View release notes and changelog</p>
+                </TooltipContent>
+              </Tooltip>
 
               <Tooltip>
                 <TooltipTrigger asChild>

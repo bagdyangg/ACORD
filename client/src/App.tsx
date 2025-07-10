@@ -10,6 +10,7 @@ import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Admin from "@/pages/admin";
 import ChangePassword from "@/pages/change-password";
+import Releases from "@/pages/releases";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -84,6 +85,7 @@ function Router() {
           }} />
           <Route path="/admin" component={Admin} />
           <Route path="/change-password" component={ChangePassword} />
+          <Route path="/releases" component={Releases} />
           <Route component={NotFound} />
         </Switch>
       </div>
