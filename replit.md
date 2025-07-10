@@ -2,7 +2,7 @@
 
 ## Overview
 
-ACORD is a production-ready WhatsApp-integrated lunch ordering system designed for office environments. The system features an image-only menu selection interface optimized for mobile WhatsApp workflow, comprehensive order management, and real-time analytics. The application is currently in version 1.1 (ACORD-v1.1-stable) and has been validated with 27 users, 5 dishes, and 11+ confirmed orders.
+ACORD is a production-ready WhatsApp-integrated lunch ordering system designed for office environments. The system features an image-only menu selection interface optimized for mobile WhatsApp workflow, comprehensive order management, and real-time analytics. The application is currently in version 1.2.3 (ACORD-v1.2.3-stable) and has been validated with extensive testing including cache optimization, file management, login tracking, and comprehensive system stability verification.
 
 ## System Architecture
 
@@ -104,18 +104,25 @@ The application requires the following environment variables:
 
 ## Changelog
 
-- July 10, 2025. **ACORD v1.2.3** - Last Login Tracking System, Admin Access, Cache Resolution & File Cleanup:
+- July 10, 2025. **ACORD v1.2.3 (STABLE)** - Complete System Enhancement with Login Tracking, Cache Optimization & File Management:
+  
+  **Login Tracking & User Management:**
   - Added lastLoginAt field to users schema to track login timestamps
-  - Implemented automatic last login timestamp recording on successful authentication
+  - Implemented automatic last login timestamp recording on successful authentication  
   - Added "Last Login" column to User Management table with relative time display (e.g., "2h ago", "3d ago")
   - Enhanced user table with absolute timestamp details (date and time) shown as secondary information
   - Added getRelativeTime() helper function for user-friendly time display
   - Updated database storage with updateLastLogin() method to track user activity
   - Shows "Never logged in" for users who haven't accessed the system yet
+  
+  **Admin Access & Permissions:**
   - Confirmed admin users have full access to Password Policy settings alongside superadmin users
   - Verified isAdmin() function properly validates both 'admin' and 'superadmin' roles for policy management
+  - Enhanced role-based access control for administrative functions
+  
+  **Cache System Optimization:**
   - Implemented aggressive cache-busting strategy with Service Worker v1.2.3
-  - Added automatic version detection and cache clearing every 5 seconds
+  - Added automatic version detection and cache clearing with optimized 60-second intervals
   - Created zero-cache policy for all API requests with no-store directive
   - Implemented complete cache clearing on version mismatch with localStorage tracking
   - Added network-first strategy with cache reload for all static assets
@@ -123,14 +130,30 @@ The application requires the following environment variables:
   - Added version.json endpoint for real-time version checking
   - Eliminated need for manual Ctrl+Shift+R after updates
   - Fixed critical production issue preventing app loading after version updates
+  - Resolved persistent Service Worker 404 errors with proper /sw.js routing and fallback handling
+  
+  **File Management & Data Cleanup:**
   - Enhanced data cleanup to properly remove image files when clearing daily data
-  - Fixed broken image display issue after clearing today's orders and dishes
+  - Fixed critical bug in clearTodayData function preventing broken image display
+  - Added intelligent file path handling for image deletion (supports /uploads/ and uploads/ formats)
+  - Implemented proper filesystem cleanup with error handling and logging
+  - Eliminated orphaned image files and storage waste
+  
+  **User Interface & Navigation:**
   - Added industry-standard releases page at /releases route accessible via top-right navigation
   - Created comprehensive changelog with version history, feature descriptions, and release dates
   - Implemented visual badges for version types (Major/Minor/Patch) and status (Stable/Beta/Deprecated)
   - Added feature categorization with icons (Feature/Improvement/Fix/Security) for better organization
   - Integrated releases page into main navigation with FileText icon and active state highlighting
   - Enhanced user experience with detailed release descriptions and professional layout design
+  
+  **System Stability & Performance:**
+  - Conducted comprehensive system testing across all pages and components
+  - Verified API endpoints functionality (dishes, orders, users, auth)
+  - Confirmed authentication system stability and session management
+  - Validated Service Worker registration and error-free operation
+  - Ensured all React components import correctly with proper dependency management
+  - Optimized cache performance with reduced update frequency for better user experience
 - July 10, 2025. **ACORD v1.2.3** - Last Login Tracking System & Admin Access Enhancement:
   - Added lastLoginAt field to users schema to track login timestamps
   - Implemented automatic last login timestamp recording on successful authentication
