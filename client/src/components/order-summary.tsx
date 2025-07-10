@@ -6,7 +6,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import type { Dish } from "@shared/schema";
 
 interface OrderSummaryProps {
-  selectedDishes: Dish[];
+  selectedDishes: (Dish & { selectedQuantity?: number })[];
   onConfirm: () => void;
   isLoading: boolean;
   onRemoveDish: (dishId: number) => void;
@@ -35,7 +35,7 @@ export default function OrderSummary({
             <div className="flex items-center justify-between mb-2 md:mb-4">
               <h3 className="text-lg md:text-xl font-semibold text-secondary">Your Order</h3>
               <Badge variant="secondary" className="text-xs md:text-sm">
-                {selectedDishes.length} {selectedDishes.length === 1 ? "dish" : "dishes"}
+                {selectedDishes.reduce((total, dish) => total + (dish.selectedQuantity || 1), 0)} portions
               </Badge>
             </div>
             
@@ -98,7 +98,8 @@ export default function OrderSummary({
                             <X className="h-3 w-3" />
                           </Button>
                           <div className="text-xs text-center mt-1 text-gray-600">
-                            #{index + 1}
+                            {dish.selectedQuantity && dish.selectedQuantity !== 1 ? 
+                              `${dish.selectedQuantity}x` : `#${index + 1}`}
                           </div>
                         </div>
                       ))}
@@ -115,7 +116,7 @@ export default function OrderSummary({
                   disabled={isLoading}
                   className="w-full bg-primary text-white py-2 md:py-3 px-4 md:px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors text-sm md:text-base"
                 >
-                  {isLoading ? "Confirming..." : `Confirm Order (${selectedDishes.length})`}
+                  {isLoading ? "Confirming..." : `Confirm Order (${selectedDishes.reduce((total, dish) => total + (dish.selectedQuantity || 1), 0)} portions)`}
                 </Button>
               ) : hasExistingOrder && onDeleteOrder ? (
                 <Button 
