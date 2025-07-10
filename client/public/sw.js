@@ -1,5 +1,5 @@
 // Version the cache to force updates
-const CACHE_VERSION = 'v1.2.5';
+const CACHE_VERSION = 'v1.2.3';
 const STATIC_CACHE = `acord-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `acord-dynamic-${CACHE_VERSION}`;
 

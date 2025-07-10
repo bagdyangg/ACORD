@@ -52,7 +52,7 @@ if ('serviceWorker' in navigator) {
   });
   
   // Clear cache on first load if needed - more aggressive approach
-  const currentVersion = 'v1.2.5';
+  const currentVersion = 'v1.2.3';
   const lastClearedVersion = localStorage.getItem('cache-cleared');
   
   if (lastClearedVersion !== currentVersion) {
