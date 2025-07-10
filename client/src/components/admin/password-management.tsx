@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema, type ResetPasswordInput } from "@shared/password-utils";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@shared/schema";
-import { RotateCcw, Settings, Shield, Clock, AlertTriangle } from "lucide-react";
+import { RotateCcw, Shield, Clock, AlertTriangle } from "lucide-react";
 
 interface PasswordManagementProps {
   user: User;
@@ -20,9 +20,6 @@ interface PasswordManagementProps {
 
 export default function PasswordManagement({ user }: PasswordManagementProps) {
   const [open, setOpen] = useState(false);
-  const [expiryOpen, setExpiryOpen] = useState(false);
-  const [expiryDays, setExpiryDays] = useState(user.passwordExpiryDays || 120);
-  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -69,45 +66,8 @@ export default function PasswordManagement({ user }: PasswordManagementProps) {
     },
   });
 
-  const updateExpiryMutation = useMutation({
-    mutationFn: async (days: number) => {
-      const response = await fetch(`/api/admin/password-expiry/${user.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ days }),
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update expiry");
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Password expiry updated successfully",
-      });
-      setExpiryOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
   const onSubmit = (data: ResetPasswordInput) => {
     resetPasswordMutation.mutate(data);
-  };
-
-  const handleExpiryUpdate = () => {
-    updateExpiryMutation.mutate(expiryDays);
   };
 
   const getPasswordStatusBadge = () => {
@@ -214,50 +174,6 @@ export default function PasswordManagement({ user }: PasswordManagementProps) {
               </Form>
             </DialogContent>
           </Dialog>
-
-          {user.role !== "superadmin" && (
-            <Dialog open={expiryOpen} onOpenChange={setExpiryOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Expiry Settings
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Password Expiry Settings</DialogTitle>
-                  <DialogDescription>
-                    Set the number of days before the password expires for {user.firstName} {user.lastName}.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="expiry-days">Expiry Days (1-365)</Label>
-                    <Input
-                      id="expiry-days"
-                      type="number"
-                      min="1"
-                      max="365"
-                      value={expiryDays}
-                      onChange={(e) => setExpiryDays(parseInt(e.target.value))}
-                    />
-                  </div>
-
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setExpiryOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={handleExpiryUpdate}
-                      disabled={updateExpiryMutation.isPending || expiryDays < 1 || expiryDays > 365}
-                    >
-                      {updateExpiryMutation.isPending ? "Updating..." : "Update Expiry"}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
         </div>
       </CardContent>
     </Card>
