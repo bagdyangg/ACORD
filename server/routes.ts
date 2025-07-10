@@ -329,9 +329,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(400).json({ message: "User ID not found" });
       }
-      const { dishIds, date } = req.body;
+      
+      // Support both old format (dishIds array) and new format (orders array with quantities)
+      const { dishIds, orders: orderRequests, date } = req.body;
 
-      if (!Array.isArray(dishIds) || dishIds.length === 0) {
+      let ordersToCreate = [];
+
+      if (orderRequests && Array.isArray(orderRequests)) {
+        // New format: orders with quantities
+        ordersToCreate = orderRequests;
+      } else if (dishIds && Array.isArray(dishIds)) {
+        // Old format: just dish IDs (for backward compatibility)
+        ordersToCreate = dishIds.map((dishId: number) => ({
+          dishId,
+          quantity: 1,
+          orderDate: date || new Date().toISOString().split('T')[0]
+        }));
+      } else {
+        return res.status(400).json({ message: "At least one dish must be selected" });
+      }
+
+      if (ordersToCreate.length === 0) {
         return res.status(400).json({ message: "At least one dish must be selected" });
       }
 
@@ -340,30 +358,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Delete existing orders for this user and date
       await storage.deleteUserOrdersForDate(userId, orderDate);
 
-      // Get dish details for pricing
+      // Get dish details for validation
       const dishes = await storage.getDishesByDate(orderDate);
       const dishMap = new Map(dishes.map(d => [d.id, d]));
 
-      // Create new orders
-      const orders = [];
-      for (const dishId of dishIds) {
-        const dish = dishMap.get(dishId);
+      // Create new orders with quantities
+      const createdOrders = [];
+      for (const orderRequest of ordersToCreate) {
+        const dish = dishMap.get(orderRequest.dishId);
         if (!dish) {
-          return res.status(400).json({ message: `Dish with ID ${dishId} not found` });
+          return res.status(400).json({ message: `Dish with ID ${orderRequest.dishId} not found` });
         }
 
         const orderData = insertOrderSchema.parse({
           userId,
-          dishId,
-          quantity: 1,
-          orderDate,
+          dishId: orderRequest.dishId,
+          quantity: orderRequest.quantity.toString(), // Convert to string for decimal field
+          orderDate: orderRequest.orderDate || orderDate,
         });
 
         const order = await storage.createOrder(orderData);
-        orders.push(order);
+        createdOrders.push(order);
       }
 
-      res.status(201).json(orders);
+      res.status(201).json(createdOrders);
     } catch (error) {
       console.error("Error creating orders:", error);
       res.status(400).json({ message: error instanceof Error ? error.message : "Failed to create orders" });

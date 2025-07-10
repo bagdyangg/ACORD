@@ -28,7 +28,7 @@ export default function Dashboard() {
     );
   }
 
-  const [selectedDishes, setSelectedDishes] = useState<number[]>([]);
+  const [dishQuantities, setDishQuantities] = useState<{ [dishId: number]: number }>({});
   const [activeTab, setActiveTab] = useState("my-orders");
   const [processedImages, setProcessedImages] = useState<{ [key: string]: string }>({});
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
@@ -77,16 +77,21 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  // Set selected dishes based on existing orders (only for dishes that still exist)
+  // Set dish quantities based on existing orders (only for dishes that still exist)
   useEffect(() => {
     if (existingOrders.length > 0 && dishes.length > 0) {
       const validDishIds = dishes.map(dish => dish.id);
-      const orderDishIds = existingOrders
-        .map(order => order.dishId)
-        .filter(dishId => validDishIds.includes(dishId));
-      setSelectedDishes(orderDishIds);
+      const quantities: { [dishId: number]: number } = {};
+      
+      existingOrders.forEach(order => {
+        if (validDishIds.includes(order.dishId)) {
+          quantities[order.dishId] = parseFloat(order.quantity?.toString() || "1");
+        }
+      });
+      
+      setDishQuantities(quantities);
     } else {
-      setSelectedDishes([]);
+      setDishQuantities({});
     }
   }, [existingOrders, dishes]);
 
@@ -111,15 +116,31 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [isAdmin]);
 
+  // Handle quantity change for a dish
+  const handleQuantityChange = (dishId: number, quantity: number) => {
+    setDishQuantities(prev => {
+      const newQuantities = { ...prev };
+      if (quantity === 0) {
+        delete newQuantities[dishId];
+      } else {
+        newQuantities[dishId] = quantity;
+      }
+      return newQuantities;
+    });
+  };
+
   // Create/update order mutation
   const orderMutation = useMutation({
-    mutationFn: async (dishIds: number[]) => {
+    mutationFn: async (quantities: { [dishId: number]: number }) => {
+      const orders = Object.entries(quantities).map(([dishId, quantity]) => ({
+        dishId: parseInt(dishId),
+        quantity: quantity,
+        orderDate: today,
+      }));
+      
       const response = await apiRequest("/api/orders", {
         method: "POST",
-        body: JSON.stringify({
-          dishIds,
-          date: today,
-        }),
+        body: JSON.stringify({ orders }),
       });
       return response.json();
     },
@@ -161,8 +182,8 @@ export default function Dashboard() {
         title: "Order deleted",
         description: "Your lunch order has been cancelled successfully.",
       });
-      // Clear selected dishes and refresh data
-      setSelectedDishes([]);
+      // Clear dish quantities and refresh data
+      setDishQuantities({});
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/detailed-orders"] });
@@ -435,18 +456,8 @@ export default function Dashboard() {
     }
   };
 
-  const toggleDishSelection = (dishId: number) => {
-    setSelectedDishes(prev => {
-      if (prev.includes(dishId)) {
-        return prev.filter(id => id !== dishId);
-      } else {
-        return [...prev, dishId];
-      }
-    });
-  };
-
   const confirmOrder = () => {
-    if (selectedDishes.length === 0) {
+    if (Object.keys(dishQuantities).length === 0) {
       toast({
         title: "No dishes selected",
         description: "Please select at least one dish to order.",
@@ -455,7 +466,7 @@ export default function Dashboard() {
       return;
     }
     
-    orderMutation.mutate(selectedDishes);
+    orderMutation.mutate(dishQuantities);
   };
 
   // Export functionality for admin
@@ -622,7 +633,10 @@ export default function Dashboard() {
     );
   }
 
-  const selectedDishesData = dishes.filter(dish => selectedDishes.includes(dish.id));
+  const selectedDishesData = dishes.filter(dish => dishQuantities[dish.id] > 0).map(dish => ({
+    ...dish,
+    selectedQuantity: dishQuantities[dish.id]
+  }));
 
   // Render content for regular users (non-admin)
   const renderUserContent = () => (
@@ -658,8 +672,8 @@ export default function Dashboard() {
             <DishCard
               key={dish.id}
               dish={dish}
-              isSelected={selectedDishes.includes(dish.id)}
-              onToggle={() => toggleDishSelection(dish.id)}
+              selectedQuantity={dishQuantities[dish.id] || 0}
+              onQuantityChange={handleQuantityChange}
             />
           ))}
         </div>
@@ -946,7 +960,7 @@ export default function Dashboard() {
           selectedDishes={selectedDishesData}
           onConfirm={confirmOrder}
           isLoading={orderMutation.isPending}
-          onRemoveDish={(dishId) => setSelectedDishes(prev => prev.filter(id => id !== dishId))}
+          onRemoveDish={(dishId) => handleQuantityChange(dishId, 0)}
           onDeleteOrder={() => deleteOrderMutation.mutate()}
           hasExistingOrder={existingOrders.length > 0}
           isDeleting={deleteOrderMutation.isPending}
