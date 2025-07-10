@@ -50,11 +50,30 @@ export default function ResetPasswordButton({ user }: ResetPasswordButtonProps) 
     },
     onSuccess: (data) => {
       console.log("Password reset successful:", data);
-      toast({
-        title: "Password Reset Successful",
-        description: `New temporary password for ${user.firstName} ${user.lastName}: ${data.tempPassword}`,
-        duration: 10000, // Show for 10 seconds so admin can copy the password
-      });
+      
+      // Copy password to clipboard
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(data.tempPassword).then(() => {
+          toast({
+            title: "Password Reset Successful",
+            description: `Temporary password for ${user.firstName} ${user.lastName}: ${data.tempPassword} (copied to clipboard)`,
+            duration: 8000,
+          });
+        }).catch(() => {
+          toast({
+            title: "Password Reset Successful", 
+            description: `Temporary password for ${user.firstName} ${user.lastName}: ${data.tempPassword} (please copy manually)`,
+            duration: 8000,
+          });
+        });
+      } else {
+        toast({
+          title: "Password Reset Successful",
+          description: `Temporary password for ${user.firstName} ${user.lastName}: ${data.tempPassword} (please copy manually)`,
+          duration: 8000,
+        });
+      }
+      
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setIsResetting(false);
     },
