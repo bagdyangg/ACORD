@@ -913,9 +913,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Generate temporary password (8 characters)
-      const tempPassword = Math.random().toString(36).substring(2, 10);
-      console.log("Generated temp password:", tempPassword);
+      // Generate temporary password (exactly 8 characters)
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      let tempPassword = '';
+      for (let i = 0; i < 8; i++) {
+        tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      console.log("Generated temp password:", tempPassword, "(length:", tempPassword.length, ")");
       
       // Reset the password
       const success = await storage.resetPassword(targetUserId, tempPassword, true);
