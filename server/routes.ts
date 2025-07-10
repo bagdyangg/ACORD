@@ -668,7 +668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Service Worker endpoint - serve from client/public
+  // Service Worker endpoint - serve from client/public with error handling
   app.get("/sw.js", (req, res) => {
     res.set({
       'Content-Type': 'application/javascript',
@@ -678,7 +678,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
     
     const swPath = path.resolve(import.meta.dirname, '../client/public/sw.js');
-    res.sendFile(swPath);
+    
+    // Check if file exists before serving
+    if (fs.existsSync(swPath)) {
+      res.sendFile(swPath);
+    } else {
+      // Return minimal SW if file doesn't exist
+      res.send(`
+        // Minimal Service Worker fallback
+        self.addEventListener('install', event => {
+          self.skipWaiting();
+        });
+        
+        self.addEventListener('activate', event => {
+          event.waitUntil(clients.claim());
+        });
+      `);
+    }
   });
 
   // Serve other files from client/public in development
