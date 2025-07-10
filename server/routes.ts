@@ -903,6 +903,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reset password endpoint for admin
+  app.post("/api/admin/reset-password/:userId", isAuthenticated, async (req: any, res) => {
+    try {
+      const adminUserId = req.user?.id;
+      if (!adminUserId) {
+        return res.status(400).json({ message: "Admin user ID not found" });
+      }
+      
+      const adminUser = await storage.getUser(adminUserId);
+      if (!isAdmin(adminUser?.role)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId: targetUserId } = req.params;
+      
+      // Generate temporary password
+      const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+      
+      // Reset the password
+      const success = await storage.resetPassword(targetUserId, tempPassword, true);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      console.log(`Admin ${adminUser.username} reset password for user ${targetUserId}`);
+      
+      res.json({ 
+        message: "Password reset successfully",
+        tempPassword: tempPassword
+      });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
