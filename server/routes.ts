@@ -50,9 +50,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post('/api/auth/login', async (req, res) => {
     try {
-      const { username, password } = req.body;
+      console.log("Login attempt - Raw body:", req.body);
+      console.log("Login attempt - Headers:", req.headers);
+      
+      // Try to parse as JSON if body is string
+      let parsedBody = req.body;
+      if (typeof req.body === 'string') {
+        try {
+          parsedBody = JSON.parse(req.body);
+        } catch (e) {
+          console.log("Failed to parse body as JSON:", e);
+        }
+      }
+      
+      const { username, password } = parsedBody;
       
       if (!username || !password) {
+        console.log("Missing credentials:", { username: !!username, password: !!password });
         return res.status(400).json({ message: "Username and password are required" });
       }
 

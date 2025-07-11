@@ -38,11 +38,13 @@ export default function Login() {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json; charset=utf-8",
           "Accept": "application/json",
+          "Cache-Control": "no-cache",
         },
         body: JSON.stringify(loginData),
         credentials: "include",
+        mode: "cors",
       });
       
       console.log("Login response status:", response.status);
