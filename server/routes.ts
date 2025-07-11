@@ -50,16 +50,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post('/api/auth/login', async (req, res) => {
     try {
-      console.log("=== LOGIN REQUEST ===");
-      console.log("Request body:", req.body);
-      console.log("Content-Type:", req.headers['content-type']);
-      
       const { username, password } = req.body;
       
-      console.log("Parsed credentials:", { username, passwordProvided: !!password });
-      
       if (!username || !password) {
-        console.log("Missing credentials - username:", !!username, "password:", !!password);
         return res.status(400).json({ message: "Username and password are required" });
       }
 
