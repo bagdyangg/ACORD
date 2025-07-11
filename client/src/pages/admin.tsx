@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, UserPlus, Upload, FileText, Download, Calendar, Trash2, AlertTriangle, Shield, UserCheck, Clock } from "lucide-react";
+import { X, UserPlus, Upload, FileText, Download, Calendar, Trash2, AlertTriangle, Shield, UserCheck, Clock, Edit } from "lucide-react";
 import { Link } from "wouter";
 import type { User, Dish } from "@shared/schema";
 
@@ -771,6 +771,102 @@ export default function Admin() {
     }
   };
 
+  // Reset password function moved from ResetPasswordButton component
+  const handleResetPassword = async (userData: any) => {
+    try {
+      console.log("Resetting password for user:", userData.id);
+      const response = await fetch(`/api/admin/reset-password/${userData.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({}),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Copy temporary password to clipboard
+        if (result.tempPassword) {
+          try {
+            await navigator.clipboard.writeText(result.tempPassword);
+            toast({
+              title: "Password reset successful",
+              description: `Temporary password for ${userData.firstName} ${userData.lastName} has been copied to clipboard`,
+            });
+          } catch (clipboardError) {
+            toast({
+              title: "Password reset successful",
+              description: `Temporary password for ${userData.firstName} ${userData.lastName}: ${result.tempPassword}`,
+            });
+          }
+        } else {
+          toast({
+            title: "Password reset successful",
+            description: `Password has been reset for ${userData.firstName} ${userData.lastName}`,
+          });
+        }
+
+        // Refresh users list
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Reset failed",
+          description: error.message || "Failed to reset password",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Reset password error:", error);
+      toast({
+        title: "Reset failed",
+        description: "Network error. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Toggle activation function moved from ActivationButton component
+  const handleToggleActivation = async (userData: any) => {
+    const action = userData.isActive ? 'deactivate' : 'activate';
+    
+    try {
+      const response = await fetch(`/api/admin/users/${userData.id}/${action}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        toast({
+          title: `User ${action}d`,
+          description: `${userData.firstName} ${userData.lastName} has been ${action}d successfully`,
+        });
+
+        // Refresh users list
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      } else {
+        const error = await response.json();
+        toast({
+          title: `${action.charAt(0).toUpperCase() + action.slice(1)} failed`,
+          description: error.message || `Failed to ${action} user`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error(`Toggle activation error:`, error);
+      toast({
+        title: `${action.charAt(0).toUpperCase() + action.slice(1)} failed`,
+        description: "Network error. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCreateUser = () => {
     if (!createForm.firstName || !createForm.lastName || !createForm.username || !createForm.password) {
       toast({
@@ -1124,7 +1220,26 @@ export default function Admin() {
                               </Badge>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge variant={userData.isActive ? 'default' : 'secondary'}>
+                              <Badge 
+                                variant={userData.isActive ? 'default' : 'secondary'}
+                                className={`cursor-pointer hover:opacity-80 transition-opacity ${
+                                  userData.id !== user?.id && userData.role !== 'superadmin' 
+                                    ? 'hover:scale-105' 
+                                    : 'cursor-not-allowed opacity-50'
+                                }`}
+                                onClick={() => {
+                                  if (userData.id !== user?.id && userData.role !== 'superadmin') {
+                                    handleToggleActivation(userData);
+                                  }
+                                }}
+                                title={
+                                  userData.id === user?.id 
+                                    ? "Cannot deactivate yourself"
+                                    : userData.role === 'superadmin'
+                                    ? "Cannot deactivate superadmin"
+                                    : `Click to ${userData.isActive ? 'deactivate' : 'activate'} user`
+                                }
+                              >
                                 {userData.isActive ? 'Active' : 'Inactive'}
                               </Badge>
                             </td>
@@ -1152,18 +1267,29 @@ export default function Admin() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => startEditUser(userData)}
+                                  className="p-2"
+                                  title="Edit user"
                                 >
-                                  Edit
+                                  <Edit className="h-4 w-4" />
                                 </Button>
-                                <ResetPasswordButton user={userData} />
-                                <ActivationButton user={userData} currentUserId={user?.id || ''} />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleResetPassword(userData)}
+                                  className="p-2"
+                                  title="Reset password"
+                                >
+                                  <Shield className="h-4 w-4" />
+                                </Button>
                                 {userData.role !== 'superadmin' && (
                                   <Button
                                     variant="destructive"
                                     size="sm"
                                     onClick={() => handleDeleteUser(userData.id)}
+                                    className="p-2"
+                                    title="Delete user"
                                   >
-                                    Delete
+                                    <Trash2 className="h-4 w-4" />
                                   </Button>
                                 )}
                               </div>
