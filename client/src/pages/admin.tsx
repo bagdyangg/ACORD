@@ -898,11 +898,11 @@ export default function Admin() {
     const warningDays = passwordPolicy?.warningDays || 7;
     
     if (daysUntilExpiry <= 0) {
-      return <Badge variant="destructive"><Clock className="h-3 w-3 mr-1" />Expired</Badge>;
+      return <Badge variant="destructive">Expired</Badge>;
     } else if (daysUntilExpiry <= warningDays) {
-      return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Expires Soon ({daysUntilExpiry}d)</Badge>;
+      return <Badge variant="secondary">{daysUntilExpiry}d</Badge>;
     } else {
-      return <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />Active ({daysUntilExpiry}d)</Badge>;
+      return <Badge variant="outline">{daysUntilExpiry}d</Badge>;
     }
   };
 
@@ -1190,39 +1190,39 @@ export default function Admin() {
               <CardContent>
                 {users && Array.isArray(users) && users.length > 0 ? (
                   <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full text-sm">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Active</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Login</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Active</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Password Expiry</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Last Login</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
                         {users.map((userData: any) => (
-                          <tr key={userData.id}>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                          <tr key={userData.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 whitespace-nowrap">
                               <div className="text-sm font-medium text-gray-900">
                                 {userData.firstName} {userData.lastName}
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                               {userData.username}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge variant={userData.role === 'admin' ? 'default' : userData.role === 'superadmin' ? 'destructive' : 'secondary'}>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <Badge variant={userData.role === 'admin' ? 'default' : userData.role === 'superadmin' ? 'destructive' : 'secondary'} className="text-xs">
                                 {userData.role}
                               </Badge>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-4 py-3 whitespace-nowrap">
                               <Badge 
                                 variant={userData.isActive ? 'default' : 'secondary'}
-                                className={`cursor-pointer hover:opacity-80 transition-opacity ${
+                                className={`cursor-pointer hover:opacity-80 transition-opacity text-xs ${
                                   userData.id !== user?.id && userData.role !== 'superadmin' 
                                     ? 'hover:scale-105' 
                                     : 'cursor-not-allowed opacity-50'
@@ -1243,53 +1243,53 @@ export default function Admin() {
                                 {userData.isActive ? 'Active' : 'Inactive'}
                               </Badge>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-4 py-3 whitespace-nowrap">
                               {getPasswordStatusBadge(userData)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
                               {userData.lastLoginAt ? (
                                 <div className="flex flex-col">
                                   <span className="font-medium">{getRelativeTime(userData.lastLoginAt)}</span>
                                   <span className="text-xs text-gray-400">
-                                    {new Date(userData.lastLoginAt).toLocaleDateString()} {new Date(userData.lastLoginAt).toLocaleTimeString()}
+                                    {new Date(userData.lastLoginAt).toLocaleDateString()}
                                   </span>
                                 </div>
                               ) : (
-                                <span className="text-gray-400 italic">Never logged in</span>
+                                <span className="text-gray-400 italic">Never</span>
                               )}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
                               {new Date(userData.createdAt).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex space-x-2 flex-wrap gap-1">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                              <div className="flex items-center space-x-1">
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => startEditUser(userData)}
-                                  className="p-2"
+                                  className="p-1.5 h-8 w-8"
                                   title="Edit user"
                                 >
-                                  <Edit className="h-4 w-4" />
+                                  <Edit className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleResetPassword(userData)}
-                                  className="p-2"
+                                  className="p-1.5 h-8 w-8"
                                   title="Reset password"
                                 >
-                                  <Shield className="h-4 w-4" />
+                                  <Shield className="h-3.5 w-3.5" />
                                 </Button>
                                 {userData.role !== 'superadmin' && (
                                   <Button
                                     variant="destructive"
                                     size="sm"
                                     onClick={() => handleDeleteUser(userData.id)}
-                                    className="p-2"
+                                    className="p-1.5 h-8 w-8"
                                     title="Delete user"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-3.5 w-3.5" />
                                   </Button>
                                 )}
                               </div>
