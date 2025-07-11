@@ -2,7 +2,7 @@
 
 ## Overview
 
-ACORD is a production-ready WhatsApp-integrated lunch ordering system designed for office environments. The system features an image-only menu selection interface optimized for mobile WhatsApp workflow, comprehensive order management, and real-time analytics. The application is currently in version 1.3.0 (ACORD-v1.3.0-stable) and has been validated with extensive testing including advanced image management, integrity validation, cache optimization, and comprehensive system stability verification.
+ACORD is a production-ready WhatsApp-integrated lunch ordering system designed for office environments. The system features an image-only menu selection interface optimized for mobile WhatsApp workflow, comprehensive order management, and real-time analytics. The application is currently in version 1.3.1 (ACORD-v1.3.1-stable) and has been validated with extensive testing including advanced image management, integrity validation, cache optimization, comprehensive system stability verification, and modern compact UI design.
 
 ## System Architecture
 
@@ -103,6 +103,34 @@ The application requires the following environment variables:
 - **Local Setup**: Development and testing environment configuration
 
 ## Changelog
+
+- July 11, 2025. **ACORD v1.3.1 (STABLE)** - Compact UI Design & Enhanced User Experience:
+  
+  **User Interface Improvements:**
+  - Replaced text-based action buttons with intuitive icon-only buttons (Edit, Shield, Trash2)
+  - Implemented compact table design with reduced padding and optimized spacing
+  - Renamed "Status" column to "Password Expiry" for better clarity
+  - Simplified password expiry badges to show only days remaining (e.g., "117d")
+  - Added hover effects and improved visual feedback for interactive elements
+  - Made activation/deactivation badges clickable with integrated toggle functionality
+  
+  **User Management Enhancement:**
+  - Consolidated activation controls into status badges eliminating separate buttons
+  - Improved action button layout with single-row icon arrangement
+  - Enhanced tooltips and user guidance for better accessibility
+  - Streamlined admin workflow with more intuitive interface elements
+  
+  **Technical Improvements:**
+  - Resolved login middleware issues with proper Content-Type handling
+  - Optimized Express.js request parsing for better API reliability
+  - Enhanced error handling and debugging capabilities
+  - Improved session management and authentication flow
+  
+  **System Stability:**
+  - Comprehensive testing of all v1.3+ features confirmed working
+  - Verified API endpoint functionality across all user management operations
+  - Validated password policy management and user activation systems
+  - Ensured backward compatibility with existing user data and preferences
 
 - July 10, 2025. **ACORD v1.3.0 (STABLE)** - Enhanced Image Management System with Integrity Validation:
 
