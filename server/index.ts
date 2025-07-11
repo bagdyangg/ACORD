@@ -26,8 +26,20 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: '10mb' }));
+// Force content-type parsing for all requests
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api/') && req.method === 'POST') {
+    if (!req.headers['content-type'] && req.headers['content-length']) {
+      req.headers['content-type'] = 'application/json';
+      console.log("Force setting content-type to application/json");
+    }
+  }
+  next();
+});
+
+app.use(express.json({ limit: '10mb', strict: false }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(express.text());
 
 // Debug middleware to check request body AFTER parsing
 app.use((req, res, next) => {
