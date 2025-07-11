@@ -21,12 +21,52 @@ interface Release {
 
 const releases: Release[] = [
   {
+    version: "v1.3.0",
+    date: "2025-07-10",
+    type: "minor",
+    status: "stable",
+    title: "Enhanced Image Management System with Integrity Validation",
+    description: "Advanced image integrity validation and broken image prevention system with automatic file cleanup.",
+    features: [
+      {
+        type: "feature",
+        title: "Automatic Image File Validation",
+        description: "Real-time validation of image files in dish API endpoints to prevent broken image display"
+      },
+      {
+        type: "improvement",
+        title: "Intelligent Image Filtering",
+        description: "Smart filtering system that automatically excludes dishes with missing image files"
+      },
+      {
+        type: "improvement",
+        title: "Enhanced Data Cleanup",
+        description: "Improved clearTodayData function with proper file cleanup and orphaned record management"
+      },
+      {
+        type: "feature",
+        title: "Image Integrity Monitoring",
+        description: "Detailed logging system for tracking and identifying missing image files"
+      },
+      {
+        type: "fix",
+        title: "Broken Image Resolution",
+        description: "Fixed critical issue with orphaned dish records showing broken image placeholders"
+      },
+      {
+        type: "improvement",
+        title: "File Path Handling",
+        description: "Enhanced support for multiple upload formats and improved file system consistency"
+      }
+    ]
+  },
+  {
     version: "v1.2.3",
     date: "2025-07-10",
     type: "minor",
     status: "stable",
-    title: "Last Login Tracking System",
-    description: "Added comprehensive user activity tracking with last login timestamps and user-friendly time display.",
+    title: "Last Login Tracking, Admin Access & Cache Resolution System",
+    description: "Added comprehensive user activity tracking, confirmed admin access to password policies, and implemented automatic cache management to eliminate manual refresh issues.",
     features: [
       {
         type: "feature",
@@ -42,6 +82,31 @@ const releases: Release[] = [
         type: "improvement",
         title: "User Activity Insights",
         description: "Administrators can now monitor user engagement and system usage patterns"
+      },
+      {
+        type: "security",
+        title: "Admin Password Policy Access",
+        description: "Confirmed admin users have full access to Password Policy settings alongside superadmin users"
+      },
+      {
+        type: "fix",
+        title: "Automatic Cache Clearing",
+        description: "No more Ctrl+Shift+R required - automatic cache invalidation on version updates"
+      },
+      {
+        type: "improvement",
+        title: "Zero-Cache API Strategy",
+        description: "All API requests now use no-store directive for real-time data accuracy"
+      },
+      {
+        type: "improvement",
+        title: "Version Detection System",
+        description: "Real-time monitoring for version changes with automatic cache clearing"
+      },
+      {
+        type: "fix",
+        title: "Service Worker Optimization",
+        description: "Complete service worker lifecycle management with aggressive cache busting"
       }
     ]
   },

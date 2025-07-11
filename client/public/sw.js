@@ -1,5 +1,5 @@
 // Version the cache to force updates
-const CACHE_VERSION = 'v1.1.1';
+const CACHE_VERSION = 'v1.3.0';
 const STATIC_CACHE = `acord-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `acord-dynamic-${CACHE_VERSION}`;
 
@@ -31,82 +31,160 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch events - Network First strategy to prevent stale cache issues
+// Fetch events - Network First strategy with aggressive cache busting
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Handle API requests - Always network first, no caching for auth/critical data
+  // Handle API requests - NO CACHING for any API requests
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(request)
+      fetch(request, {
+        cache: 'no-store',
+        headers: {
+          ...request.headers,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      })
         .then((response) => {
-          // Only cache non-critical API responses
-          if (response.ok && url.pathname.includes('/api/dishes')) {
-            const responseClone = response.clone();
-            caches.open(DYNAMIC_CACHE)
-              .then((cache) => {
-                cache.put(request, responseClone);
-              });
-          }
-          return response;
+          // Never cache API responses - always serve fresh
+          const newHeaders = new Headers(response.headers);
+          newHeaders.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+          newHeaders.set('Pragma', 'no-cache');
+          newHeaders.set('Expires', '0');
+          
+          return new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: newHeaders
+          });
         })
-        .catch(() => {
-          // Only fallback to cache for dishes API
-          if (url.pathname.includes('/api/dishes')) {
-            return caches.match(request);
-          }
-          // For other APIs, return network error
-          return new Response('Network Error', {
+        .catch((error) => {
+          console.error('API request failed:', error);
+          // No cache fallback for APIs - always return network error
+          return new Response(JSON.stringify({
+            error: 'Network Error',
+            message: 'Unable to reach server. Please check your connection.'
+          }), {
             status: 503,
-            statusText: 'Service Unavailable'
+            statusText: 'Service Unavailable',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache, no-store, must-revalidate'
+            }
           });
         })
     );
     return;
   }
 
-  // Handle navigation requests - Network first, cache fallback
+  // Handle navigation requests - Network first with cache busting
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      fetch(request, {
+        cache: 'reload'
+      })
         .then((response) => {
           if (response.ok) {
-            // Cache successful navigation responses
-            const responseClone = response.clone();
-            caches.open(STATIC_CACHE)
-              .then((cache) => {
-                cache.put(request, responseClone);
-              });
+            // Add cache-busting headers to navigation responses
+            const newHeaders = new Headers(response.headers);
+            newHeaders.set('Cache-Control', 'no-cache, must-revalidate');
+            newHeaders.set('Expires', '0');
+            
+            return new Response(response.body, {
+              status: response.status,
+              statusText: response.statusText,
+              headers: newHeaders
+            });
           }
           return response;
         })
         .catch(() => {
-          // Fallback to cached version only if network fails
-          return caches.match(request)
-            .then((cachedResponse) => {
-              return cachedResponse || caches.match('/');
-            });
+          // Return basic offline page if network fails
+          return new Response(`
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <title>ACORD - Connection Error</title>
+                <style>
+                  body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+                  .container { max-width: 400px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                  button { background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer; margin: 5px; }
+                  button:hover { background: #0056b3; }
+                  .emergency { background: #dc3545; }
+                  .emergency:hover { background: #c82333; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <h1>🔌 ACORD Unavailable</h1>
+                  <p>Cannot connect to the lunch ordering system.</p>
+                  <p>Please check your internet connection.</p>
+                  <button onclick="window.location.reload(true)">Try Again</button>
+                  <br>
+                  <button class="emergency" onclick="clearEverythingAndRetry()">Clear Cache & Retry</button>
+                </div>
+                <script>
+                  function clearEverythingAndRetry() {
+                    if ('caches' in window) {
+                      caches.keys().then(names => {
+                        Promise.all(names.map(name => caches.delete(name)))
+                          .then(() => {
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            window.location.reload(true);
+                          });
+                      });
+                    } else {
+                      localStorage.clear();
+                      sessionStorage.clear();
+                      window.location.reload(true);
+                    }
+                  }
+                </script>
+              </body>
+            </html>
+          `, {
+            headers: {
+              'Content-Type': 'text/html',
+              'Cache-Control': 'no-cache, no-store, must-revalidate'
+            }
+          });
         })
     );
     return;
   }
 
-  // Handle static assets - Network first to get latest versions
+  // Handle static assets - Network first with cache busting
   event.respondWith(
-    fetch(request)
+    fetch(request, {
+      cache: 'reload'
+    })
       .then((response) => {
         if (response.ok) {
-          const responseClone = response.clone();
-          caches.open(STATIC_CACHE)
-            .then((cache) => {
-              cache.put(request, responseClone);
-            });
+          // Add cache-busting headers to static assets
+          const newHeaders = new Headers(response.headers);
+          newHeaders.set('Cache-Control', 'no-cache, must-revalidate');
+          
+          return new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: newHeaders
+          });
         }
         return response;
       })
       .catch(() => {
-        return caches.match(request);
+        // No cache fallback for static assets - ensures fresh content
+        return new Response('Resource not available', {
+          status: 404,
+          statusText: 'Not Found',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          }
+        });
       })
   );
 });

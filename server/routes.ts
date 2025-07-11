@@ -50,9 +50,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post('/api/auth/login', async (req, res) => {
     try {
-      const { username, password } = req.body;
+      console.log("Login attempt - Raw body:", req.body);
+      console.log("Login attempt - Headers:", req.headers);
+      
+      // Try to parse as JSON if body is string
+      let parsedBody = req.body;
+      if (typeof req.body === 'string') {
+        try {
+          parsedBody = JSON.parse(req.body);
+        } catch (e) {
+          console.log("Failed to parse body as JSON:", e);
+        }
+      }
+      
+      const { username, password } = parsedBody;
       
       if (!username || !password) {
+        console.log("Missing credentials:", { username: !!username, password: !!password });
         return res.status(400).json({ message: "Username and password are required" });
       }
 
@@ -125,7 +139,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dishes = await storage.getDishesByDate(today);
       }
       
-      res.json(dishes || []);
+      // Filter out dishes with missing image files
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      const validDishes = (dishes || []).filter(dish => {
+        try {
+          let imagePath: string;
+          if (dish.imagePath.startsWith('/uploads/')) {
+            imagePath = path.resolve(process.cwd(), dish.imagePath.substring(1));
+          } else if (dish.imagePath.startsWith('uploads/')) {
+            imagePath = path.resolve(process.cwd(), dish.imagePath);
+          } else {
+            imagePath = path.resolve(process.cwd(), 'uploads', path.basename(dish.imagePath));
+          }
+          
+          const exists = fs.existsSync(imagePath);
+          if (!exists) {
+            console.log(`Image file missing for dish ${dish.id}: ${imagePath}`);
+          }
+          return exists;
+        } catch (error) {
+          console.warn('Error checking image file for dish:', dish.id, error);
+          return false;
+        }
+      });
+      
+      res.json(validDishes);
     } catch (error) {
       console.error("Error fetching dishes:", error);
       res.status(500).json({ message: "Failed to fetch dishes", error: error instanceof Error ? error.message : "Unknown error" });
@@ -303,9 +343,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(400).json({ message: "User ID not found" });
       }
-      const { dishIds, date } = req.body;
+      
+      // Support both old format (dishIds array) and new format (orders array with quantities)
+      const { dishIds, orders: orderRequests, date } = req.body;
 
-      if (!Array.isArray(dishIds) || dishIds.length === 0) {
+      let ordersToCreate = [];
+
+      if (orderRequests && Array.isArray(orderRequests)) {
+        // New format: orders with quantities
+        ordersToCreate = orderRequests;
+      } else if (dishIds && Array.isArray(dishIds)) {
+        // Old format: just dish IDs (for backward compatibility)
+        ordersToCreate = dishIds.map((dishId: number) => ({
+          dishId,
+          quantity: 1,
+          orderDate: date || new Date().toISOString().split('T')[0]
+        }));
+      } else {
+        return res.status(400).json({ message: "At least one dish must be selected" });
+      }
+
+      if (ordersToCreate.length === 0) {
         return res.status(400).json({ message: "At least one dish must be selected" });
       }
 
@@ -314,30 +372,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Delete existing orders for this user and date
       await storage.deleteUserOrdersForDate(userId, orderDate);
 
-      // Get dish details for pricing
+      // Get dish details for validation
       const dishes = await storage.getDishesByDate(orderDate);
       const dishMap = new Map(dishes.map(d => [d.id, d]));
 
-      // Create new orders
-      const orders = [];
-      for (const dishId of dishIds) {
-        const dish = dishMap.get(dishId);
+      // Create new orders with quantities
+      const createdOrders = [];
+      for (const orderRequest of ordersToCreate) {
+        const dish = dishMap.get(orderRequest.dishId);
         if (!dish) {
-          return res.status(400).json({ message: `Dish with ID ${dishId} not found` });
+          return res.status(400).json({ message: `Dish with ID ${orderRequest.dishId} not found` });
         }
 
         const orderData = insertOrderSchema.parse({
           userId,
-          dishId,
-          quantity: 1,
-          orderDate,
+          dishId: orderRequest.dishId,
+          quantity: orderRequest.quantity.toString(), // Convert to string for decimal field
+          orderDate: orderRequest.orderDate || orderDate,
         });
 
         const order = await storage.createOrder(orderData);
-        orders.push(order);
+        createdOrders.push(order);
       }
 
-      res.status(201).json(orders);
+      res.status(201).json(createdOrders);
     } catch (error) {
       console.error("Error creating orders:", error);
       res.status(400).json({ message: error instanceof Error ? error.message : "Failed to create orders" });
@@ -666,6 +724,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error exporting report:", error);
       res.status(500).json({ message: "Failed to export report" });
     }
+  });
+
+  // Service Worker endpoint - serve from client/public with error handling
+  app.get("/sw.js", (req, res) => {
+    res.set({
+      'Content-Type': 'application/javascript',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
+    const swPath = path.resolve(import.meta.dirname, '../client/public/sw.js');
+    
+    // Check if file exists before serving
+    if (fs.existsSync(swPath)) {
+      res.sendFile(swPath);
+    } else {
+      // Return minimal SW if file doesn't exist
+      res.send(`
+        // Minimal Service Worker fallback
+        self.addEventListener('install', event => {
+          self.skipWaiting();
+        });
+        
+        self.addEventListener('activate', event => {
+          event.waitUntil(clients.claim());
+        });
+      `);
+    }
+  });
+
+  // Serve other files from client/public in development
+  app.use('/cache-clear.js', (req, res) => {
+    res.set({
+      'Content-Type': 'application/javascript',
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
+    });
+    const cacheClearPath = path.resolve(import.meta.dirname, '../client/public/cache-clear.js');
+    res.sendFile(cacheClearPath);
+  });
+
+  // Version endpoint for automatic cache management
+  app.get("/version.json", (req, res) => {
+    res.set({
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+res.json({
+      version: "1.2.3",
+      timestamp: new Date().toISOString(),
+      buildId: "acord-1.2.3-with-cache-fix"
+    });
   });
 
   // Cache clearing endpoint for debugging

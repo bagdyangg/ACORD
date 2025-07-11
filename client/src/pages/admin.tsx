@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, UserPlus, Upload, FileText, Download, Calendar, Trash2, AlertTriangle, Shield, UserCheck, Clock } from "lucide-react";
+import { X, UserPlus, Upload, FileText, Download, Calendar, Trash2, AlertTriangle, Shield, UserCheck, Clock, Edit } from "lucide-react";
 import { Link } from "wouter";
 import type { User, Dish } from "@shared/schema";
 
@@ -771,6 +771,102 @@ export default function Admin() {
     }
   };
 
+  // Reset password function moved from ResetPasswordButton component
+  const handleResetPassword = async (userData: any) => {
+    try {
+      console.log("Resetting password for user:", userData.id);
+      const response = await fetch(`/api/admin/reset-password/${userData.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({}),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Copy temporary password to clipboard
+        if (result.tempPassword) {
+          try {
+            await navigator.clipboard.writeText(result.tempPassword);
+            toast({
+              title: "Password reset successful",
+              description: `Temporary password for ${userData.firstName} ${userData.lastName} has been copied to clipboard`,
+            });
+          } catch (clipboardError) {
+            toast({
+              title: "Password reset successful",
+              description: `Temporary password for ${userData.firstName} ${userData.lastName}: ${result.tempPassword}`,
+            });
+          }
+        } else {
+          toast({
+            title: "Password reset successful",
+            description: `Password has been reset for ${userData.firstName} ${userData.lastName}`,
+          });
+        }
+
+        // Refresh users list
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Reset failed",
+          description: error.message || "Failed to reset password",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Reset password error:", error);
+      toast({
+        title: "Reset failed",
+        description: "Network error. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Toggle activation function moved from ActivationButton component
+  const handleToggleActivation = async (userData: any) => {
+    const action = userData.isActive ? 'deactivate' : 'activate';
+    
+    try {
+      const response = await fetch(`/api/admin/users/${userData.id}/${action}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        toast({
+          title: `User ${action}d`,
+          description: `${userData.firstName} ${userData.lastName} has been ${action}d successfully`,
+        });
+
+        // Refresh users list
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      } else {
+        const error = await response.json();
+        toast({
+          title: `${action.charAt(0).toUpperCase() + action.slice(1)} failed`,
+          description: error.message || `Failed to ${action} user`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error(`Toggle activation error:`, error);
+      toast({
+        title: `${action.charAt(0).toUpperCase() + action.slice(1)} failed`,
+        description: "Network error. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCreateUser = () => {
     if (!createForm.firstName || !createForm.lastName || !createForm.username || !createForm.password) {
       toast({
@@ -802,11 +898,11 @@ export default function Admin() {
     const warningDays = passwordPolicy?.warningDays || 7;
     
     if (daysUntilExpiry <= 0) {
-      return <Badge variant="destructive"><Clock className="h-3 w-3 mr-1" />Expired</Badge>;
+      return <Badge variant="destructive">Expired</Badge>;
     } else if (daysUntilExpiry <= warningDays) {
-      return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Expires Soon ({daysUntilExpiry}d)</Badge>;
+      return <Badge variant="secondary">{daysUntilExpiry}d</Badge>;
     } else {
-      return <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />Active ({daysUntilExpiry}d)</Badge>;
+      return <Badge variant="outline">{daysUntilExpiry}d</Badge>;
     }
   };
 
@@ -1094,76 +1190,106 @@ export default function Admin() {
               <CardContent>
                 {users && Array.isArray(users) && users.length > 0 ? (
                   <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full text-sm">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Active</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Login</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Active</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Password Expiry</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Last Login</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
                         {users.map((userData: any) => (
-                          <tr key={userData.id}>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                          <tr key={userData.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 whitespace-nowrap">
                               <div className="text-sm font-medium text-gray-900">
                                 {userData.firstName} {userData.lastName}
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                               {userData.username}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge variant={userData.role === 'admin' ? 'default' : userData.role === 'superadmin' ? 'destructive' : 'secondary'}>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <Badge variant={userData.role === 'admin' ? 'default' : userData.role === 'superadmin' ? 'destructive' : 'secondary'} className="text-xs">
                                 {userData.role}
                               </Badge>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge variant={userData.isActive ? 'default' : 'secondary'}>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <Badge 
+                                variant={userData.isActive ? 'default' : 'secondary'}
+                                className={`cursor-pointer hover:opacity-80 transition-opacity text-xs ${
+                                  userData.id !== user?.id && userData.role !== 'superadmin' 
+                                    ? 'hover:scale-105' 
+                                    : 'cursor-not-allowed opacity-50'
+                                }`}
+                                onClick={() => {
+                                  if (userData.id !== user?.id && userData.role !== 'superadmin') {
+                                    handleToggleActivation(userData);
+                                  }
+                                }}
+                                title={
+                                  userData.id === user?.id 
+                                    ? "Cannot deactivate yourself"
+                                    : userData.role === 'superadmin'
+                                    ? "Cannot deactivate superadmin"
+                                    : `Click to ${userData.isActive ? 'deactivate' : 'activate'} user`
+                                }
+                              >
                                 {userData.isActive ? 'Active' : 'Inactive'}
                               </Badge>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-4 py-3 whitespace-nowrap">
                               {getPasswordStatusBadge(userData)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
                               {userData.lastLoginAt ? (
                                 <div className="flex flex-col">
                                   <span className="font-medium">{getRelativeTime(userData.lastLoginAt)}</span>
                                   <span className="text-xs text-gray-400">
-                                    {new Date(userData.lastLoginAt).toLocaleDateString()} {new Date(userData.lastLoginAt).toLocaleTimeString()}
+                                    {new Date(userData.lastLoginAt).toLocaleDateString()}
                                   </span>
                                 </div>
                               ) : (
-                                <span className="text-gray-400 italic">Never logged in</span>
+                                <span className="text-gray-400 italic">Never</span>
                               )}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
                               {new Date(userData.createdAt).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex space-x-2 flex-wrap gap-1">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                              <div className="flex items-center space-x-1">
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => startEditUser(userData)}
+                                  className="p-1.5 h-8 w-8"
+                                  title="Edit user"
                                 >
-                                  Edit
+                                  <Edit className="h-3.5 w-3.5" />
                                 </Button>
-                                <ResetPasswordButton user={userData} />
-                                <ActivationButton user={userData} currentUserId={user?.id || ''} />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleResetPassword(userData)}
+                                  className="p-1.5 h-8 w-8"
+                                  title="Reset password"
+                                >
+                                  <Shield className="h-3.5 w-3.5" />
+                                </Button>
                                 {userData.role !== 'superadmin' && (
                                   <Button
                                     variant="destructive"
                                     size="sm"
                                     onClick={() => handleDeleteUser(userData.id)}
+                                    className="p-1.5 h-8 w-8"
+                                    title="Delete user"
                                   >
-                                    Delete
+                                    <Trash2 className="h-3.5 w-3.5" />
                                   </Button>
                                 )}
                               </div>

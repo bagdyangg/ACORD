@@ -26,8 +26,33 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Force content-type parsing for all requests
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api/') && req.method === 'POST') {
+    if (!req.headers['content-type'] && req.headers['content-length']) {
+      req.headers['content-type'] = 'application/json';
+      console.log("Force setting content-type to application/json");
+    }
+  }
+  next();
+});
+
+app.use(express.json({ limit: '10mb', strict: false }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(express.text());
+
+// Debug middleware to check request body AFTER parsing
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api/')) {
+    console.log("=== PARSED REQUEST DEBUG ===");
+    console.log("Method:", req.method);
+    console.log("URL:", req.url);
+    console.log("Content-Type:", req.headers['content-type']);
+    console.log("Content-Length:", req.headers['content-length']);
+    console.log("Body:", req.body);
+  }
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

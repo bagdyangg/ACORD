@@ -52,12 +52,12 @@ export const dishes = pgTable("dishes", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Orders table - simplified without price
+// Orders table - with decimal quantity support for portions (0.5, 1, 2, etc.)
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
   dishId: integer("dish_id").notNull().references(() => dishes.id),
-  quantity: integer("quantity").default(1),
+  quantity: decimal("quantity", { precision: 3, scale: 1 }).default("1.0"),
   orderDate: date("order_date").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });

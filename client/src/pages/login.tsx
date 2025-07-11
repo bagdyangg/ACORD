@@ -18,15 +18,36 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
 
+    // Validate form data
+    if (!username.trim() || !password.trim()) {
+      toast({
+        title: "Login failed",
+        description: "Username and password are required",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    console.log("Attempting login with:", { username, passwordLength: password.length });
+
     try {
+      const loginData = { username: username.trim(), password: password.trim() };
+      console.log("Sending login data:", loginData);
+      
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json; charset=utf-8",
+          "Accept": "application/json",
+          "Cache-Control": "no-cache",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify(loginData),
         credentials: "include",
+        mode: "cors",
       });
+      
+      console.log("Login response status:", response.status);
 
       if (response.ok) {
         // Clear all cached data and force refresh
